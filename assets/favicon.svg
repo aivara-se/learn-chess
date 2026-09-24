@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Learn chess">
+  <!-- The app's mark: four board squares and a pawn. Inline, no font, no
+       third-party request. -->
+  <rect width="32" height="32" rx="6" fill="#0c0d1d"/>
+  <rect x="6" y="6" width="10" height="10" fill="#a2aac0"/>
+  <rect x="16" y="16" width="10" height="10" fill="#a2aac0"/>
+  <rect x="16" y="6" width="10" height="10" fill="#6b7490"/>
+  <rect x="6" y="16" width="10" height="10" fill="#6b7490"/>
+  <circle cx="11" cy="11" r="3.2" fill="#f8fafc" stroke="#0c0d1d" stroke-width="1"/>
+</svg>

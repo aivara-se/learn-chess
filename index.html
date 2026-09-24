@@ -1,0 +1,276 @@
+<!doctype html>
+<!--
+  Learn chess — a beginner's course plus a coach. Everything is local:
+  self-hosted fonts, no analytics, no third-party request, no build step.
+  The rules engine and the computer opponent are js/engine.js; the lessons
+  are js/lessons.js; the interface is js/app.js.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c0d1d">
+  <title>Learn chess</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <meta name="description" content="A beginner's chess course with drills you play yourself, and a coach that tells you why a move was good or bad.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Learn chess">
+  <meta property="og:description" content="Lessons, drills and a coach for people who have never played chess.">
+  <style>
+    /* Self-hosted, latin subset, variable weight. Both families are OFL 1.1
+       (assets/fonts/OFL-*.txt). No CDN link: this app makes no third-party
+       request by design. */
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 400 600;
+      font-display: swap;
+      src: url(assets/fonts/inter-latin.woff2) format('woff2');
+    }
+    @font-face {
+      font-family: 'Space Grotesk';
+      font-style: normal;
+      font-weight: 500 700;
+      font-display: swap;
+      src: url(assets/fonts/space-grotesk-latin.woff2) format('woff2');
+    }
+    :root {
+      /* The family's ground and text tiers (see docs/DESIGN.md). This page is a
+         tool rather than a bot's site, so it has no bot accent: interaction is
+         white-on-dark, and the only colour is semantic — green for right, red
+         for wrong. */
+      --ground: #0c0d1d;
+      --panel: rgba(22, 27, 34, 0.6);
+      --border: #21262d;
+      --text: #e6edf3;
+      --text-soft: #c9d1d9;
+      --text-muted: #8b949e;
+      --text-quiet: #8b93a1;
+      /* Board tones. Measured on both tones (docs/DESIGN.md): a white piece
+         is carried by its dark outline (8.29:1 on light, 4.15:1 on dark), a
+         black piece by its body (7.67:1 / 3.83:1). No piece relies on colour
+         alone to be seen. */
+      --sq-light: #a2aac0;
+      --sq-dark: #6b7490;
+      --good: #9fe6a6;
+      --bad: #f2a2a2;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { background-color: var(--ground); }
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding: 20px 16px 64px;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(900px 620px at 18% 4%, rgba(122, 237, 226, 0.06), transparent 62%),
+        radial-gradient(1200px 800px at 20% 10%, #171834 0%, #131530 52%, #0c0d1d 100%);
+    }
+    .app { max-width: 720px; margin: 0 auto; }
+    h1, h2, h3 { font-family: 'Space Grotesk', 'Inter', sans-serif; line-height: 1.25; }
+    h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+    h2 { font-size: 19px; font-weight: 600; }
+    h3 { font-size: 16px; font-weight: 600; }
+    p { color: var(--text-soft); }
+    a { color: var(--text); text-decoration: none; border-bottom: 1px solid #3a4055; }
+    a:hover { border-bottom-color: var(--text); }
+    .lede { color: var(--text-muted); font-size: 14px; margin-top: 6px; max-width: 60ch; }
+    header.top { margin-bottom: 18px; }
+
+    /* tabs */
+    .tabs { display: flex; gap: 6px; margin: 18px 0 20px; }
+    .tab {
+      font: inherit; font-size: 13.5px; font-weight: 500; color: var(--text-muted);
+      background: transparent; border: 1px solid var(--border); border-radius: 999px;
+      padding: 6px 14px; cursor: pointer;
+    }
+    .tab:hover { color: var(--text); border-color: #3a4055; }
+    .tab[aria-selected="true"] { color: var(--ground); background: var(--text-soft); border-color: var(--text-soft); }
+    .view[hidden] { display: none; }
+
+    /* lesson list */
+    .cards { display: grid; gap: 10px; }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; text-align: left; font: inherit; color: var(--text);
+      cursor: pointer; display: block; width: 100%;
+    }
+    .card:hover { border-color: #3a4055; }
+    .card .k { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+    .card .t { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; margin: 3px 0 2px; }
+    .card .g { color: var(--text-muted); font-size: 13.5px; }
+    .card .done { color: var(--good); font-size: 12px; }
+    .progress { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; }
+
+    /* panel */
+    .panel {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px; margin-bottom: 14px;
+    }
+    .panel p + p { margin-top: 10px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    button.btn {
+      font: inherit; font-size: 13.5px; font-weight: 500; color: var(--text-soft);
+      background: #1b2030; border: 1px solid var(--border); border-radius: 8px;
+      padding: 7px 13px; cursor: pointer;
+    }
+    button.btn:hover { border-color: #4a5268; color: var(--text); }
+    button.btn:disabled { opacity: 0.4; cursor: default; }
+    button.btn.primary { background: var(--text-soft); color: var(--ground); border-color: var(--text-soft); }
+    :focus-visible { outline: 2px solid var(--text-soft); outline-offset: 2px; }
+
+    /* board */
+    .board-wrap { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    .board {
+      width: min(94vw, 460px); aspect-ratio: 1; display: grid;
+      grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+      user-select: none; touch-action: manipulation;
+    }
+    .sq {
+      position: relative; display: grid; place-items: center; font-size: 0;
+      border: 0; padding: 0; cursor: default; background: var(--sq-light);
+    }
+    .sq.dark { background: var(--sq-dark); }
+    .sq.piece { cursor: pointer; }
+    .sq .pc { font-size: min(9vw, 42px); line-height: 1; }
+    .sq .pc.w {
+      color: #f8fafc;
+      -webkit-text-stroke: 1.2px #0c0d1d;
+      text-shadow: -1.5px -1.5px 0 #0c0d1d, 1.5px -1.5px 0 #0c0d1d, -1.5px 1.5px 0 #0c0d1d, 1.5px 1.5px 0 #0c0d1d;
+    }
+    .sq .pc.b {
+      color: #141726;
+      -webkit-text-stroke: 1.2px #ffffff;
+      text-shadow: -1.5px -1.5px 0 #ffffff, 1.5px -1.5px 0 #ffffff, -1.5px 1.5px 0 #ffffff, 1.5px 1.5px 0 #ffffff;
+    }
+    /* Every state marker is a double ring: a dark edge that is visible on both
+       board tones, then the colour that carries the meaning. */
+    .sq.last { box-shadow: inset 0 0 0 100px rgba(12, 13, 29, 0.16); }
+    .sq.sel { box-shadow: inset 0 0 0 3px #0c0d1d, inset 0 0 0 6px #f8fafc; }
+    .sq.check { box-shadow: inset 0 0 0 3px #0c0d1d, inset 0 0 0 6px #f2a2a2; }
+    .sq.hintbest { box-shadow: inset 0 0 0 3px #0c0d1d, inset 0 0 0 6px var(--good); }
+    .sq.right { box-shadow: inset 0 0 0 3px #0c0d1d, inset 0 0 0 100px rgba(159, 230, 166, 0.4); }
+    .sq.wrong { box-shadow: inset 0 0 0 3px #0c0d1d, inset 0 0 0 100px rgba(242, 162, 162, 0.4); }
+    .sq .dot { width: 22%; height: 22%; border-radius: 50%; background: #0c0d1d; outline: 2px solid rgba(255, 255, 255, 0.8); }
+    .sq .ring { position: absolute; inset: 6%; border: 4px solid #0c0d1d; border-radius: 50%; outline: 2px solid rgba(255, 255, 255, 0.8); }
+    .sq .coord { position: absolute; font-size: 9.5px; }
+    .sq .coord.f { right: 3px; bottom: 1px; }
+    .sq .coord.r { left: 3px; top: 1px; }
+    .sq:not(.dark) .coord { color: #141726; }
+    .sq.dark .coord { color: #ffffff; }
+    figcaption, .caption { color: var(--text-muted); font-size: 12.5px; text-align: center; }
+
+    /* log / feedback */
+    .log { display: grid; gap: 8px; margin-top: 12px; }
+    .msg { border-left: 2px solid #3a4055; padding: 2px 0 2px 10px; font-size: 13.5px; color: var(--text-soft); }
+    .msg.bad { border-left-color: var(--bad); }
+    .msg.good { border-left-color: var(--good); }
+    .msg .lab { color: var(--text-muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; display: block; }
+    .moves { font-size: 13px; color: var(--text-muted); margin-top: 10px; line-height: 1.9; }
+    .moves span { padding-right: 6px; }
+    .stat { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--text-muted); }
+    .stat b { color: var(--text); font-weight: 600; }
+    .lead { color: var(--text-soft); font-size: 13.5px; margin-bottom: 10px; }
+    ul.plain { list-style: none; display: grid; gap: 6px; }
+    ul.plain li { color: var(--text-soft); font-size: 13.5px; padding-left: 14px; position: relative; }
+    ul.plain li::before { content: "–"; position: absolute; left: 0; color: var(--text-muted); }
+    footer.colophon { margin-top: 26px; color: var(--text-quiet); font-size: 12.5px; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <h1>Learn chess</h1>
+    <p class="lede">Eight short lessons and 24 positions you play yourself, plus a coach that
+      says why a move was good or bad. No account, no download — it runs in the page.</p>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" id="tab-learn" role="tab" aria-selected="true" aria-controls="view-learn">Learn</button>
+      <button class="tab" id="tab-play" role="tab" aria-selected="false" aria-controls="view-play">Play</button>
+      <button class="tab" id="tab-train" role="tab" aria-selected="false" aria-controls="view-train">Train</button>
+    </nav>
+  </header>
+
+  <noscript>
+    <div class="panel"><p>This page plays chess, so it needs JavaScript turned on.</p></div>
+  </noscript>
+
+  <section class="view" id="view-learn" role="tabpanel" aria-labelledby="tab-learn">
+    <div id="lesson-list"></div>
+    <div id="lesson-view" hidden></div>
+  </section>
+
+  <section class="view" id="view-play" role="tabpanel" aria-labelledby="tab-play" hidden>
+    <div class="panel">
+      <div class="row">
+        <button class="btn primary" id="play-new">New game</button>
+        <button class="btn" id="play-undo">Undo my move</button>
+        <button class="btn" id="play-hint">Hint</button>
+        <button class="btn" id="play-flip">Flip board</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label for="play-level" class="g" style="font-size:13px;color:var(--text-muted)">Opponent</label>
+        <select id="play-level" class="btn" style="padding:6px 10px">
+          <option value="1">Just learning (weakest)</option>
+          <option value="2" selected>Club beginner</option>
+          <option value="3">Plays properly</option>
+        </select>
+        <label for="play-color" style="font-size:13px;color:var(--text-muted)">You play</label>
+        <select id="play-color" class="btn" style="padding:6px 10px">
+          <option value="w" selected>White</option>
+          <option value="b">Black</option>
+        </select>
+        <label style="font-size:13px;color:var(--text-muted)">
+          <input type="checkbox" id="play-coach" checked> coach
+        </label>
+      </div>
+    </div>
+    <div class="board-wrap">
+      <div class="board" id="play-board" aria-label="Chess board"></div>
+      <p class="lead" id="play-status">Play a move by tapping a piece, then where it goes.</p>
+    </div>
+    <div class="log" id="play-log" aria-live="polite"></div>
+    <p class="moves" id="play-moves"></p>
+  </section>
+
+  <section class="view" id="view-train" role="tabpanel" aria-labelledby="tab-train" hidden>
+    <div class="panel">
+      <div class="stat">
+        <span>Streak <b id="train-streak">0</b></span>
+        <span>Best <b id="train-best">0</b></span>
+        <span>Solved <b id="train-solved">0</b>/<span id="train-total">0</span></span>
+      </div>
+      <p class="lead" id="train-prompt" style="margin-top:10px"></p>
+      <div class="row">
+        <button class="btn primary" id="train-hint">Hint</button>
+        <button class="btn" id="train-next">Skip</button>
+        <button class="btn" id="train-reset">Reset progress</button>
+      </div>
+    </div>
+    <div class="board-wrap">
+      <div class="board" id="train-board" aria-label="Puzzle board"></div>
+      <p class="caption" id="train-where"></p>
+    </div>
+    <div class="log" id="train-log" aria-live="polite"></div>
+  </section>
+
+  <footer class="colophon">
+    <p>Aivara · the board and the opponent run in this page, in plain JavaScript.
+      Progress is kept in this browser only.</p>
+  </footer>
+</main>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
