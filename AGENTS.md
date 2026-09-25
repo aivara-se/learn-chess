@@ -8,8 +8,7 @@ server. The interface is `index.html` plus `js/app.js`; the rules engine and the
 `js/engine.js`; the course content is `js/lessons.js`. Design rules are in
 [`docs/DESIGN.md`](docs/DESIGN.md), deployment in [`docs/SYSTEM.md`](docs/SYSTEM.md).
 
-This file is the `aivara-se` agent convention, version `2`, adopted from
-`e4bd72fa7a00bec50cc71332593e66564e3bd0e9`. Adopt it, do not fork it: repository-specific
+This file is the `aivara-se` agent convention, version `2`, adopted from `1a7d1b2b59e2c8185b7ea0ea67aa8fceb8e73fc3`. Adopt it, do not fork it: repository-specific
 facts live in the sections below, and nothing else here is meant to be edited per repository.
 
 ## Current Project Focus
@@ -61,6 +60,8 @@ bun test                            # the rules engine: perft and legality
 bun run scripts/verify-site.ts      # the site-level rules that can be checked mechanically
 ```
 
+Run the whole sequence, not just its fast part, and read every result — the exit code of the last command says nothing about the first.
+
 Then the two things a script cannot see: the app must work on a phone at 360px with no
 horizontal scroll, and the *rendered* page must be looked at — board legible, pieces
 distinguishable, buttons reachable, no console error. Automated browser checks do not prove
@@ -107,14 +108,23 @@ than no map.
 ## Agent Skills
 
 `.agents/skills/` holds one skill per kind of work — the procedure to follow, not a second copy
-of these instructions. Each skill declares in its front matter what it covers and its
-`when-to-use`: the situation in which you must open it. Read the skill that covers the work
-before you start it.
+of these instructions. A skill stands on its own: it names no file of this convention and
+points at no other skill, so a reader who has it has everything it needs. This file is what
+points at the skills; they never point back. Each skill declares in its front matter what it
+covers and its `when-to-use`: the situation in which you must open it. Read the skill that
+covers the work before you start it.
 
-No skills are shipped in this repository yet: the work so far is one feature in one app, and
-the conventions above cover it. The first skill to write is the one for authoring drills —
-verify the answer with Stockfish, phrase the `why` from the position, then play it in the
-browser.
+- .agents/skills/coding/SKILL.md
+- .agents/skills/testing/SKILL.md
+- .agents/skills/writing/SKILL.md
+- .agents/skills/review/SKILL.md
+
+Every skill on disk is listed above, and every skill listed above exists. A new skill is added
+here in the same pull request that adds it, and a skill deleted from disk is deleted from this
+list in the same commit. An index that has drifted is worse than a short one.
+
+The first repository-specific skill to write is still the one for authoring drills — verify the
+answer with Stockfish, phrase the `why` from the position, then play it in the browser.
 
 Front matter is exactly three keys: `name`, equal to the directory; `description`, one
 sentence; `when-to-use`, the trigger in the reader's words. A skill stays under about 120
