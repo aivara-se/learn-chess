@@ -2,20 +2,21 @@
 
 ## What this product is
 
-A beginner's chess course that runs entirely in the browser. Eight short lessons, each ending
-in positions the learner plays themselves; a game against a beginner-strength opponent; and a
-coach that grades the learner's moves and says, in words, what the stronger move would have
-done.
+A beginner's chess course shaped like a small phone app: three tabs, one idea per card, puzzles
+you play with a finger, stars to collect, and Pip the pawn coaching your moves in a sentence a
+child can read. It runs entirely in the browser — nothing is installed, nothing is sent anywhere.
 
 ## Who it is for
 
-- **Someone who has never played.** The first lesson is how the pieces move. Nothing assumes
-  a reader knows what a file is, or why a knight on the rim is worse than one in the middle.
+- **A child who has never played, roughly 8 to 12.** The first lesson is how the pieces move, and
+  the copy is held to a nine-year-old's reading level and enforced by the site check. Nothing
+  assumes the reader knows what a file is, or why a knight on the rim is worse than one in the
+  middle.
 - **Someone who knows the moves and loses anyway.** Lessons 3 to 7 are the habits that decide
-  beginner games: take the centre, develop, castle, keep the queen back, and look for loose
-  pieces before moving.
-- **A teacher or a parent** who wants one link to hand over. No account, no download, no
-  install, no data collected.
+  beginner games: take the centre, bring your pieces out, castle, keep the queen back, and look
+  for loose pieces before you move.
+- **A parent or a teacher** who wants one link to hand over, and wants to know that it needs no
+  account, shows no adverts and keeps a child's progress on that device alone.
 
 ## In scope
 
@@ -39,7 +40,8 @@ done.
 
 ## Constraints
 
-- **Works on a phone**: one column, board sized to the viewport, no horizontal scroll at 360px.
+- **Looks and behaves like an app**: one screen tall, bottom tab bar, one idea per screen, tap
+  targets of at least 48px, no page scroll, no sideways scroll at 360px.
 - **Works offline** once loaded, and from any static host: no build step, no runtime config.
 - **AA contrast on every surface**, including pieces on both board tones (`docs/DESIGN.md`
   carries the measurements).
@@ -49,7 +51,7 @@ done.
 
 ## How it changes
 
-The course grows by adding lessons and drills to `js/lessons.js` — new positions, verified the
-same way. The engine changes rarely; if it does, `bun test` decides whether the change is
+The course grows by adding lessons and puzzles to `js/lessons.js` — new positions, verified the
+same way, written to the length budgets the site check enforces. The engine changes rarely; if it does, `bun test` decides whether the change is
 sound. Anything that needs a server, an account, or a network call belongs in a different
 product.
