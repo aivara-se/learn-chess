@@ -24,6 +24,8 @@ when-to-use: Any change that adds or alters behaviour, any bug fix, and any chan
 
 ## Running them
 
-- The repository has two commands and this skill has neither of them written down: the narrow test command for while you are iterating, and the check command for the final tree. Run the narrow one first, the check command before you hand the work off, and quote its output — a report of either without the command and the tree it ran against is not a verification.
-- If the repository has no test command at all, say that in the handoff instead of claiming coverage.
+- **Find out what this repository runs before you run anything.** There is no fixed shape and no fixed number: a repository may have one narrow test command, one gate that runs everything, a sequence of steps with no wrapper, or nothing at all. Read its manifest, its `scripts/`, its CI file and the instructions it already carries, and adapt to what is actually there — this skill deliberately names no command, because it cannot know.
+- **Before a full handover, follow the same steps that validating a pull request follows** — the same commands, in the same order, on the tree the reviewer will get. Start narrow while you iterate; finish with everything the repository gates on, and read each result rather than the last exit code alone.
+- Quote the command and the tree it ran against. A report without either is a claim, not a verification.
+- If the repository has no test command at all, or has one that nothing runs — not your loop, not CI — say that in the handoff instead of claiming coverage.
 - A test that passes only sometimes is a broken test. Fix it or delete it in the same change — **never** retry until green, and never mark a flaky test as expected failure to get past a gate.

@@ -10,7 +10,7 @@ when-to-use: A pull request or a task handoff is waiting on your review. Never f
 
 1. Read the task or pull request body: what was claimed, and what the acceptance criteria are. The claim and the task are not always the same thing, and the difference is a finding.
 2. Read the diff twice — once for what it does, once for what it does **not** do: the caller nobody updated, the test that would have caught it, the document it just made untrue, the error path that swallows.
-3. Run it. Check out the branch, run the repository's check command, and exercise the thing the change claims to fix. A reviewer who did not run the change is reading, not reviewing.
+3. Run it. Check out the branch, run the checks this repository gates on — whatever CI runs, where there is CI — and exercise the thing the change claims to fix. A reviewer who did not run the change is reading, not reviewing.
 4. Test the claim, not the description: if the body says empty input is handled, feed it empty input; if it says the bug is fixed, reproduce the bug on the parent commit first.
 5. Look at what the checks cannot see: silently swallowed errors, a public surface that grew, a dependency that appeared, a gate that was skipped and reported as passing, credentials or personal data in the diff.
 

@@ -45,5 +45,5 @@ Style is the language's own business: run the formatter and linter this reposito
 Before you call a change done:
 
 1. Run the formatter and linter this repository already uses — clean, with no suppressions you added for this change.
-2. Run the repository's check command on the final tree — exit 0.
+2. Run the checks this repository gates on, on the final tree — the whole sequence, not just the fast one.
 3. Read the diff once, top to bottom, as the reviewer will: no debug output, no stray files, no unrelated reformatting, no scope the task did not ask for.

@@ -8,8 +8,7 @@ server. The interface is `index.html` plus `js/app.js`; the rules engine and the
 `js/engine.js`; the course content is `js/lessons.js`. Design rules are in
 [`docs/DESIGN.md`](docs/DESIGN.md), deployment in [`docs/SYSTEM.md`](docs/SYSTEM.md).
 
-This file is the `aivara-se` agent convention, version `2`, adopted from
-`e4bd72fa7a00bec50cc71332593e66564e3bd0e9`. Adopt it, do not fork it: repository-specific
+This file is the `aivara-se` agent convention, version `2`, adopted from `1a7d1b2b59e2c8185b7ea0ea67aa8fceb8e73fc3`. Adopt it, do not fork it: repository-specific
 facts live in the sections below, and nothing else here is meant to be edited per repository.
 
 ## Current Project Focus
@@ -60,6 +59,8 @@ to. Keep it short enough to read in full, and current enough to be worth reading
 bun test                            # the rules engine: perft and legality
 bun run scripts/verify-site.ts      # the site-level rules that can be checked mechanically
 ```
+
+Run the whole sequence, not just its fast part, and read every result — the exit code of the last command says nothing about the first.
 
 Then the two things a script cannot see: the app must work on a phone at 360px with no
 horizontal scroll, and the *rendered* page must be looked at — board legible, pieces
