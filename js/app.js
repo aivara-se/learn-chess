@@ -136,8 +136,15 @@ function renderBoard(container, pos, opts = {}) {
   const flip = !!opts.flip;
   container.textContent = '';
   const targets = opts.targets || new Set();
+  /* The engine numbers squares 0 = a1 .. 63 = h8 (rank 1 first). A board drawn in
+     DOM order would therefore put White at the top — upside down for the learner
+     this app is for. So the cell in row `row` and column `col` maps to:
+       rank 8 at the top (unflipped) or rank 1 at the top (flipped, playing Black),
+     and when flipped the files mirror too, so it is a true 180-degree rotation. */
   for (let i = 0; i < 64; i++) {
-    const sq = flip ? 63 - i : i;
+    const row = Math.floor(i / 8);
+    const col = i % 8;
+    const sq = flip ? row * 8 + (7 - col) : (7 - row) * 8 + col;
     const rank = Math.floor(sq / 8);
     const file = sq % 8;
     const sqEl = el('button', 'sq' + ((rank + file) % 2 === 0 ? ' dark' : ''));
@@ -154,8 +161,10 @@ function renderBoard(container, pos, opts = {}) {
     if (opts.checkSquare === sq) sqEl.classList.add('check');
     if (opts.flash && opts.flash.square === sq) sqEl.classList.add(opts.flash.ok ? 'right' : 'wrong');
     if (targets.has(sq)) sqEl.appendChild(piece ? el('span', 'ring') : el('span', 'dot'));
-    if (flip ? file === 7 : file === 0) sqEl.appendChild(el('span', 'coord r', String(rank + 1)));
-    if (flip ? rank === 7 : rank === 0) sqEl.appendChild(el('span', 'coord f', FILES[file]));
+    /* Labels sit on the edge nearest the player: ranks down the left (right when
+       flipped), files along the bottom (top when flipped). */
+    if (flip ? col === 7 : col === 0) sqEl.appendChild(el('span', 'coord r', String(rank + 1)));
+    if (flip ? row === 0 : row === 7) sqEl.appendChild(el('span', 'coord f', FILES[file]));
     if (opts.onSquare) sqEl.addEventListener('click', () => opts.onSquare(sq));
     container.appendChild(sqEl);
   }
