@@ -36,6 +36,13 @@ to. Keep it short enough to read in full, and current enough to be worth reading
   150. Short sentences, active voice, no jargon.
 - **A star means first try.** Never award one for a puzzle solved after a hint or a wrong answer.
   The list shows both numbers — puzzles solved and stars earned — and they must stay separate.
+- **The board is drawn from White's side and the engine is not.** The engine numbers squares
+  `0 = a1 … 63 = h8`, so drawing that index in DOM order puts White at the top — which shipped
+  once, because the file and rank labels followed the same convention and nothing looked wrong.
+  Map the cell in row `row` and column `col` to `(7 - row) * 8 + col`, and to `row * 8 + (7 - col)`
+  when flipped. Square colour comes from the square, not the cell (a1 and h8 stay dark). The browser
+  check asserts orientation, the corner labels, a1/h8 colouring and every piece's colour against
+  the position; keep those assertions when you touch the renderer.
 - **Every colour is measured, on the surface it is used on.** `docs/DESIGN.md` carries the table;
   a new pair without a measurement does not ship. Nothing may be signalled by colour alone: a
   verdict, a turn or a check is always also a word.
