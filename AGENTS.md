@@ -14,9 +14,10 @@ facts live in the sections below, and nothing else here is meant to be edited pe
 
 ## Current Project Focus
 
-The app is built and verified locally; the open question is publication (a new repository,
-Pages, and whether the owner points a subdomain at it). Next work, in order: get it reviewed
-and merged, then read it on a real phone at 360px.
+The app is built, restyled as a phone-style app for children, and verified locally; the open
+question is publication (Pages is enabled, the pull request is not merged). Next work, in order:
+get it reviewed and merged, then read it on a real phone at 360px and watch a child use it —
+that is the only test of the copy that matters.
 
 This section is steering, not policy. It is the one place where what matters right now
 outranks the standing rules below, it changes often, and it is replaced rather than appended
@@ -24,11 +25,20 @@ to. Keep it short enough to read in full, and current enough to be worth reading
 
 ## House rules
 
-- **The course content is data, not code.** Lesson text and drills live in `js/lessons.js`.
-  Every drill's answer must be a move a beginner can find, and every `accepted` list must
-  hold moves verified against Stockfish at depth 18 — a drill that rejects a good move
-  teaches the wrong thing. `scripts/verify-site.ts` checks that each drill is playable; it
-  cannot check that the answer is best, so that stays a human (or Stockfish) job.
+- **The course content is data, not code.** Lesson text and puzzles live in `js/lessons.js`.
+  Every puzzle's answer must be a move a beginner can find, and every `accepted` list must hold
+  moves verified against Stockfish at depth 18 — a puzzle that rejects a good move teaches the
+  wrong thing. `scripts/verify-site.ts` checks that each position is playable and every answer
+  legal; it cannot check that the answer is best, so that stays a human (or Stockfish) job.
+- **Copy is written for a nine-year-old**, and the length budgets are enforced by
+  `scripts/verify-site.ts`: a lesson goal under 55 characters, a title under 40, a body paragraph
+  under 170, a caption under 110, a puzzle prompt under 65, a hint under 55, an explanation under
+  150. Short sentences, active voice, no jargon.
+- **A star means first try.** Never award one for a puzzle solved after a hint or a wrong answer.
+  The list shows both numbers — puzzles solved and stars earned — and they must stay separate.
+- **Every colour is measured, on the surface it is used on.** `docs/DESIGN.md` carries the table;
+  a new pair without a measurement does not ship. Nothing may be signalled by colour alone: a
+  verdict, a turn or a check is always also a word.
 - **The app must keep working offline and from `file://`-style hosting**: no fetch, no CDN,
   no external font, no account, no backend. Any feature that needs a server does not belong
   here.

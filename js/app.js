@@ -1,106 +1,100 @@
 /* Learn chess — the interface.
  *
- * Three sections: Learn (a course of lessons, each ending in positions you
- * play), Play (a game against a beginner-strength opponent, with a coach that
- * grades your moves), and Train (the same positions again, shuffled, with a
- * streak).
+ * Three screens, switched from a bottom tab bar, the way a small phone app
+ * works: Lessons (a course in steps, each ending in positions you play),
+ * Play (a game against a sleepy-but-honest opponent, with Pip coaching), and
+ * Puzzles (the same positions shuffled, with a streak).
  *
- * The rules, the search and the evaluation come from js/engine.js; the lesson
- * content comes from js/lessons.js. Nothing here talks to a server.
+ * The rules, the search and the evaluation come from js/engine.js; the course
+ * comes from js/lessons.js. Nothing here talks to a server.
  */
 import {
   START_FEN, parseFen, toFen, legalMoves, makeMove, isCheckmate, isStalemate,
-  isInsufficientMaterial, inCheck, san, findBestMove, evaluate, searchEval,
+  isInsufficientMaterial, inCheck, san, findBestMove, searchEval,
 } from './engine.js';
 import { LESSONS } from './lessons.js';
 
-const PIECES = {
-  w: { k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E', p: '\u265F' },
-  b: { k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E', p: '\u265F' },
-};
+const GLYPH = { k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E', p: '\u265F' };
 const NAMES = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
-const VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 const FILES = 'abcdefgh';
-const STORE = 'aivara-learn-chess-v1';
+const STORE = 'aivara-learn-chess-v2';
+const TOTAL_DRILLS = LESSONS.reduce((n, l) => n + (l.drills || []).length, 0);
 
-/* ---------- small helpers ---------- */
+/* ---------- tiny helpers ---------- */
 
 const $ = (id) => document.getElementById(id);
-
-function el(tag, cls, text) {
+const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
   if (text != null) n.textContent = text;
   return n;
-}
-
-function squareName(sq) {
-  return FILES[sq % 8] + (Math.floor(sq / 8) + 1);
-}
-
-function colorOf(pos, sq) {
+};
+const squareName = (sq) => FILES[sq % 8] + (Math.floor(sq / 8) + 1);
+const colorOf = (pos, sq) => {
   const p = pos.board[sq];
-  if (!p) return null;
-  return p === p.toUpperCase() ? 'w' : 'b';
-}
-
-function pieceAt(pos, sq) {
+  return p ? (p === p.toUpperCase() ? 'w' : 'b') : null;
+};
+const pieceAt = (pos, sq) => {
   const p = pos.board[sq];
-  if (!p) return null;
-  return { color: p === p.toUpperCase() ? 'w' : 'b', type: p.toLowerCase() };
-}
+  return p ? { color: p === p.toUpperCase() ? 'w' : 'b', type: p.toLowerCase() } : null;
+};
+const legalFrom = (pos, sq) => legalMoves(pos).filter((m) => m.from === sq);
+const toUci = (m) => squareName(m.from) + squareName(m.to) + (m.promotion || '');
+const uciToMove = (pos, uci) => {
+  const from = FILES.indexOf(uci[0]) + (Number(uci[1]) - 1) * 8;
+  const to = FILES.indexOf(uci[2]) + (Number(uci[3]) - 1) * 8;
+  return legalMoves(pos).find((m) => m.from === from && m.to === to && (m.promotion || '') === (uci[4] || '')) || null;
+};
+const sameMove = (a, b) => !!a && !!b && a.from === b.from && a.to === b.to && (a.promotion || null) === (b.promotion || null);
+const findKing = (pos, colour) => pos.board.indexOf(colour === 'w' ? 'K' : 'k');
 
-function legalFrom(pos, sq) {
-  return legalMoves(pos).filter((m) => m.from === sq);
-}
-
-function findMove(pos, from, to, prefer) {
-  const moves = legalMoves(pos).filter((m) => m.from === from && m.to === to);
-  if (!moves.length) return null;
-  if (moves.length === 1) return moves[0];
-  const wanted = prefer || 'q';
-  return moves.find((m) => (m.promotion || 'q') === wanted) || moves[0];
-}
-
-function sameMove(a, b) {
-  return a && b && a.from === b.from && a.to === b.to && (a.promotion || null) === (b.promotion || null);
-}
-
-/* Plain-language description of what a move does, used by the coach. */
+/* What a move does, in words a nine-year-old reads without stopping. */
 function describeMove(pos, move) {
   const piece = pieceAt(pos, move.from);
   const victim = pieceAt(pos, move.to);
   const bits = [];
-  if (piece.type === 'k' && Math.abs(move.to - move.from) === 2) bits.push('castles the king out of the centre');
+  if (piece.type === 'k' && Math.abs(move.to - move.from) === 2) bits.push('tucks the king away safely');
   else {
-    if (victim) bits.push(`takes the ${NAMES[victim.type]} on ${squareName(move.to)}`);
-    if (move.promotion) bits.push(`promotes to a ${NAMES[move.promotion]}`);
+    if (victim) bits.push(`wins the ${NAMES[victim.type]} on ${squareName(move.to)}`);
+    if (move.promotion) bits.push(`turns the pawn into a ${NAMES[move.promotion]}`);
     const fromRank = Math.floor(move.from / 8);
     const toRank = Math.floor(move.to / 8);
     if ((piece.type === 'n' || piece.type === 'b') && (fromRank === 0 || fromRank === 7) && toRank !== 0 && toRank !== 7) {
-      bits.push('develops a piece');
+      bits.push('brings a piece out');
     }
-    if (piece.type === 'p' && [27, 28, 35, 36].includes(move.to)) bits.push('claims the centre');
+    if (piece.type === 'p' && [27, 28, 35, 36].includes(move.to)) bits.push('takes the middle');
   }
   const after = makeMove(pos, move);
   if (isCheckmate(after)) bits.unshift('checkmate');
-  else if (inCheck(after, after.turn)) bits.push('gives check');
-  return { san: san(pos, move), text: bits.join('; ') || 'keeps the position together' };
+  else if (inCheck(after, after.turn)) bits.push('says check');
+  /* `verb` is the same move as an instruction, for the reveal sheet: "The move
+     is to take the knight on d5." */
+  let verb = 'play that move';
+  if (piece.type === 'k' && Math.abs(move.to - move.from) === 2) verb = 'castle';
+  else if (victim) verb = `take the ${NAMES[victim.type]} on ${squareName(move.to)}`;
+  else if (move.promotion) verb = `make a new ${NAMES[move.promotion]}`;
+  else if ((piece.type === 'n' || piece.type === 'b') && (Math.floor(move.from / 8) === 0 || Math.floor(move.from / 8) === 7)) verb = `bring the ${NAMES[piece.type]} out`;
+  else if (piece.type === 'p' && [27, 28, 35, 36].includes(move.to)) verb = 'take the middle';
+  return { san: san(pos, move), text: bits.join(', ') || 'keeps things tidy', verb };
 }
 
-function classify(loss) {
-  if (loss >= 300) return { label: 'Blunder', cls: 'bad' };
-  if (loss >= 150) return { label: 'Mistake', cls: 'bad' };
-  if (loss >= 70) return { label: 'Inaccuracy', cls: 'bad' };
-  if (loss <= 10) return { label: 'Best move', cls: 'good' };
-  if (loss <= 40) return { label: 'Good', cls: 'good' };
-  return { label: 'Playable', cls: '' };
+/* How a played move rates, in a child's words. */
+function verdict(loss) {
+  if (loss <= 10) return { word: 'Perfect!', tone: 'good' };
+  if (loss <= 40) return { word: 'Nice move', tone: 'good' };
+  if (loss <= 70) return { word: 'Okay', tone: '' };
+  if (loss <= 150) return { word: 'Careful', tone: 'bad' };
+  if (loss <= 300) return { word: 'That loses something', tone: 'bad' };
+  return { word: 'Oops', tone: 'bad' };
 }
-
-function pawns(cp) {
-  const n = cp / 100;
-  return (n >= 0 ? '+' : '') + n.toFixed(1);
-}
+const scoreWords = (cp) => {
+  const p = cp / 100;
+  if (p > 1.5) return 'you are well ahead';
+  if (p > 0.5) return 'you are a little ahead';
+  if (p < -1.5) return 'you are well behind';
+  if (p < -0.5) return 'you are a little behind';
+  return 'the game is level';
+};
 
 /* ---------- progress ---------- */
 
@@ -108,52 +102,58 @@ const store = {
   read() {
     try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; }
   },
-  write(data) {
-    try { localStorage.setItem(STORE, JSON.stringify(data)); } catch { /* private mode: progress just does not persist */ }
+  write(d) {
+    try { localStorage.setItem(STORE, JSON.stringify(d)); } catch { /* private mode: progress just does not stick */ }
   },
-  markDone(key) {
+  solved(key) {
     const d = store.read();
     d.done = d.done || {};
     d.done[key] = true;
     store.write(d);
   },
-  setBest(streak) {
+  clean(key) {
     const d = store.read();
-    if (!d.best || streak > d.best) { d.best = streak; store.write(d); }
+    d.first = d.first || {};
+    d.first[key] = true;
+    store.write(d);
   },
-  clear() { store.write({}); },
+  streak(n) {
+    const d = store.read();
+    if (!d.best || n > d.best) { d.best = n; store.write(d); }
+  },
+  reset() { store.write({}); },
 };
+const solvedCount = () => Object.keys((store.read().done) || {}).length;
+const isSolved = (key) => !!((store.read().done || {})[key]);
+const isFirstTry = (key) => !!((store.read().first || {})[key]);
 
-/* ---------- board rendering ---------- */
+/* ---------- board ---------- */
 
-const boards = new Map(); // container id -> render state
+let live = null;          // the board currently accepting taps
+const boards = new Map();
 
 function renderBoard(container, pos, opts = {}) {
   const flip = !!opts.flip;
   container.textContent = '';
   const targets = opts.targets || new Set();
-  const checkSq = opts.checkSquare;
   for (let i = 0; i < 64; i++) {
     const sq = flip ? 63 - i : i;
     const rank = Math.floor(sq / 8);
     const file = sq % 8;
     const sqEl = el('button', 'sq' + ((rank + file) % 2 === 0 ? ' dark' : ''));
-    sqEl.dataset.square = String(sq);
     sqEl.type = 'button';
+    sqEl.dataset.square = String(sq);
     const piece = pieceAt(pos, sq);
     if (piece) {
-      sqEl.classList.add('piece');
-      const span = el('span', 'pc ' + piece.color, PIECES[piece.color][piece.type]);
-      sqEl.appendChild(span);
+      sqEl.appendChild(el('span', 'pc ' + piece.color, GLYPH[piece.type]));
+      if (opts.movable !== false && piece.color === pos.turn && opts.interactive !== false) sqEl.classList.add('mine');
     }
     if (opts.selected === sq) sqEl.classList.add('sel');
     if (opts.last && (opts.last.from === sq || opts.last.to === sq)) sqEl.classList.add('last');
     if (opts.hintMove && (opts.hintMove.from === sq || opts.hintMove.to === sq)) sqEl.classList.add('hintbest');
+    if (opts.checkSquare === sq) sqEl.classList.add('check');
     if (opts.flash && opts.flash.square === sq) sqEl.classList.add(opts.flash.ok ? 'right' : 'wrong');
-    if (checkSq === sq) sqEl.classList.add('check');
-    if (targets.has(sq)) {
-      sqEl.appendChild(piece ? el('span', 'ring') : el('span', 'dot'));
-    }
+    if (targets.has(sq)) sqEl.appendChild(piece ? el('span', 'ring') : el('span', 'dot'));
     if (flip ? file === 7 : file === 0) sqEl.appendChild(el('span', 'coord r', String(rank + 1)));
     if (flip ? rank === 7 : rank === 0) sqEl.appendChild(el('span', 'coord f', FILES[file]));
     if (opts.onSquare) sqEl.addEventListener('click', () => opts.onSquare(sq));
@@ -162,24 +162,44 @@ function renderBoard(container, pos, opts = {}) {
   boards.set(container.id, { pos, opts });
 }
 
-/* Interactive move input: tap your piece, then the square it goes to. */
-function moveInput(container, state) {
+function paint(state) {
+  const pos = state.pos;
+  const checkSquare = inCheck(pos, pos.turn) ? findKing(pos, pos.turn) : null;
+  renderBoard(state.container, pos, {
+    flip: state.flip,
+    selected: state.selected,
+    targets: state.targets,
+    last: state.last,
+    hintMove: state.hintMove,
+    flash: state.flash,
+    checkSquare,
+    interactive: state.locked !== true,
+    onSquare: state.onSquare,
+  });
+  state.container.setAttribute('aria-label', checkSquare != null ? 'Chess board, the king is in check' : 'Chess board');
+}
+
+/* Tap a piece, then tap where it goes. */
+function tapHandler(state) {
   return (sq) => {
-    const pos = state.pos;
     if (state.locked || state.over) return;
-    const colour = colorOf(pos, sq);
-    const turn = pos.turn;
+    const pos = state.pos;
     if (state.selected != null && state.targets.has(sq)) {
-      const move = findMove(pos, state.selected, sq, pickPromotion(state, state.selected, sq));
+      const choices = legalMoves(pos).filter((m) => m.from === state.selected && m.to === sq);
+      const prefer = state.accepted
+        ? (choices.find((m) => state.accepted.includes(toUci(m))) || choices[0])
+        : choices[0];
       state.selected = null;
       state.targets = new Set();
-      if (move) state.onMove(move);
+      if (prefer) state.onMove(prefer);
       else paint(state);
       return;
     }
-    if (colour === turn) {
-      if (state.selected === sq) { state.selected = null; state.targets = new Set(); }
-      else {
+    if (colorOf(pos, sq) === pos.turn) {
+      if (state.selected === sq) {
+        state.selected = null;
+        state.targets = new Set();
+      } else {
         state.selected = sq;
         state.targets = new Set(legalFrom(pos, sq).map((m) => m.to));
       }
@@ -192,243 +212,345 @@ function moveInput(container, state) {
   };
 }
 
-function pickPromotion(state, from, to) {
-  if (!state.accepted) return 'q';
-  const opts = legalMoves(state.pos).filter((m) => m.from === from && m.to === to).map((m) => m.promotion || 'q');
-  for (const p of opts) if (state.accepted.some((u) => u.slice(0, 4) === toUci(from, to) && (u[4] || 'q') === p)) return p;
-  return 'q';
+/* ---------- the bottom sheet, confetti, announcements ---------- */
+
+function announce(text) { $('live').textContent = text; }
+
+function closeSheet() {
+  $('sheet').hidden = true;
+  $('sheet').textContent = '';
+  $('scrim').hidden = true;
 }
 
-function toUci(move) {
-  return squareName(move.from) + squareName(move.to) + (move.promotion || '');
+function showSheet({ title, text, tone = '', icon = 'star', action = 'Got it', onAction = null }) {
+  const sheet = $('sheet');
+  sheet.textContent = '';
+  const head = el('div', 'sheethead');
+  head.appendChild(iconSvg(icon, 44));
+  head.appendChild(el('h2', null, title));
+  sheet.appendChild(head);
+  if (text) sheet.appendChild(el('p', null, text));
+  const row = el('div', 'row');
+  row.style.marginTop = '14px';
+  const go = el('button', 'btn primary wide', action);
+  go.type = 'button';
+  go.addEventListener('click', () => { closeSheet(); if (onAction) onAction(); });
+  row.appendChild(go);
+  sheet.appendChild(row);
+  sheet.hidden = false;
+  $('scrim').hidden = false;
+  const board = document.querySelector('.screen:not([hidden]) .board');
+  const main = document.querySelector('main');
+  if (board && main) main.scrollTop = Math.max(0, board.offsetTop - 58);   // keep the board at the top, the sheet covers the space below it
+  announce(`${title}. ${text || ''}`);
+  go.focus();
+  return sheet;
 }
 
-function uciToMove(pos, uci) {
-  const from = FILES.indexOf(uci[0]) + (Number(uci[1]) - 1) * 8;
-  const to = FILES.indexOf(uci[2]) + (Number(uci[3]) - 1) * 8;
-  const promo = uci[4];
-  return legalMoves(pos).find((m) => m.from === from && m.to === to && (m.promotion || '') === (promo || '')) || null;
+const ICONS = {
+  star: '<path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5 6.1 20.6l1.2-6.5L2.5 9.5l6.6-.9z" fill="#ffb01f"/>',
+  happy: '<circle cx="12" cy="12" r="10" fill="#e3f7ec"/><circle cx="9" cy="10" r="1.6" fill="#0f7b46"/><circle cx="15" cy="10" r="1.6" fill="#0f7b46"/><path d="M8 14q4 3.6 8 0" fill="none" stroke="#0f7b46" stroke-width="2" stroke-linecap="round"/>',
+  hmm: '<circle cx="12" cy="12" r="10" fill="#ffe9ea"/><circle cx="9" cy="10" r="1.6" fill="#b8232b"/><circle cx="15" cy="10" r="1.6" fill="#b8232b"/><path d="M8 16q4-3.6 8 0" fill="none" stroke="#b8232b" stroke-width="2" stroke-linecap="round"/>',
+  trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0zM5 5h2v3H5zM17 5h2v3h-2zM10 14h4l1 6H9z" fill="#ffb01f" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/>',
+};
+const iconSvg = (name, size = 24) => {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('viewBox', '0 0 24 24');
+  s.setAttribute('width', String(size));
+  s.setAttribute('height', String(size));
+  s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = ICONS[name] || ICONS.star;
+  return s;
+};
+
+function confetti() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = $('confetti');
+  const colours = ['#ffb01f', '#2f5fe0', '#0f7b46', '#6b4ff0', '#e5484d'];
+  for (let i = 0; i < 18; i++) {
+    const bit = el('i');
+    bit.style.left = `${Math.round(Math.random() * 100)}%`;
+    bit.style.background = colours[i % colours.length];
+    bit.style.animationDelay = `${Math.round(Math.random() * 220)}ms`;
+    box.appendChild(bit);
+    setTimeout(() => bit.remove(), 1600);
+  }
 }
 
-function paint(state) {
-  const pos = state.pos;
-  const kingSq = inCheck(pos, pos.turn) ? findKing(pos, pos.turn) : null;
-  renderBoard(state.container, pos, {
-    flip: state.flip,
-    selected: state.selected,
-    targets: state.targets,
-    last: state.last,
-    hintMove: state.hintMove,
-    flash: state.flash,
-    checkSquare: kingSq,
-    onSquare: state.onSquare,
-  });
+/* ---------- Lessons ---------- */
+
+const learn = { lesson: 0, step: 0, state: null, tries: 0 };
+
+function starsFor(lesson) {
+  const drills = lesson.drills || [];
+  const firsts = drills.filter((_, i) => isFirstTry(`drill:${lesson.id}:${i}`)).length;
+  const solved = drills.filter((_, i) => isSolved(`drill:${lesson.id}:${i}`)).length;
+  return { got: firsts, of: drills.length, solved };
 }
 
-function findKing(pos, colour) {
-  const k = colour === 'w' ? 'K' : 'k';
-  return pos.board.indexOf(k);
+function starRow(got, of) {
+  const box = el('span', 'stars');
+  for (let i = 0; i < of; i++) {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('viewBox', '0 0 24 24');
+    s.innerHTML = i < got
+      ? ICONS.star
+      : '<path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5 6.1 20.6l1.2-6.5L2.5 9.5l6.6-.9z" fill="none" stroke="#c9d4ee" stroke-width="2" stroke-linejoin="round"/>';
+    box.appendChild(s);
+  }
+  return box;
 }
-
-/* ---------- Learn ---------- */
-
-const learn = { lessonIndex: 0, drillIndex: 0, state: null };
 
 function renderLessonList() {
-  const done = (store.read().done) || {};
-  const total = LESSONS.reduce((n, l) => n + (l.drills || []).length, 0);
-  const solved = Object.keys(done).filter((k) => k.startsWith('drill:')).length;
   const list = $('lesson-list');
   list.textContent = '';
-  const head = el('div', 'progress');
-  head.textContent = `${LESSONS.length} lessons · ${total} positions to play · ${Math.min(solved, total)} solved`;
-  list.appendChild(head);
-  const cards = el('div', 'cards');
+  $('star-count').textContent = `${solvedCount()}/${TOTAL_DRILLS}`;
+
+  const intro = el('div', 'card');
+  const head = el('div', 'between');
+  head.appendChild(el('h2', null, 'Start here'));
+  head.appendChild(starRow(Math.min(3, Math.round((solvedCount() / TOTAL_DRILLS) * 3)), 3));
+  intro.appendChild(head);
+  intro.appendChild(el('p', null, `${LESSONS.length} short lessons and ${TOTAL_DRILLS} puzzles. Play every puzzle and you can beat most people who are new to chess.`));
+  list.appendChild(intro);
+
   LESSONS.forEach((lesson, i) => {
-    const card = el('button', 'card');
+    const s = starsFor(lesson);
+    const allDone = s.of > 0 && s.solved === s.of;
+    const card = el('button', 'lesson' + (allDone ? ' done' : ''));
     card.type = 'button';
-    card.appendChild(el('span', 'k', `Lesson ${i + 1}`));
-    card.appendChild(el('span', 't', lesson.title));
-    card.appendChild(el('span', 'g', lesson.goal));
-    const n = (lesson.drills || []).length;
-    const doneHere = (lesson.drills || []).filter((_, j) => done[`drill:${lesson.id}:${j}`]).length;
-    card.appendChild(el('span', 'done', `${doneHere}/${n} positions solved`));
+    card.appendChild(el('span', 'num', allDone ? '\u2713' : String(i + 1)));
+    const txt = el('span', 'txt');
+    txt.appendChild(el('span', 't', lesson.title));
+    txt.appendChild(el('span', 's', allDone
+      ? (s.got === s.of ? 'All puzzles, all first time' : `${s.got} of ${s.of} stars — try again for more`)
+      : `${s.solved} of ${s.of} puzzles solved`));
+    card.appendChild(txt);
+    card.appendChild(starRow(s.got, s.of));
     card.addEventListener('click', () => openLesson(i));
-    cards.appendChild(card);
+    list.appendChild(card);
   });
-  list.appendChild(cards);
+
+  const truth = el('p', 'tiny');
+  truth.style.marginTop = '14px';
+  truth.textContent = 'An Aivara app. No account, no adverts, no internet needed after it loads. Your stars are saved only on this device.';
+  list.appendChild(truth);
+}
+
+function lessonSteps(lesson) {
+  const steps = (lesson.body || []).map((text, i) => ({ kind: 'read', text, i }));
+  steps.push({ kind: 'look' });
+  (lesson.drills || []).forEach((drill, i) => steps.push({ kind: 'drill', drill, i }));
+  steps.push({ kind: 'done' });
+  return steps;
 }
 
 function openLesson(i) {
-  learn.lessonIndex = i;
-  learn.drillIndex = 0;
+  learn.lesson = i;
+  learn.step = 0;
   $('lesson-list').hidden = true;
   $('lesson-view').hidden = false;
-  renderLesson();
+  renderStep();
 }
 
-function renderLesson() {
-  const lesson = LESSONS[learn.lessonIndex];
+function backToList() {
+  $('lesson-view').hidden = true;
+  $('lesson-list').hidden = false;
+  closeSheet();
+  renderLessonList();
+}
+
+function renderStep() {
+  const lesson = LESSONS[learn.lesson];
+  const steps = lessonSteps(lesson);
+  learn.step = Math.max(0, Math.min(learn.step, steps.length - 1));
+  const step = steps[learn.step];
   const view = $('lesson-view');
   view.textContent = '';
-  const panel = el('div', 'panel');
-  const back = el('button', 'btn', '← All lessons');
-  back.type = 'button';
-  back.addEventListener('click', () => {
-    $('lesson-view').hidden = true;
-    $('lesson-list').hidden = false;
-    renderLessonList();
-  });
-  panel.appendChild(back);
-  const h = el('h2', 't', `Lesson ${learn.lessonIndex + 1} — ${lesson.title}`);
-  h.style.margin = '10px 0 8px';
-  panel.appendChild(h);
-  (lesson.body || []).forEach((para) => panel.appendChild(el('p', null, para)));
-  if (lesson.diagram) {
-    const wrap = el('div', 'board-wrap');
-    wrap.style.marginTop = '14px';
-    const b = el('div', 'board');
-    b.id = 'lesson-diagram';
-    wrap.appendChild(b);
-    if (lesson.diagramCaption) wrap.appendChild(el('p', 'caption', lesson.diagramCaption));
-    panel.appendChild(wrap);
-  }
-  view.appendChild(panel);
 
-  const drills = lesson.drills || [];
-  if (drills.length) {
-    const dp = el('div', 'panel');
-    dp.appendChild(el('h3', null, 'Your move'));
-    dp.appendChild(el('p', 'lead', 'Play the move you think is best. The coach answers straight away.'));
-    const stage = el('div');
-    dp.appendChild(stage);
-    view.appendChild(dp);
-    renderDrill(stage, lesson, 0);
-  }
-  if (lesson.diagram) {
-    renderBoard($('lesson-diagram'), parseFen(lesson.diagram), {});
-  }
-}
+  view.appendChild(dots(steps, learn.step, lesson));
 
-function renderDrill(stage, lesson, index) {
-  stage.textContent = '';
-  const drill = lesson.drills[index];
-  const pos = parseFen(drill.fen);
-  const key = `drill:${lesson.id}:${index}`;
-  const done = (store.read().done) || {};
-  const head = el('p', 'lead', `Position ${index + 1} of ${lesson.drills.length} · ${drill.prompt}`);
-  stage.appendChild(head);
-  const wrap = el('div', 'board-wrap');
-  const boardEl = el('div', 'board');
-  boardEl.id = 'lesson-board';
-  wrap.appendChild(boardEl);
-  wrap.appendChild(el('p', 'caption', pos.turn === 'w' ? 'White to move' : 'Black to move'));
-  stage.appendChild(wrap);
-  const log = el('div', 'log');
-  log.setAttribute('aria-live', 'polite');
-  stage.appendChild(log);
-  const row = el('div', 'row');
-  row.style.marginTop = '10px';
-  const hintBtn = el('button', 'btn', 'Hint');
-  const skipBtn = el('button', 'btn', 'Next position');
-  hintBtn.type = 'button';
-  skipBtn.type = 'button';
-  row.appendChild(hintBtn);
-  row.appendChild(skipBtn);
-  stage.appendChild(row);
-
-  const state = {
-    container: boardEl,
-    pos,
-    selected: null,
-    targets: new Set(),
-    flip: pos.turn === 'b',
-    accepted: (drill.accepted || []).map((u) => u.toLowerCase()),
-    locked: false,
-    over: false,
-    last: null,
-  };
-  state.onSquare = moveInput(boardEl, state);
-  state.onMove = (move) => {
-    const uci = toUci(move);
-    const ok = state.accepted.includes(uci);
-    const best = uciToMove(pos, (drill.best || state.accepted[0] || '').toLowerCase());
-    state.flash = { square: move.to, ok };
-    state.last = move;
-    paint(state);
-    if (ok) {
-      state.locked = true;
-      state.pos = makeMove(pos, move);   // play it out, so the learner sees the result
-      paint(state);
-      store.markDone(key);
-      say(log, 'good', 'Correct', `${describeMove(pos, move).san}. ${drill.why}`);
-      showNext();
-    } else {
-      const bestSan = best ? describeMove(pos, best) : null;
-      say(log, 'bad', 'Not the move', `The idea here is ${drill.hint} ${bestSan ? `— ${bestSan.san} (` + bestSan.text + ').' : ''} Try again, or press Hint.`);
-      setTimeout(() => { state.flash = null; state.selected = null; state.targets = new Set(); paint(state); }, 900);
+  if (step.kind === 'read' || step.kind === 'look') {
+    const card = el('div', 'card');
+    if (step.kind === 'read' && step.i === 0) {
+      card.appendChild(el('p', 'tiny', `Lesson ${learn.lesson + 1}`));
+      card.appendChild(el('h2', null, lesson.title));
+      card.appendChild(el('p', 'tiny', lesson.goal));
     }
-  };
-  paint(state);
-
-  let nextBtnShown = false;
-  function showNext() {
-    if (nextBtnShown) return;
-    nextBtnShown = true;
-    const n = index + 1 < lesson.drills.length ? 'Next position' : 'Finish lesson';
-    skipBtn.textContent = n;
-    skipBtn.classList.add('primary');
+    if (step.kind === 'read') {
+      card.appendChild(el('p', null, step.text));
+    } else {
+      card.appendChild(el('h2', null, 'Look at this'));
+      const wrap = el('div', 'boardwrap');
+      const b = el('div', 'board');
+      b.id = 'lesson-diagram';
+      wrap.appendChild(b);
+      if (lesson.diagramCaption) wrap.appendChild(el('p', 'tiny', lesson.diagramCaption));
+      card.appendChild(wrap);
+    }
+    card.appendChild(navRow('Next'));
+    view.appendChild(card);
+    if (step.kind === 'look' && lesson.diagram) renderBoard($('lesson-diagram'), parseFen(lesson.diagram), { interactive: false, movable: false });
+    return;
   }
-  hintBtn.addEventListener('click', () => {
-    const best = uciToMove(pos, (drill.best || state.accepted[0] || '').toLowerCase());
-    if (best) {
+
+  if (step.kind === 'drill') {
+    const drill = step.drill;
+    const pos = parseFen(drill.fen);
+    learn.tries = 0;
+    const card = el('div', 'card');
+    card.appendChild(el('p', 'tiny', `Puzzle ${step.i + 1} of ${lesson.drills.length}`));
+    card.appendChild(el('h2', null, drill.prompt));
+    const wrap = el('div', 'boardwrap');
+    wrap.style.marginTop = '10px';
+    const b = el('div', 'board');
+    b.id = 'lesson-board';
+    wrap.appendChild(b);
+    const turnCap = el('p', 'tiny drill-turn', pos.turn === 'w' ? 'White to move — your turn' : 'Black to move — your turn');
+    wrap.appendChild(turnCap);
+    card.appendChild(wrap);
+    const row = el('div', 'row');
+    row.style.marginTop = '12px';
+    const hint = el('button', 'btn', 'Hint');
+    hint.type = 'button';
+    hint.addEventListener('click', () => {
+      const best = uciToMove(pos, String(drill.best || drill.accepted[0]).toLowerCase());
+      if (!best) return;
       state.hintMove = best;
       paint(state);
-      say(log, '', 'Hint', `${drill.hint} Look at the ${NAMES[pieceAt(pos, best.from).type]} on ${squareName(best.from)}.`);
-    }
+      showSheet({ title: 'Hint', text: drill.hint, icon: 'star', action: 'Got it' });
+    });
+    row.appendChild(hint);
+    card.appendChild(row);
+    view.appendChild(card);
+
+    const state = {
+      container: b,
+      pos,
+      selected: null,
+      targets: new Set(),
+      flip: pos.turn === 'b',
+      accepted: (drill.accepted || []).map((u) => u.toLowerCase()),
+      locked: false,
+      over: false,
+      last: null,
+    };
+    learn.state = state;
+    state.onSquare = tapHandler(state);
+    state.onMove = (move) => {
+      const ok = state.accepted.includes(toUci(move));
+      const key = `drill:${lesson.id}:${step.i}`;
+      learn.tries += 1;
+      state.flash = { square: move.to, ok };
+      state.last = move;
+      state.pos = makeMove(pos, move);
+      paint(state);
+      turnCap.textContent = ok ? 'Puzzle solved' : (state.pos.turn === 'w' ? 'White to move — your turn' : 'Black to move — your turn');
+      if (ok) {
+        state.locked = true;
+        store.solved(key);
+        if (learn.tries === 1) store.clean(key);
+        $('star-count').textContent = `${solvedCount()}/${TOTAL_DRILLS}`;
+        confetti();
+        showSheet({
+          title: 'Correct!',
+          text: drill.why,
+          icon: 'happy',
+          action: 'Next',
+          onAction: () => { learn.step += 1; renderStep(); },
+        });
+      } else if (learn.tries === 1) {
+        setTimeout(() => { state.flash = null; state.pos = pos; state.selected = null; state.targets = new Set(); paint(state); }, 700);
+        showSheet({
+          title: 'Not that one',
+          text: `${drill.hint}. Have another go.`,
+          icon: 'hmm',
+          action: 'Try again',
+          onAction: () => { state.locked = false; state.pos = pos; paint(state); },
+        });
+      } else {
+        const best = uciToMove(pos, String(drill.best || drill.accepted[0]).toLowerCase());
+        const d = best ? describeMove(pos, best) : null;
+        state.locked = true;
+        store.solved(key);
+        showSheet({
+          title: 'Here is the move',
+          text: d ? `The move is to ${d.verb}. ${drill.why}` : drill.why,
+          icon: 'hmm',
+          action: 'Next',
+          onAction: () => { learn.step += 1; renderStep(); },
+        });
+      }
+    };
+    paint(state);
+    return;
+  }
+
+  /* done */
+  const s = starsFor(lesson);
+  const card = el('div', 'card');
+  const head = el('div', 'between');
+  head.appendChild(el('h2', null, 'Lesson finished!'));
+  head.appendChild(starRow(s.got, s.of));
+  card.appendChild(head);
+  card.appendChild(el('p', null, s.got === s.of
+    ? 'Every puzzle first time. Brilliant.'
+    : 'You solved every puzzle. Try again to get all the stars first time.'));
+  const row = el('div', 'row');
+  row.style.marginTop = '12px';
+  const next = el('button', 'btn primary', learn.lesson + 1 < LESSONS.length ? 'Next lesson' : 'Back to lessons');
+  next.type = 'button';
+  next.addEventListener('click', () => {
+    if (learn.lesson + 1 < LESSONS.length) openLesson(learn.lesson + 1);
+    else backToList();
   });
-  skipBtn.addEventListener('click', () => {
-    if (index + 1 < lesson.drills.length) {
-      renderDrill(stage, lesson, index + 1);
-    } else {
-      say(log, 'good', 'Lesson finished', 'Press “All lessons” to pick the next one, or try these positions again in Train.');
-      skipBtn.textContent = 'Back to lessons';
-      skipBtn.onclick = () => {
-        $('lesson-view').hidden = true;
-        $('lesson-list').hidden = false;
-        renderLessonList();
-      };
-    }
-  });
+  const all = el('button', 'btn', 'All lessons');
+  all.type = 'button';
+  all.addEventListener('click', backToList);
+  row.appendChild(next);
+  row.appendChild(all);
+  card.appendChild(row);
+  view.appendChild(card);
 }
 
-function say(log, cls, label, text) {
-  const m = el('div', 'msg' + (cls ? ' ' + cls : ''));
-  m.appendChild(el('span', 'lab', label));
-  m.appendChild(document.createTextNode(text));
-  log.prepend(m);
+function dots(steps, at, lesson) {
+  const box = el('div', 'dots');
+  steps.forEach((s, i) => {
+    const d = el('i');
+    if (s.kind === 'drill' && isFirstTry(`drill:${lesson.id}:${s.i}`)) d.classList.add('win');
+    if (i === at) d.classList.add('on');
+    box.appendChild(d);
+  });
+  return box;
+}
+
+function navRow(nextLabel) {
+  const row = el('div', 'row');
+  row.style.marginTop = '14px';
+  const back = el('button', 'btn', 'Back');
+  back.type = 'button';
+  back.addEventListener('click', () => {
+    if (learn.step === 0) backToList();
+    else { learn.step -= 1; renderStep(); }
+  });
+  const next = el('button', 'btn primary', nextLabel || 'Next');
+  next.id = 'lesson-next';
+  next.type = 'button';
+  next.addEventListener('click', () => { learn.step += 1; renderStep(); });
+  row.appendChild(back);
+  row.appendChild(next);
+  return row;
 }
 
 /* ---------- Play ---------- */
 
-const play = {
-  pos: null,
-  history: [],
-  moves: [],
-  level: 2,
-  colour: 'w',
-  coach: true,
-  flip: false,
-  thinking: false,
-  over: false,
-  state: null,
-};
-
 const DEPTH = { 1: { search: 1, evalDepth: 2 }, 2: { search: 2, evalDepth: 2 }, 3: { search: 3, evalDepth: 3 } };
+const LEVEL_NAME = { 1: 'Level 1', 2: 'Level 2', 3: 'Level 3' };
 
-function playStatus(text) {
-  $('play-status').textContent = text;
-}
+const play = {
+  pos: null, history: [], moves: [], level: 2, colour: 'w', flip: false,
+  thinking: false, over: false, state: null, started: false,
+};
 
 function newGame() {
   play.pos = parseFen(START_FEN);
@@ -436,11 +558,6 @@ function newGame() {
   play.moves = [];
   play.over = false;
   play.thinking = false;
-  play.flip = $('play-color').value === 'b';
-  play.coach = $('play-coach').checked;
-  play.level = Number($('play-level').value);
-  play.colour = $('play-color').value;
-  $('play-log').textContent = '';
   play.state = {
     container: $('play-board'),
     pos: play.pos,
@@ -451,25 +568,30 @@ function newGame() {
     over: false,
     last: null,
   };
-  play.state.onSquare = moveInput($('play-board'), play.state);
+  play.state.onSquare = tapHandler(play.state);
   play.state.onMove = (move) => userMove(move);
   paint(play.state);
   updateMoves();
-  const msg = play.colour === 'w' ? 'You are White. Your move.' : 'You are Black. The computer opens.';
-  playStatus(msg);
+  coachSay(play.colour === 'w' ? 'good' : '', play.colour === 'w'
+    ? 'You are White. Tap a pawn, then tap the square in front of it.'
+    : 'You are Black. Pip opens the game.');
+  $('play-turn').textContent = 'Your move';
   if (play.colour === 'b') engineTurn();
+}
+
+function coachSay(tone, text) {
+  const bubble = $('play-coach');
+  bubble.className = `bubble${tone ? ' ' + tone : ''}`;
+  bubble.textContent = text;
+  announce(text);
 }
 
 function userMove(move) {
   if (play.over || play.thinking) return;
   const pos = play.pos;
   const cfg = DEPTH[play.level];
-  let grade = null;
-  if (play.coach) {
-    const before = searchEval(pos, { depth: cfg.evalDepth });
-    const best = findBestMove(pos, { depth: Math.max(2, cfg.evalDepth) });
-    grade = { before, best };
-  }
+  const before = searchEval(pos, { depth: cfg.evalDepth });
+  const best = findBestMove(pos, { depth: Math.max(2, cfg.evalDepth) });
   const after = makeMove(pos, move);
   play.history.push({ pos, move });
   play.moves.push({ san: san(pos, move), colour: pos.turn });
@@ -478,84 +600,78 @@ function userMove(move) {
   play.state.last = move;
   paint(play.state);
   updateMoves();
-  if (play.coach && grade) coachOn(after, move, grade);
+
+  const afterEval = searchEval(after, { depth: cfg.evalDepth });
+  const mine = play.colour === 'w' ? afterEval : -afterEval;
+  const loss = Math.max(0, play.colour === 'w' ? before - afterEval : afterEval - before);
+  const v = verdict(loss);
+  let said = `Pip says ${scoreWords(mine)}.`;
+  if (best && best.move && sameMove(move, best.move)) {
+    said = `${v.word} That is the move Pip would play. Pip says ${scoreWords(mine)}.`;
+  } else if (best && best.move && loss >= 70) {
+    const b = describeMove(pos, best.move);
+    const piece = pieceAt(pos, best.move.from);
+    said = `${v.word} Better was the ${NAMES[piece.type]} move — it ${b.text}. Pip says ${scoreWords(mine)}.`;
+  }
+  coachSay(v.tone, said);
+
   if (finishIfOver()) return;
   engineTurn();
-}
-
-function coachOn(posAfter, move, grade) {
-  const cfg = DEPTH[play.level];
-  const before = play.history[play.history.length - 1].pos;
-  const afterEval = searchEval(posAfter, { depth: cfg.evalDepth });
-  const mine = (cp) => (play.colour === 'w' ? cp : -cp);
-  const loss = Math.max(0, play.colour === 'w' ? grade.before - afterEval : afterEval - grade.before);
-  const v = classify(loss);
-  const log = $('play-log');
-  let text = `The computer puts you at ${pawns(mine(afterEval))} pawns.`;
-  if (grade.best && grade.best.move && sameMove(move, grade.best.move)) {
-    text += ' That is the move the computer would have played.';
-  } else if (grade.best && grade.best.move && loss >= 70) {
-    const b = describeMove(before, grade.best.move);
-    text += ` The stronger move was ${b.san} — ${b.text}.`;
-    const reply = findBestMove(posAfter, { depth: Math.max(2, cfg.evalDepth) });
-    if (reply && reply.move) {
-      const victim = pieceAt(posAfter, reply.move.to);
-      if (victim && victim.color === play.colour) {
-        const r = describeMove(posAfter, reply.move);
-        text += ` Now ${r.san} ${r.text}.`;
-      }
-    }
-  } else if (grade.best && grade.best.move && loss > 40) {
-    const b = describeMove(before, grade.best.move);
-    text += ` ${b.san} — ${b.text} — was a little better.`;
-  }
-  say(log, v.cls, v.label, text);
 }
 
 function engineTurn() {
   if (play.over) return;
   play.thinking = true;
   play.state.locked = true;
-  playStatus('The computer is thinking…');
+  $('play-turn').textContent = 'Pip is thinking…';
   setTimeout(() => {
     const cfg = DEPTH[play.level];
     const res = findBestMove(play.pos, { depth: cfg.search, seed: Date.now() });
-    if (!res || !res.move) { play.thinking = false; play.state.locked = false; finishIfOver(); return; }
-    const pos = play.pos;
-    play.history.push({ pos, move: res.move });
-    play.moves.push({ san: san(pos, res.move), colour: pos.turn });
-    play.pos = makeMove(pos, res.move);
-    play.state.pos = play.pos;
-    play.state.last = res.move;
     play.thinking = false;
+    if (res && res.move) {
+      const pos = play.pos;
+      play.history.push({ pos, move: res.move });
+      play.moves.push({ san: san(pos, res.move), colour: pos.turn });
+      play.pos = makeMove(pos, res.move);
+      play.state.pos = play.pos;
+      play.state.last = res.move;
+      play.state.locked = false;
+      paint(play.state);
+      updateMoves();
+      if (finishIfOver()) return;
+      $('play-turn').textContent = 'Your move';
+      coachSay('', `Pip played ${describeMove(pos, res.move).san}. Your move.`);
+      return;
+    }
     play.state.locked = false;
-    paint(play.state);
-    updateMoves();
-    if (finishIfOver()) return;
-    const d = describeMove(pos, res.move);
-    playStatus(`The computer played ${d.san}. Your move.`);
-  }, 260);
+    finishIfOver();
+  }, 300);
 }
 
 function finishIfOver() {
   const pos = play.pos;
   if (isCheckmate(pos)) {
-    const loser = pos.turn;
     play.over = true;
     play.state.over = true;
     play.state.locked = true;
-    const youWin = loser !== play.colour;
-    say($('play-log'), youWin ? 'good' : 'bad', youWin ? 'You win' : 'The computer wins',
-      'Checkmate. Press New game for another.');
-    playStatus(youWin ? 'Checkmate — you win.' : 'Checkmate — the computer wins.');
+    const youWin = pos.turn !== play.colour;
+    $('play-turn').textContent = youWin ? 'You win!' : 'Pip wins';
+    confetti();
+    showSheet({
+      title: youWin ? 'Checkmate — you win!' : 'Checkmate — Pip won',
+      text: youWin ? 'Well played. Start another game while you are warm.' : 'Good try. Undo a move or start again — every game teaches something.',
+      icon: youWin ? 'trophy' : 'hmm',
+      action: 'New game',
+      onAction: newGame,
+    });
     return true;
   }
   if (isStalemate(pos) || isInsufficientMaterial(pos)) {
     play.over = true;
     play.state.over = true;
     play.state.locked = true;
-    say($('play-log'), '', 'Draw', 'Neither side can force a win from here.');
-    playStatus('Draw.');
+    $('play-turn').textContent = 'Draw';
+    showSheet({ title: 'A draw', text: 'Neither side can win from here. That happens — start again.', icon: 'star', action: 'New game', onAction: newGame });
     return true;
   }
   return false;
@@ -564,10 +680,9 @@ function finishIfOver() {
 function updateMoves() {
   const pairs = [];
   for (let i = 0; i < play.moves.length; i += 2) {
-    const n = i / 2 + 1;
-    pairs.push(`${n}. ${play.moves[i].san}${play.moves[i + 1] ? ' ' + play.moves[i + 1].san : ''}`);
+    pairs.push(`${i / 2 + 1}. ${play.moves[i].san}${play.moves[i + 1] ? ' ' + play.moves[i + 1].san : ''}`);
   }
-  $('play-moves').textContent = pairs.join('  ');
+  $('play-moves').textContent = pairs.join('   ');
 }
 
 function undo() {
@@ -579,17 +694,12 @@ function undo() {
     if (play.pos.turn === play.colour) break;
   }
   play.over = false;
-  play.state.pos = play.pos;
-  play.state.over = false;
-  play.state.locked = false;
-  play.state.flash = null;
-  play.state.hintMove = null;
-  play.state.selected = null;
-  play.state.targets = new Set();
+  Object.assign(play.state, { pos: play.pos, over: false, locked: false, flash: null, hintMove: null, selected: null, targets: new Set() });
   play.state.last = play.history.length ? play.history[play.history.length - 1].move : null;
   paint(play.state);
   updateMoves();
-  playStatus('Taken back. Your move.');
+  $('play-turn').textContent = 'Your move';
+  coachSay('', 'Taken back. Your move.');
 }
 
 function hint() {
@@ -600,13 +710,40 @@ function hint() {
   const d = describeMove(play.pos, res.move);
   play.state.hintMove = res.move;
   paint(play.state);
-  say($('play-log'), '', 'Hint', `${d.san} — ${d.text}.`);
+  const piece = pieceAt(play.pos, res.move.from);
+  coachSay('', `Try the ${NAMES[piece.type]} — it ${d.text}.`);
   setTimeout(() => { play.state.hintMove = null; paint(play.state); }, 4000);
 }
 
-/* ---------- Train ---------- */
+function levelSheet() {
+  const sheet = $('sheet');
+  sheet.textContent = '';
+  const head = el('div', 'sheethead');
+  head.appendChild(iconSvg('star', 40));
+  head.appendChild(el('h2', null, 'How strong should Pip play?'));
+  sheet.appendChild(head);
+  sheet.appendChild(el('p', null, 'Pip is a small chess program, not a champion. Level 1 is sleepy and makes mistakes on purpose.'));
+  for (const level of [1, 2, 3]) {
+    const b = el('button', 'btn wide' + (level === play.level ? ' primary' : ''), level === 1 ? 'Level 1 — sleepy' : level === 2 ? 'Level 2 — club beginner' : 'Level 3 — plays properly');
+    b.type = 'button';
+    b.style.marginTop = '8px';
+    b.addEventListener('click', () => {
+      play.level = level;
+      $('play-level-label').textContent = LEVEL_NAME[level];
+      closeSheet();
+      coachSay('', `Pip will play ${level === 1 ? 'sleepily' : level === 2 ? 'like a club beginner' : 'properly'} now.`);
+    });
+    sheet.appendChild(b);
+  }
+  sheet.hidden = false;
+  $('scrim').hidden = false;
+  const first = sheet.querySelector('button');
+  if (first) first.focus();
+}
 
-const train = { queue: [], current: null, streak: 0, state: null };
+/* ---------- Puzzles ---------- */
+
+const train = { current: null, streak: 0, tries: 0, state: null };
 
 function allDrills() {
   const out = [];
@@ -614,30 +751,28 @@ function allDrills() {
   return out;
 }
 
-function refreshTrainStats() {
-  const d = store.read();
-  const done = d.done || {};
-  const drills = allDrills();
-  const solved = drills.filter((x) => done[x.key]).length;
+function refreshTrain() {
+  const done = (store.read().done) || {};
   $('train-streak').textContent = String(train.streak);
-  $('train-best').textContent = String(d.best || 0);
-  $('train-solved').textContent = String(solved);
-  $('train-total').textContent = String(drills.length);
+  $('train-solved').textContent = String(allDrills().filter((x) => done[x.key]).length);
+  $('train-total').textContent = String(TOTAL_DRILLS);
+  $('star-count').textContent = `${solvedCount()}/${TOTAL_DRILLS}`;
 }
 
-function nextTrain() {
+function nextPuzzle() {
   const done = (store.read().done) || {};
-  const drills = allDrills().filter((x) => !done[x.key]);
-  const pool = drills.length ? drills : allDrills();
+  const left = allDrills().filter((x) => !done[x.key]);
+  const pool = left.length ? left : allDrills();
   const pick = pool[Math.floor(Math.random() * pool.length)];
   train.current = pick;
+  train.tries = 0;
   const pos = parseFen(pick.drill.fen);
-  const boardEl = $('train-board');
-  $('train-where').textContent = `${pick.lesson.title} · ${pos.turn === 'w' ? 'White' : 'Black'} to move`;
   $('train-prompt').textContent = pick.drill.prompt;
-  $('train-log').textContent = '';
-  train.state = {
-    container: boardEl,
+  $('train-where').textContent = `${pick.lesson.title} · ${pos.turn === 'w' ? 'White' : 'Black'} to move`;
+
+  const b = $('train-board');
+  const state = {
+    container: b,
     pos,
     selected: null,
     targets: new Set(),
@@ -647,80 +782,114 @@ function nextTrain() {
     over: false,
     last: null,
   };
-  train.state.onSquare = moveInput(train._board, train.state);
-  train.state.onMove = (move) => {
-    const uci = toUci(move);
-    const ok = train.state.accepted.includes(uci);
-    train.state.last = move;
-    train.state.flash = { square: move.to, ok };
-    paint(train.state);
-    const log = $('train-log');
+  train.state = state;
+  state.onSquare = tapHandler(state);
+  state.onMove = (move) => {
+    const ok = state.accepted.includes(toUci(move));
+    train.tries += 1;
+    state.flash = { square: move.to, ok };
+    state.last = move;
+    state.pos = makeMove(pos, move);
+    paint(state);
     if (ok) {
-      train.state.locked = true;
-      train.state.pos = makeMove(train.state.pos, move);
-      paint(train.state);
-      train.streak++;
-      store.markDone(train.current.key);
-      store.setBest(train.streak);
-      say(log, 'good', 'Correct', `${describeMove(train.state.pos, move).san}. ${train.current.drill.why}`);
-      refreshTrainStats();
+      state.locked = true;
+      train.streak += 1;
+      $('train-where').textContent = `${pick.lesson.title} · solved`;
+      store.solved(pick.key);
+      if (train.tries === 1) store.clean(pick.key);
+      store.streak(train.streak);
+      confetti();
+      refreshTrain();
+      showSheet({
+        title: 'Correct!',
+        text: pick.drill.why,
+        icon: 'happy',
+        action: 'Next puzzle',
+        onAction: nextPuzzle,
+      });
     } else {
       train.streak = 0;
-      const best = uciToMove(train.state.pos, (train.current.drill.best || '').toLowerCase());
-      const b = best ? describeMove(train.state.pos, best) : null;
-      say(log, 'bad', 'Not it', `${train.current.drill.hint}${b ? ` The move is ${b.san} — ${b.text}.` : ''}`);
-      refreshTrainStats();
-      setTimeout(() => { train.state.flash = null; paint(train.state); }, 900);
+      refreshTrain();
+      const best = uciToMove(pos, String(pick.drill.best || state.accepted[0]).toLowerCase());
+      const d = best ? describeMove(pos, best) : null;
+      if (train.tries === 1) {
+        setTimeout(() => { state.flash = null; state.pos = pos; state.selected = null; state.targets = new Set(); paint(state); }, 700);
+        showSheet({ title: 'Not that one', text: `${pick.drill.hint}. Have another go.`, icon: 'hmm', action: 'Try again', onAction: () => { state.locked = false; state.pos = pos; paint(state); } });
+      } else {
+        state.locked = true;
+        store.solved(pick.key);
+        refreshTrain();
+        showSheet({
+          title: 'Here is the move',
+          text: d ? `The move is to ${d.verb}. ${pick.drill.why}` : pick.drill.why,
+          icon: 'hmm',
+          action: 'Next puzzle',
+          onAction: nextPuzzle,
+        });
+      }
     }
   };
-  paint(train.state);
-  refreshTrainStats();
+  paint(state);
+  refreshTrain();
+}
+
+/* ---------- screens ---------- */
+
+function showScreen(name) {
+  for (const s of ['learn', 'play', 'train']) {
+    $(`screen-${s}`).hidden = s !== name;
+    document.querySelector(`.tab[data-target="${s}"]`).setAttribute('aria-selected', String(s === name));
+  }
+  closeSheet();
+  document.querySelector('main').scrollTop = 0;
+  if (name === 'play' && !play.pos) newGame();
+  if (name === 'train' && !train.current) nextPuzzle();
+  if (name === 'learn') renderLessonList();
 }
 
 /* ---------- wiring ---------- */
 
-function showTab(name) {
-  ['learn', 'play', 'train'].forEach((n) => {
-    $(`view-${n}`).hidden = n !== name;
-    $(`tab-${n}`).setAttribute('aria-selected', String(n === name));
-  });
-  if (name === 'play' && !play.pos) newGame();
-  if (name === 'train') nextTrain();
-}
-
 function main() {
-  ['learn', 'play', 'train'].forEach((n) => $(`tab-${n}`).addEventListener('click', () => showTab(n)));
+  document.querySelectorAll('.tab').forEach((tab) => {
+    tab.addEventListener('click', () => showScreen(tab.dataset.target));
+  });
   $('play-new').addEventListener('click', newGame);
-  $('play-undo').addEventListener('click', undo);
   $('play-hint').addEventListener('click', hint);
+  $('play-undo').addEventListener('click', undo);
+  $('play-level').addEventListener('click', levelSheet);
   $('play-flip').addEventListener('click', () => {
     play.flip = !play.flip;
     play.state.flip = play.flip;
     paint(play.state);
   });
-  $('play-coach').addEventListener('change', () => { play.coach = $('play-coach').checked; });
-  $('play-level').addEventListener('change', () => { play.level = Number($('play-level').value); });
-  $('play-color').addEventListener('change', newGame);
-  $('train-next').addEventListener('click', nextTrain);
+  $('play-colour').addEventListener('click', () => {
+    play.colour = play.colour === 'w' ? 'b' : 'w';
+    play.flip = play.colour === 'b';
+    $('play-colour').textContent = play.colour === 'w' ? 'Play black' : 'Play white';
+    newGame();
+  });
+  $('train-next').addEventListener('click', nextPuzzle);
   $('train-hint').addEventListener('click', () => {
     if (!train.state) return;
-    const best = uciToMove(train.state.pos, (train.current.drill.best || '').toLowerCase());
-    if (best) {
-      train.state.hintMove = best;
-      paint(train.state);
-      say($('train-log'), '', 'Hint', `${train.current.drill.hint} Look at the ${NAMES[pieceAt(train.state.pos, best.from).type]} on ${squareName(best.from)}.`);
-    }
+    const best = uciToMove(train.state.pos, String(train.current.drill.best || '').toLowerCase());
+    if (!best) return;
+    train.state.hintMove = best;
+    paint(train.state);
+    showSheet({ title: 'Hint', text: train.current.drill.hint, icon: 'star', action: 'Got it' });
   });
   $('train-reset').addEventListener('click', () => {
-    store.clear();
+    store.reset();
     train.streak = 0;
-    refreshTrainStats();
-    nextTrain();
+    refreshTrain();
+    nextPuzzle();
   });
+  $('scrim').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+
   renderLessonList();
-  refreshTrainStats();
-  // A ready signal for automated checks: proves the module, the engine and the
-  // lessons all loaded.
+  refreshTrain();
+  // A ready signal for automated checks: the module, the engine and the course
+  // all loaded, and the first screen is drawn.
   document.documentElement.dataset.appReady = 'true';
 }
 

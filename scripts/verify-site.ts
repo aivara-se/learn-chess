@@ -62,9 +62,20 @@ checks.push('fonts and their licences are present');
 
 /* 4. the course: every drill is legal, playable, and its answers are real moves */
 let drills = 0;
+/* The copy is written for a nine-year-old, and short. These budgets are the
+   measurable half of that rule (AGENTS.md); how it reads is a human's job. */
+const BUDGET = { title: 40, goal: 55, caption: 110, body: 170, prompt: 65, hint: 55, why: 150 };
+let longest = { prompt: 0, body: 0 };
 for (const lesson of LESSONS) {
   if (!lesson.id || !lesson.title || !lesson.goal) problems.push(`lesson without id/title/goal: ${lesson.title}`);
   if (!Array.isArray(lesson.body) || lesson.body.length < 2) problems.push(`lesson ${lesson.id} has no body text`);
+  if ((lesson.title ?? '').length > BUDGET.title) problems.push(`lesson ${lesson.id}: title is ${lesson.title.length} chars (budget ${BUDGET.title})`);
+  if ((lesson.goal ?? '').length > BUDGET.goal) problems.push(`lesson ${lesson.id}: goal is ${lesson.goal.length} chars (budget ${BUDGET.goal})`);
+  if (lesson.diagramCaption && lesson.diagramCaption.length > BUDGET.caption) problems.push(`lesson ${lesson.id}: caption is ${lesson.diagramCaption.length} chars (budget ${BUDGET.caption})`);
+  (lesson.body ?? []).forEach((para: string, i: number) => {
+    longest.body = Math.max(longest.body, para.length);
+    if (para.length > BUDGET.body) problems.push(`lesson ${lesson.id}: paragraph ${i + 1} is ${para.length} chars (budget ${BUDGET.body})`);
+  });
   if (!lesson.diagram) problems.push(`lesson ${lesson.id} has no diagram position`);
   else {
     try { parseFen(lesson.diagram); } catch { problems.push(`lesson ${lesson.id} has an unparseable diagram FEN`); }
@@ -79,6 +90,11 @@ for (const lesson of LESSONS) {
     const moves = legalMoves(pos);
     if (!moves.length) problems.push(`${where}: nobody can move in this position`);
     if (!drill.prompt || !drill.hint || !drill.why) problems.push(`${where}: missing prompt, hint or explanation`);
+    longest.prompt = Math.max(longest.prompt, (drill.prompt ?? '').length);
+    for (const [field, budget] of [['prompt', BUDGET.prompt], ['hint', BUDGET.hint], ['why', BUDGET.why]] as const) {
+      const value = (drill as any)[field] as string;
+      if (value && value.length > budget) problems.push(`${where}: ${field} is ${value.length} chars (budget ${budget})`);
+    }
     const legal = new Set(moves.map((m: any) => `${'abcdefgh'[m.from % 8]}${Math.floor(m.from / 8) + 1}${'abcdefgh'[m.to % 8]}${Math.floor(m.to / 8) + 1}${m.promotion ?? ''}`));
     if (!Array.isArray(drill.accepted) || !drill.accepted.length) problems.push(`${where}: no accepted move`);
     if (!drill.best) problems.push(`${where}: no best move recorded`);
@@ -87,7 +103,8 @@ for (const lesson of LESSONS) {
     }
   });
 }
-checks.push(`${LESSONS.length} lessons, ${drills} drills — every FEN legal and every answer a legal move`);
+checks.push(`${LESSONS.length} lessons, ${drills} puzzles — every FEN legal and every answer a legal move`);
+checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.prompt}, longest paragraph ${longest.body})`);
 if (LESSONS.length !== 8) problems.push(`expected 8 lessons, found ${LESSONS.length}`);
 if (drills !== 24) problems.push(`expected 24 drills, found ${drills}`);
 
