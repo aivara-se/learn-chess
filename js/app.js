@@ -257,7 +257,7 @@ function showSheet({ title, text, tone = '', icon = 'star', action = 'Got it', o
 }
 
 const ICONS = {
-  star: '<path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5 6.1 20.6l1.2-6.5L2.5 9.5l6.6-.9z" fill="#ffb01f"/>',
+  star: '<path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5 6.1 20.6l1.2-6.5L2.5 9.5l6.6-.9z" fill="#ffb01f" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/>',
   happy: '<circle cx="12" cy="12" r="10" fill="#e3f7ec"/><circle cx="9" cy="10" r="1.6" fill="#0f7b46"/><circle cx="15" cy="10" r="1.6" fill="#0f7b46"/><path d="M8 14q4 3.6 8 0" fill="none" stroke="#0f7b46" stroke-width="2" stroke-linecap="round"/>',
   hmm: '<circle cx="12" cy="12" r="10" fill="#ffe9ea"/><circle cx="9" cy="10" r="1.6" fill="#b8232b"/><circle cx="15" cy="10" r="1.6" fill="#b8232b"/><path d="M8 16q4-3.6 8 0" fill="none" stroke="#b8232b" stroke-width="2" stroke-linecap="round"/>',
   trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0zM5 5h2v3H5zM17 5h2v3h-2zM10 14h4l1 6H9z" fill="#ffb01f" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/>',
@@ -297,6 +297,13 @@ function starsFor(lesson) {
   return { got: firsts, of: drills.length, solved };
 }
 
+/* The one place the header counter is written. It said "0/24" in three separate
+   spots, which is how it ended up disagreeing with the label. */
+function paintStarCount() {
+  const chip = $('star-count');
+  chip.textContent = `${solvedCount()} of ${TOTAL_DRILLS} stars`;
+}
+
 function starRow(got, of) {
   const box = el('span', 'stars');
   for (let i = 0; i < of; i++) {
@@ -304,23 +311,37 @@ function starRow(got, of) {
     s.setAttribute('viewBox', '0 0 24 24');
     s.innerHTML = i < got
       ? ICONS.star
-      : '<path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5 6.1 20.6l1.2-6.5L2.5 9.5l6.6-.9z" fill="none" stroke="#c9d4ee" stroke-width="2" stroke-linejoin="round"/>';
+      : '<path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5 6.1 20.6l1.2-6.5L2.5 9.5l6.6-.9z" fill="none" stroke="#b8862b" stroke-width="2" stroke-linejoin="round"/>';
     box.appendChild(s);
   }
   return box;
 }
 
+/* Where a learner is up to: the first lesson with a puzzle still unsolved, or the
+   first lesson again once the whole course is done. */
+function currentLesson() {
+  for (let i = 0; i < LESSONS.length; i++) {
+    const s = starsFor(LESSONS[i]);
+    if (s.solved < s.of) return i;
+  }
+  return 0;
+}
+
 function renderLessonList() {
   const list = $('lesson-list');
   list.textContent = '';
-  $('star-count').textContent = `${solvedCount()}/${TOTAL_DRILLS}`;
+  paintStarCount();
 
-  const intro = el('div', 'card');
-  const head = el('div', 'between');
-  head.appendChild(el('h2', null, 'Start here'));
-  head.appendChild(starRow(Math.min(3, Math.round((solvedCount() / TOTAL_DRILLS) * 3)), 3));
-  intro.appendChild(head);
-  intro.appendChild(el('p', null, `${LESSONS.length} short lessons and ${TOTAL_DRILLS} puzzles. Play every puzzle and you can beat most people who are new to chess.`));
+  const intro = el('div', 'card intro');
+  intro.appendChild(el('h2', null, 'Hi, I am Pip'));
+  intro.appendChild(el('p', null, `${LESSONS.length} lessons, ${TOTAL_DRILLS} puzzles. Pip helps you play them all.`));
+  const done = solvedCount();
+  const allDone = done === TOTAL_DRILLS;
+  const start = el('button', 'btn primary wide',
+    allDone ? 'Play it all again' : (done === 0 ? 'Start lesson 1' : `Keep going: lesson ${currentLesson() + 1}`));
+  start.type = 'button';
+  start.addEventListener('click', () => openLesson(allDone ? 0 : currentLesson()));
+  intro.appendChild(start);
   list.appendChild(intro);
 
   LESSONS.forEach((lesson, i) => {
@@ -333,7 +354,7 @@ function renderLessonList() {
     txt.appendChild(el('span', 't', lesson.title));
     txt.appendChild(el('span', 's', allDone
       ? (s.got === s.of ? 'All puzzles, all first time' : `${s.got} of ${s.of} stars — try again for more`)
-      : `${s.solved} of ${s.of} puzzles solved`));
+      : (s.solved === 0 ? `${s.of} puzzles` : `${s.solved} of ${s.of} puzzles solved`)));
     card.appendChild(txt);
     card.appendChild(starRow(s.got, s.of));
     card.addEventListener('click', () => openLesson(i));
@@ -459,7 +480,7 @@ function renderStep() {
         state.locked = true;
         store.solved(key);
         if (learn.tries === 1) store.clean(key);
-        $('star-count').textContent = `${solvedCount()}/${TOTAL_DRILLS}`;
+        paintStarCount();
         confetti();
         showSheet({
           title: 'Correct!',
@@ -765,7 +786,7 @@ function refreshTrain() {
   $('train-streak').textContent = String(train.streak);
   $('train-solved').textContent = String(allDrills().filter((x) => done[x.key]).length);
   $('train-total').textContent = String(TOTAL_DRILLS);
-  $('star-count').textContent = `${solvedCount()}/${TOTAL_DRILLS}`;
+  paintStarCount();
 }
 
 function nextPuzzle() {
