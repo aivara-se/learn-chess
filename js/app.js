@@ -142,6 +142,14 @@ function record(key, firstTry) {
 let live = null;          // the board currently accepting taps
 const boards = new Map();
 
+/* Where a square sits on the screen, in cells from the top-left corner: the
+   mapping the board is drawn with, so a walk animation survives a flip. */
+function cellOf(sq, flip) {
+  const row = Math.floor(sq / 8);
+  const col = sq % 8;
+  return flip ? [row, 7 - col] : [7 - row, col];
+}
+
 function renderBoard(container, pos, opts = {}) {
   const flip = !!opts.flip;
   container.textContent = '';
@@ -163,6 +171,19 @@ function renderBoard(container, pos, opts = {}) {
     const piece = pieceAt(pos, sq);
     if (piece) {
       sqEl.appendChild(el('span', 'pc ' + piece.color, GLYPH[piece.type]));
+      /* The piece that just arrived slides in from the square it left. A square is
+         not the piece's own width, so the distance is measured here, in px. */
+      if (opts.walk && opts.walk.to === sq && sqEl.firstChild) {
+        const unit = container.clientWidth / 8;
+        if (unit > 8) {
+          const [rTo, cTo] = cellOf(sq, flip);
+          const [rFrom, cFrom] = cellOf(opts.walk.from, flip);
+          const pc = sqEl.firstChild;
+          pc.style.setProperty('--dx', `${(cFrom - cTo) * unit}px`);
+          pc.style.setProperty('--dy', `${(rFrom - rTo) * unit}px`);
+          pc.classList.add('walk');
+        }
+      }
       if (opts.movable !== false && piece.color === pos.turn && opts.interactive !== false) sqEl.classList.add('mine');
     }
     if (opts.selected === sq) sqEl.classList.add('sel');
@@ -206,7 +227,9 @@ function paint(state) {
     checkSquare,
     interactive: state.locked !== true,
     onSquare: state.onSquare,
+    walk: state.walk,
   });
+  state.walk = null;      // a walk belongs to the move that caused it, and to no repaint after
   state.container.setAttribute('aria-label', checkSquare != null ? 'Chess board, the king is in check' : 'Chess board');
 }
 
@@ -498,6 +521,16 @@ function renderStep() {
     card.appendChild(el('h2', null, drill.prompt));
     const row = el('div', 'row');
     row.style.marginTop = '12px';
+    /* A puzzle used to be a dead end: the only way past it was to solve it or to
+       be shown the answer, so a learner who wanted the explanation again had to
+       guess first. Back goes to the text before it. */
+    const back = el('button', 'btn', 'Back');
+    back.type = 'button';
+    back.addEventListener('click', () => {
+      closeSheet();
+      if (learn.step === 0) backToList();
+      else { learn.step -= 1; renderStep(); }
+    });
     const hint = el('button', 'btn', 'Hint');
     hint.type = 'button';
     hint.addEventListener('click', () => {
@@ -507,6 +540,7 @@ function renderStep() {
       paint(state);
       showSheet({ title: 'Hint', text: drill.hint, icon: 'star', action: 'Got it' });
     });
+    row.appendChild(back);
     row.appendChild(hint);
     card.appendChild(row);
     view.appendChild(card);
@@ -542,6 +576,7 @@ function renderStep() {
       learn.tries += 1;
       state.flash = { square: move.to, ok };
       state.last = move;
+      state.walk = { from: move.from, to: move.to };
       state.pos = makeMove(pos, move);
       paint(state);
       turnCap.textContent = ok ? 'Puzzle solved' : (state.pos.turn === 'w' ? 'White to move — your turn' : 'Black to move — your turn');
@@ -569,6 +604,17 @@ function renderStep() {
         const best = uciToMove(pos, String(drill.best || drill.accepted[0]).toLowerCase());
         const d = best ? describeMove(pos, best) : null;
         state.locked = true;
+        /* "Here is the move" has to be the move on the board: this used to leave
+           the child's own wrong move standing while the words described another
+           one, which teaches the wrong position. */
+        if (best) {
+          state.pos = makeMove(pos, best);
+          state.last = best;
+          state.walk = { from: best.from, to: best.to };
+          state.flash = { square: best.to, ok: true };
+          turnCap.textContent = 'The move is shown';
+          paint(state);
+        }
         record(key, false);
         showSheet({
           title: 'Here is the move',
@@ -612,6 +658,13 @@ function renderStep() {
 
 function dots(steps, at, lesson) {
   const box = el('div', 'dots');
+  /* The dots are the only sign of how far into a lesson a learner is, and they
+     are three colours of circle to anyone who cannot see them. */
+  const puzzles = steps.filter((s) => s.kind === 'drill');
+  const won = puzzles.filter((s) => isFirstTry(`drill:${lesson.id}:${s.i}`)).length;
+  box.setAttribute('role', 'img');
+  box.setAttribute('aria-label', `Step ${at + 1} of ${steps.length}`
+    + (puzzles.length ? `, ${won} of ${puzzles.length} puzzles won first time` : ''));
   steps.forEach((s, i) => {
     const d = el('i');
     if (s.kind === 'drill' && isFirstTry(`drill:${lesson.id}:${s.i}`)) d.classList.add('win');
@@ -647,6 +700,7 @@ const LEVEL_NAME = { 1: 'Level 1', 2: 'Level 2', 3: 'Level 3' };
 const play = {
   pos: null, history: [], moves: [], seen: [], level: 2, colour: 'w', flip: false,
   thinking: false, over: false, state: null, started: false,
+  token: 0,     // bumped by a new game, so a search in flight cannot land on it
 };
 
 function newGame() {
@@ -660,6 +714,8 @@ function newGame() {
   play.seen = [];
   play.over = false;
   play.thinking = false;
+  play.token += 1;
+  setThinking(false);
   play.state = {
     container: $('play-board'),
     pos: play.pos,
@@ -691,12 +747,14 @@ function coachSay(tone, text) {
 function userMove(move) {
   if (play.over || play.thinking) return;
   const pos = play.pos;
+  const token = ++play.token;   // a new game while Pip is thinking must not grade this move
   play.history.push({ pos, move });
   play.moves.push({ san: san(pos, move), colour: pos.turn });
   play.seen.push(pos);
   play.pos = makeMove(pos, move);
   play.state.pos = play.pos;
   play.state.last = move;
+  play.state.walk = { from: move.from, to: move.to };
   play.state.selected = null;
   play.state.targets = new Set();
   paint(play.state);          // the child sees the move before anything is worked out
@@ -707,12 +765,21 @@ function userMove(move) {
      phone, with nothing on screen to say the tap had landed. Paint, then grade. */
   play.state.locked = true;
   $('play-turn').textContent = 'Pip is thinking…';
+  setThinking(true);
   setTimeout(() => {
+    if (token !== play.token) return;
     play.state.locked = false;
     gradeMove(pos, move);
     if (finishIfOver()) return;
     engineTurn();
   }, 0);
+}
+
+/* Pip at work. The board refuses taps while he is, so the one thing on screen that
+   can say so is the coach — and the buttons that would change the game go quiet. */
+function setThinking(on) {
+  document.querySelector('#screen-play .coach').classList.toggle('thinking', on);
+  for (const id of ['play-hint', 'play-undo', 'play-flip']) $(id).disabled = on;
 }
 
 /* What Pip thought of the move just played, in a child's words. */
@@ -755,7 +822,9 @@ function engineTurn() {
       play.pos = makeMove(pos, res.move);
       play.state.pos = play.pos;
       play.state.last = res.move;
+      play.state.walk = { from: res.move.from, to: res.move.to };
       play.state.locked = false;
+      setThinking(false);
       paint(play.state);
       updateMoves();
       if (finishIfOver()) return;
@@ -764,7 +833,9 @@ function engineTurn() {
       coachSay('', `Pip played ${describeMove(pos, res.move).san}.${mine} Your move.`);
       return;
     }
+    /* no move found at all: the game is over, but say so with the buttons back */
     play.state.locked = false;
+    setThinking(false);
     finishIfOver();
   }, 300);
 }
@@ -871,6 +942,31 @@ function levelSheet() {
     });
     sheet.appendChild(b);
   }
+  /* Which side you play belongs here, with the other thing you choose once at the
+     start of a game, and not among the three buttons a child taps during one. It
+     was the fourth button in that row, which pushed Hint and Undo off the bottom
+     of a 640px phone. */
+  const sides = el('div', 'row');
+  sides.style.marginTop = '16px';
+  sides.appendChild(el('p', 'tiny', 'You play'));
+  const choice = el('div', 'row');
+  choice.style.marginTop = '6px';
+  for (const [side, label] of [['w', 'White'], ['b', 'Black']]) {
+    const b = el('button', 'btn' + (play.colour === side ? ' primary' : ''), label);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(play.colour === side));
+    b.addEventListener('click', () => {
+      if (play.colour === side) { closeSheet(); return; }
+      play.colour = side;
+      play.flip = side === 'b';
+      newGame();
+      closeSheet();
+    });
+    choice.appendChild(b);
+  }
+  sides.appendChild(choice);
+  sheet.appendChild(sides);
+  sheet.appendChild(el('p', 'tiny', 'Changing the side starts a new game.'));
   sheet.hidden = false;
   $('scrim').hidden = false;
   const first = sheet.querySelector('button');
@@ -972,10 +1068,13 @@ function nextPuzzle() {
 
 /* The app bar says what the tab is for. It used to say "Pick a lesson and play"
    on all three screens, including the two that are not lessons. */
+/* Short on purpose: at 360px a longer line wraps and takes 18px off the board on
+   every one of these screens (measured — "A game, with Pip coaching." cost that
+   much before it was shortened). */
 const SUBTITLE = {
   learn: 'Pick a lesson and play.',
-  play: 'A game, with Pip coaching.',
-  train: 'The same puzzles, shuffled.',
+  play: 'A game with Pip.',
+  train: 'The puzzles, shuffled.',
 };
 
 function showScreen(name) {
@@ -995,7 +1094,13 @@ function showScreen(name) {
 
 function main() {
   document.querySelectorAll('.tab').forEach((tab) => {
-    tab.addEventListener('click', () => showScreen(tab.dataset.target));
+    tab.addEventListener('click', () => {
+      /* Tapping the tab you are already on goes back to where that tab starts —
+         from inside a lesson, the list of lessons. It did nothing at all before,
+         which made the tab look broken and left a lesson a one-way trip. */
+      if (tab.dataset.target === 'learn' && !$('lesson-view').hidden) backToList();
+      showScreen(tab.dataset.target);
+    });
   });
   $('play-new').addEventListener('click', newGame);
   $('play-hint').addEventListener('click', hint);
@@ -1005,25 +1110,6 @@ function main() {
     play.flip = !play.flip;
     play.state.flip = play.flip;
     paint(play.state);
-  });
-  /* Swapping colour starts a new game, so it asks first when there is a game to
-     lose: it used to abandon one in progress without a word. */
-  const swapColour = () => {
-    play.colour = play.colour === 'w' ? 'b' : 'w';
-    play.flip = play.colour === 'b';
-    $('play-colour').textContent = play.colour === 'w' ? 'Play black' : 'Play white';
-    newGame();
-  };
-  $('play-colour').addEventListener('click', () => {
-    if (!play.moves.length || play.over) { swapColour(); return; }
-    showSheet({
-      title: 'Start a new game?',
-      text: 'Pip starts again and the game you are playing is lost.',
-      icon: 'hmm',
-      action: 'Yes, new game',
-      cancel: 'Keep playing',
-      onAction: swapColour,
-    });
   });
   $('train-next').addEventListener('click', nextPuzzle);
   $('train-hint').addEventListener('click', () => {
