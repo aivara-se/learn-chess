@@ -16,7 +16,11 @@ A beginner's chess course shaped like a small phone app: three tabs, one idea pe
 ## In scope
 
 - A course: lessons in a fixed order, each with an explanation and drills that are played, not
-  read. Progress is remembered in the browser.
+  read. Progress is remembered in the browser, as two separate numbers — puzzles solved, and stars
+  for the ones solved first time (`docs/DESIGN.md`).
+- A rule a beginner cannot play without: what check is, the three ways out of it, and what makes
+  checkmate. A course that teaches eight habits and not this one leaves a learner who cannot finish
+  a game.
 - A game with a coach: while playing, each move is graded (best, good, playable, inaccuracy,
   mistake, blunder) and the reason is stated in plain language, with the stronger move named.
 - A training mode: the same positions again, shuffled, with a streak, for repetition.
@@ -36,13 +40,21 @@ A beginner's chess course shaped like a small phone app: three tabs, one idea pe
 ## Constraints
 
 - **Looks and behaves like an app**: one screen tall, bottom tab bar, one idea per screen, tap
-  targets of at least 48px, no page scroll, no sideways scroll at 360px.
-- **Works offline** once loaded, and from any static host: no build step, no runtime config.
+  targets of at least 48px — the board's own squares are the one measured exception, because eight
+  of them cannot be 48px each inside a 360px screen (`docs/DESIGN.md` carries the numbers) — no
+  page scroll, no sideways scroll at 360px.
+- **Works offline for real**, from any static host: the app's own files are cached by `sw.js`, so a
+  reload with no network still opens it, and a home screen can install it. No build step, no runtime
+  config.
 - **AA contrast on every surface**, including pieces on both board tones (`docs/DESIGN.md`
   carries the measurements).
-- **The drills must be right.** Every drill's answer was verified against Stockfish at depth 18
-  before it was written down; a drill that rejects a good move teaches the wrong thing, so correcting one is a first-class change, not copy-editing.
+- **The drills must be right, and must be checkable.** Every drill's answer is checked against
+  Stockfish at depth 18 by `scripts/verify-drills.ts`, and `docs/DRILLS.md` is the record of that
+  run — in the repository, re-runnable, not in someone's scratch directory. A drill that rejects a
+  good move teaches the wrong thing, so correcting one is a first-class change, not copy-editing.
 
 ## How it changes
 
-The course grows by adding lessons and puzzles to `js/lessons.js` — new positions, verified the same way, written to the length budgets the site check enforces. The engine changes rarely; if it does, `bun test` decides whether the change is sound. Anything that needs a server, an account, or a network call belongs in a different product.
+The course grows by adding lessons and puzzles to `js/lessons.js` — new positions, verified the same way, written to the length budgets the site check enforces. Nothing counts them but the app: the number of lessons and puzzles never appears in the shell, so the course can grow without anyone having to remember a total. The engine changes rarely; if it does, `bun test` decides whether the change is sound. `bun run scripts/verify-site.ts` and `bun run scripts/verify-drills.ts` decide whether the course still holds together, and both run on every pull request.
+
+Anything that needs a server, an account, or a network call belongs in a different product.

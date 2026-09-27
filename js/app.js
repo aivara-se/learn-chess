@@ -9,8 +9,8 @@
  * comes from js/lessons.js. Nothing here talks to a server.
  */
 import {
-  START_FEN, parseFen, toFen, legalMoves, makeMove, isCheckmate, isStalemate,
-  isInsufficientMaterial, inCheck, san, findBestMove, searchEval,
+  START_FEN, parseFen, legalMoves, makeMove, isCheckmate, isStalemate,
+  isDraw, inCheck, san, findBestMove, searchEval,
 } from './engine.js';
 import { LESSONS } from './lessons.js';
 
@@ -124,8 +124,18 @@ const store = {
   reset() { store.write({}); },
 };
 const solvedCount = () => Object.keys((store.read().done) || {}).length;
+const starCount = () => Object.keys((store.read().first) || {}).length;
 const isSolved = (key) => !!((store.read().done || {})[key]);
 const isFirstTry = (key) => !!((store.read().first || {})[key]);
+
+/* Every progress write goes through here, so the two numbers can never drift
+   apart or go stale: `done` is a puzzle the answer was found or shown for,
+   `first` is a star — solved with no wrong answer and no hint. */
+function record(key, firstTry) {
+  store.solved(key);
+  if (firstTry) store.clean(key);
+  paintStarCount();
+}
 
 /* ---------- board ---------- */
 
@@ -165,6 +175,18 @@ function renderBoard(container, pos, opts = {}) {
        flipped), files along the bottom (top when flipped). */
     if (flip ? col === 7 : col === 0) sqEl.appendChild(el('span', 'coord r', String(rank + 1)));
     if (flip ? row === 0 : row === 7) sqEl.appendChild(el('span', 'coord f', FILES[file]));
+    /* Every square says what it is, in words: a screen reader cannot see a
+       board. The coordinates printed inside the button are not enough — only 16
+       of 64 squares carry one — and both sides use the same glyph, told apart by
+       colour, which a screen reader does not get either. */
+    const name = squareName(sq);
+    let label = piece ? `${name}, ${piece.color === 'w' ? 'white' : 'black'} ${NAMES[piece.type]}` : `${name}, empty`;
+    if (piece && piece.color === pos.turn && opts.interactive !== false && opts.movable !== false) label += ', your piece';
+    if (opts.selected === sq) label += ', selected';
+    if (targets.has(sq)) label += piece ? ', can be taken' : ', you can move here';
+    if (opts.checkSquare === sq) label += ', in check';
+    if (opts.flash && opts.flash.square === sq) label += opts.flash.ok ? ', correct' : ', not the move';
+    sqEl.setAttribute('aria-label', label);
     if (opts.onSquare) sqEl.addEventListener('click', () => opts.onSquare(sq));
     container.appendChild(sqEl);
   }
@@ -231,7 +253,7 @@ function closeSheet() {
   $('scrim').hidden = true;
 }
 
-function showSheet({ title, text, tone = '', icon = 'star', action = 'Got it', onAction = null }) {
+function showSheet({ title, text, tone = '', icon = 'star', action = 'Got it', onAction = null, cancel = null }) {
   const sheet = $('sheet');
   sheet.textContent = '';
   const head = el('div', 'sheethead');
@@ -241,10 +263,19 @@ function showSheet({ title, text, tone = '', icon = 'star', action = 'Got it', o
   if (text) sheet.appendChild(el('p', null, text));
   const row = el('div', 'row');
   row.style.marginTop = '14px';
-  const go = el('button', 'btn primary wide', action);
+  row.style.justifyContent = 'center';
+  const go = el('button', `btn primary${cancel ? '' : ' wide'}`, action);
   go.type = 'button';
   go.addEventListener('click', () => { closeSheet(); if (onAction) onAction(); });
   row.appendChild(go);
+  /* A sheet with two answers: the one that does something, and the way out. The
+     safe one is never the button a thumb lands on by accident. */
+  if (cancel) {
+    const no = el('button', 'btn', cancel);
+    no.type = 'button';
+    no.addEventListener('click', closeSheet);
+    row.appendChild(no);
+  }
   sheet.appendChild(row);
   sheet.hidden = false;
   $('scrim').hidden = false;
@@ -298,10 +329,12 @@ function starsFor(lesson) {
 }
 
 /* The one place the header counter is written. It said "0/24" in three separate
-   spots, which is how it ended up disagreeing with the label. */
+   spots, which is how it ended up disagreeing with the label; it then counted
+   puzzles the answer had been shown for, which is how it ended up disagreeing
+   with the rule in docs/DESIGN.md. A star is counted from `first` only. */
 function paintStarCount() {
   const chip = $('star-count');
-  chip.textContent = `${solvedCount()} of ${TOTAL_DRILLS} stars`;
+  chip.textContent = `${starCount()} of ${TOTAL_DRILLS} stars`;
 }
 
 function starRow(got, of) {
@@ -342,6 +375,14 @@ function renderLessonList() {
   start.type = 'button';
   start.addEventListener('click', () => openLesson(allDone ? 0 : currentLesson()));
   intro.appendChild(start);
+  /* Both numbers, in one place, in words: a puzzle solved, and a star for the
+     ones solved first time. The header chip carries the stars; this is where a
+     learner (or a parent) can see what the difference is. */
+  const progress = el('p', 'tiny');
+  progress.style.marginTop = '10px';
+  progress.textContent = `${done} of ${TOTAL_DRILLS} puzzles solved · ${starCount()} stars won. `
+    + 'A star is a puzzle you solved first time.';
+  intro.appendChild(progress);
   list.appendChild(intro);
 
   LESSONS.forEach((lesson, i) => {
@@ -365,6 +406,29 @@ function renderLessonList() {
   truth.style.marginTop = '14px';
   truth.textContent = 'An Aivara app. No account, no adverts, no internet needed after it loads. Your stars are saved only on this device.';
   list.appendChild(truth);
+
+  /* Clearing progress deletes something a child earned, so it is not a button in
+     the middle of another screen: it lives here, says what it deletes, and asks. */
+  if (done > 0) {
+    const startOver = el('button', 'btn quiet wide', 'Start over and clear my stars');
+    startOver.type = 'button';
+    startOver.addEventListener('click', () => showSheet({
+      title: 'Start over?',
+      text: `This clears ${done} solved puzzles and ${starCount()} stars on this device, and cannot be undone.`,
+      icon: 'hmm',
+      action: 'Yes, clear it',
+      cancel: 'Keep my stars',
+      onAction: () => {
+        store.reset();
+        train.streak = 0;
+        train.current = null;
+        renderLessonList();
+        refreshTrain();
+        announce('Progress cleared.');
+      },
+    }));
+    list.appendChild(startOver);
+  }
 }
 
 function lessonSteps(lesson) {
@@ -431,14 +495,6 @@ function renderStep() {
     const card = el('div', 'card');
     card.appendChild(el('p', 'tiny', `Puzzle ${step.i + 1} of ${lesson.drills.length}`));
     card.appendChild(el('h2', null, drill.prompt));
-    const wrap = el('div', 'boardwrap');
-    wrap.style.marginTop = '10px';
-    const b = el('div', 'board');
-    b.id = 'lesson-board';
-    wrap.appendChild(b);
-    const turnCap = el('p', 'tiny drill-turn', pos.turn === 'w' ? 'White to move — your turn' : 'Black to move — your turn');
-    wrap.appendChild(turnCap);
-    card.appendChild(wrap);
     const row = el('div', 'row');
     row.style.marginTop = '12px';
     const hint = el('button', 'btn', 'Hint');
@@ -453,6 +509,18 @@ function renderStep() {
     row.appendChild(hint);
     card.appendChild(row);
     view.appendChild(card);
+
+    /* The board sits outside the card, and so is as wide as the screen allows:
+       inside a card it lost 32px of width, and with it a quarter of every square
+       a child has to hit with a finger. */
+    const wrap = el('div', 'boardwrap');
+    wrap.style.marginTop = '12px';
+    const b = el('div', 'board');
+    b.id = 'lesson-board';
+    wrap.appendChild(b);
+    const turnCap = el('p', 'tiny drill-turn', pos.turn === 'w' ? 'White to move — your turn' : 'Black to move — your turn');
+    wrap.appendChild(turnCap);
+    view.appendChild(wrap);
 
     const state = {
       container: b,
@@ -478,9 +546,7 @@ function renderStep() {
       turnCap.textContent = ok ? 'Puzzle solved' : (state.pos.turn === 'w' ? 'White to move — your turn' : 'Black to move — your turn');
       if (ok) {
         state.locked = true;
-        store.solved(key);
-        if (learn.tries === 1) store.clean(key);
-        paintStarCount();
+        record(key, learn.tries === 1);
         confetti();
         showSheet({
           title: 'Correct!',
@@ -502,7 +568,7 @@ function renderStep() {
         const best = uciToMove(pos, String(drill.best || drill.accepted[0]).toLowerCase());
         const d = best ? describeMove(pos, best) : null;
         state.locked = true;
-        store.solved(key);
+        record(key, false);
         showSheet({
           title: 'Here is the move',
           text: d ? `The move is to ${d.verb}. ${drill.why}` : drill.why,
@@ -578,7 +644,7 @@ const DEPTH = { 1: { search: 1, evalDepth: 2 }, 2: { search: 2, evalDepth: 2 }, 
 const LEVEL_NAME = { 1: 'Level 1', 2: 'Level 2', 3: 'Level 3' };
 
 const play = {
-  pos: null, history: [], moves: [], level: 2, colour: 'w', flip: false,
+  pos: null, history: [], moves: [], seen: [], level: 2, colour: 'w', flip: false,
   thinking: false, over: false, state: null, started: false,
 };
 
@@ -586,6 +652,11 @@ function newGame() {
   play.pos = parseFen(START_FEN);
   play.history = [];
   play.moves = [];
+  /* `seen` holds the positions the game has already left, oldest first: `isDraw`
+     counts the current position itself, so putting it in here too would let a
+     position repeat twice and be called a threefold draw. Positions, not keys —
+     `isDraw` reads a string as a FEN, and a position key is not one. */
+  play.seen = [];
   play.over = false;
   play.thinking = false;
   play.state = {
@@ -619,19 +690,36 @@ function coachSay(tone, text) {
 function userMove(move) {
   if (play.over || play.thinking) return;
   const pos = play.pos;
+  play.history.push({ pos, move });
+  play.moves.push({ san: san(pos, move), colour: pos.turn });
+  play.seen.push(pos);
+  play.pos = makeMove(pos, move);
+  play.state.pos = play.pos;
+  play.state.last = move;
+  play.state.selected = null;
+  play.state.targets = new Set();
+  paint(play.state);          // the child sees the move before anything is worked out
+  updateMoves();
+
+  /* The grade is a search, and it used to run before the repaint: a tap at level 3
+     froze the board for 141–245ms on a fast machine and nearer a second on a cheap
+     phone, with nothing on screen to say the tap had landed. Paint, then grade. */
+  play.state.locked = true;
+  $('play-turn').textContent = 'Pip is thinking…';
+  setTimeout(() => {
+    play.state.locked = false;
+    gradeMove(pos, move);
+    if (finishIfOver()) return;
+    engineTurn();
+  }, 0);
+}
+
+/* What Pip thought of the move just played, in a child's words. */
+function gradeMove(pos, move) {
   const cfg = DEPTH[play.level];
   const before = searchEval(pos, { depth: cfg.evalDepth });
   const best = findBestMove(pos, { depth: Math.max(2, cfg.evalDepth) });
-  const after = makeMove(pos, move);
-  play.history.push({ pos, move });
-  play.moves.push({ san: san(pos, move), colour: pos.turn });
-  play.pos = after;
-  play.state.pos = after;
-  play.state.last = move;
-  paint(play.state);
-  updateMoves();
-
-  const afterEval = searchEval(after, { depth: cfg.evalDepth });
+  const afterEval = searchEval(play.pos, { depth: cfg.evalDepth });
   const mine = play.colour === 'w' ? afterEval : -afterEval;
   const loss = Math.max(0, play.colour === 'w' ? before - afterEval : afterEval - before);
   const v = verdict(loss);
@@ -643,10 +731,10 @@ function userMove(move) {
     const piece = pieceAt(pos, best.move.from);
     said = `${v.word} Better was the ${NAMES[piece.type]} move — it ${b.text}. Pip says ${scoreWords(mine)}.`;
   }
+  /* A king in check is the one thing on the board a beginner must not miss, and
+     the red frame alone does not say it out loud. */
+  if (inCheck(play.pos, play.pos.turn)) said = 'Check! ' + said;
   coachSay(v.tone, said);
-
-  if (finishIfOver()) return;
-  engineTurn();
 }
 
 function engineTurn() {
@@ -662,6 +750,7 @@ function engineTurn() {
       const pos = play.pos;
       play.history.push({ pos, move: res.move });
       play.moves.push({ san: san(pos, res.move), colour: pos.turn });
+      play.seen.push(pos);
       play.pos = makeMove(pos, res.move);
       play.state.pos = play.pos;
       play.state.last = res.move;
@@ -670,7 +759,8 @@ function engineTurn() {
       updateMoves();
       if (finishIfOver()) return;
       $('play-turn').textContent = 'Your move';
-      coachSay('', `Pip played ${describeMove(pos, res.move).san}. Your move.`);
+      const mine = inCheck(play.pos, play.pos.turn) ? ' Your king is in check.' : '';
+      coachSay('', `Pip played ${describeMove(pos, res.move).san}.${mine} Your move.`);
       return;
     }
     play.state.locked = false;
@@ -696,12 +786,24 @@ function finishIfOver() {
     });
     return true;
   }
-  if (isStalemate(pos) || isInsufficientMaterial(pos)) {
+  /* A game can also end without a mate: stalemate, dead position, fifty moves
+     without a capture or a pawn move, or the same position three times. `isDraw`
+     knows all of those and used to go uncalled, so a drawn game ran until the tab
+     was closed. */
+  if (isStalemate(pos) || isDraw(pos, play.seen)) {
     play.over = true;
     play.state.over = true;
     play.state.locked = true;
     $('play-turn').textContent = 'Draw';
-    showSheet({ title: 'A draw', text: 'Neither side can win from here. That happens — start again.', icon: 'star', action: 'New game', onAction: newGame });
+    showSheet({
+      title: 'A draw',
+      text: isStalemate(pos)
+        ? 'Nobody can move, so the game is a draw. That happens — start again.'
+        : 'Neither side can win from here: the same position three times, fifty moves without a capture, or too little material left. Start again.',
+      icon: 'star',
+      action: 'New game',
+      onAction: newGame,
+    });
     return true;
   }
   return false;
@@ -724,6 +826,9 @@ function undo() {
     if (play.pos.turn === play.colour) break;
   }
   play.over = false;
+  /* The draw history has to move back with the moves: a repetition or fifty-move
+     claim that counted positions the game has just left would end a live game. */
+  play.seen = play.history.map((h) => h.pos);
   Object.assign(play.state, { pos: play.pos, over: false, locked: false, flash: null, hintMove: null, selected: null, targets: new Set() });
   play.state.last = play.history.length ? play.history[play.history.length - 1].move : null;
   paint(play.state);
@@ -825,8 +930,7 @@ function nextPuzzle() {
       state.locked = true;
       train.streak += 1;
       $('train-where').textContent = `${pick.lesson.title} · solved`;
-      store.solved(pick.key);
-      if (train.tries === 1) store.clean(pick.key);
+      record(pick.key, train.tries === 1);
       store.streak(train.streak);
       confetti();
       refreshTrain();
@@ -847,7 +951,7 @@ function nextPuzzle() {
         showSheet({ title: 'Not that one', text: `${pick.drill.hint}. Have another go.`, icon: 'hmm', action: 'Try again', onAction: () => { state.locked = false; state.pos = pos; paint(state); } });
       } else {
         state.locked = true;
-        store.solved(pick.key);
+        record(pick.key, false);
         refreshTrain();
         showSheet({
           title: 'Here is the move',
@@ -865,11 +969,20 @@ function nextPuzzle() {
 
 /* ---------- screens ---------- */
 
+/* The app bar says what the tab is for. It used to say "Pick a lesson and play"
+   on all three screens, including the two that are not lessons. */
+const SUBTITLE = {
+  learn: 'Pick a lesson and play.',
+  play: 'A game, with Pip coaching.',
+  train: 'The same puzzles, shuffled.',
+};
+
 function showScreen(name) {
   for (const s of ['learn', 'play', 'train']) {
     $(`screen-${s}`).hidden = s !== name;
     document.querySelector(`.tab[data-target="${s}"]`).setAttribute('aria-selected', String(s === name));
   }
+  $('app-sub').textContent = SUBTITLE[name] || '';
   closeSheet();
   document.querySelector('main').scrollTop = 0;
   if (name === 'play' && !play.pos) newGame();
@@ -892,11 +1005,24 @@ function main() {
     play.state.flip = play.flip;
     paint(play.state);
   });
-  $('play-colour').addEventListener('click', () => {
+  /* Swapping colour starts a new game, so it asks first when there is a game to
+     lose: it used to abandon one in progress without a word. */
+  const swapColour = () => {
     play.colour = play.colour === 'w' ? 'b' : 'w';
     play.flip = play.colour === 'b';
     $('play-colour').textContent = play.colour === 'w' ? 'Play black' : 'Play white';
     newGame();
+  };
+  $('play-colour').addEventListener('click', () => {
+    if (!play.moves.length || play.over) { swapColour(); return; }
+    showSheet({
+      title: 'Start a new game?',
+      text: 'Pip starts again and the game you are playing is lost.',
+      icon: 'hmm',
+      action: 'Yes, new game',
+      cancel: 'Keep playing',
+      onAction: swapColour,
+    });
   });
   $('train-next').addEventListener('click', nextPuzzle);
   $('train-hint').addEventListener('click', () => {
@@ -907,17 +1033,20 @@ function main() {
     paint(train.state);
     showSheet({ title: 'Hint', text: train.current.drill.hint, icon: 'star', action: 'Got it' });
   });
-  $('train-reset').addEventListener('click', () => {
-    store.reset();
-    train.streak = 0;
-    refreshTrain();
-    nextPuzzle();
-  });
   $('scrim').addEventListener('click', closeSheet);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
+  /* Offline for real: the app's own seven files, cached by a service worker, so
+     the footer's promise survives a reload with no network. */
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => { /* offline is a bonus, never a blocker */ });
+    });
+  }
+
   renderLessonList();
   refreshTrain();
+  showScreen('learn');
   // A ready signal for automated checks: the module, the engine and the course
   // all loaded, and the first screen is drawn.
   document.documentElement.dataset.appReady = 'true';
