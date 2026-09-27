@@ -341,6 +341,24 @@ describe('insufficient material and draws', () => {
     expect(isDraw(parseFen(fen), [fen])).toBe(false);
     expect(isDraw(parseFen(fen), [fen, other, fen])).toBe(true);
   });
+  test('the play screen counts a position twice, not three times', () => {
+    /* js/app.js pushes the position it is leaving before every move, so the list
+       holds every position the game has been in except the current one. A game
+       that has only just come back to where it started is not a draw — and it was
+       one, while the start position sat in the list twice. */
+    let p = parseFen(START_FEN);
+    const seen: unknown[] = [];
+    const play = (uci: string) => {
+      const legal = legalMoves(p).find((m) => squareName(m.from) + squareName(m.to) === uci);
+      if (!legal) throw new Error(`illegal move in test: ${uci}`);
+      seen.push(p);                 // the app keeps positions, not keys: see isDraw
+      p = makeMove(p, legal);
+    };
+    const shuffle = ['g1f3', 'g8f6', 'f3g1', 'f6g8', 'g1f3', 'g8f6', 'f3g1', 'f6g8'];
+    const claims = shuffle.map((uci) => { play(uci); return isDraw(p, seen); });
+    expect(claims.slice(0, 7)).toEqual([false, false, false, false, false, false, false]);
+    expect(claims[7]).toBe(true);
+  });
   test('insufficient material is a draw too', () => {
     expect(isDraw(parseFen('8/8/8/4k3/8/8/8/2B1K3 w - - 3 20'))).toBe(true);
   });
