@@ -157,6 +157,30 @@ for (const file of ['js/app.js', 'index.html']) {
   }
 }
 
+/* 8. the two things that must stay small on the smallest phone — measured in
+ * docs/DESIGN.md: a longer app bar line wraps at 360px and costs the board 18px,
+ * and a fourth button in the play screen's row wraps onto a second line, which
+ * pushes Hint and Undo off the bottom of a 640px phone. */
+{
+  const app = await read('js/app.js');
+  const lines = [...app.matchAll(/^\s{2}(learn|play|train):\s*'([^']*)',$/gm)].map((m) => [m[1], m[2]] as const);
+  if (lines.length !== 3) {
+    problems.push(`the app bar's three lines are not all in SUBTITLE (found ${lines.length})`);
+  }
+  for (const [tab, line] of lines) {
+    if (line.length > 24) {
+      problems.push(`the ${tab} app bar line is ${line.length} characters ("${line}"): past 24 it wraps at 360px and the board loses 18px of height, so say it shorter`);
+    }
+  }
+  const row = html.match(/<div class="row" style="justify-content:center">([\s\S]*?)<\/div>/);
+  const buttons = row ? (row[1].match(/<button/g) || []).length : 0;
+  if (buttons !== 3) {
+    problems.push(`the row of buttons under the play board holds ${buttons}: a fourth wraps onto a second line at 360px and pushes Hint and Undo off the bottom of a 640px phone`);
+  }
+  const longestLine = lines.length ? Math.max(...lines.map(([, l]) => l.length)) : 0;
+  checks.push(`the app bar lines stay on one line at 360px (longest ${longestLine} characters) and the game's buttons are one row of three`);
+}
+
 for (const c of checks) console.log(`ok   ${c}`);
 if (problems.length) {
   console.error('\nFAILED');
