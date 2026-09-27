@@ -13,10 +13,18 @@
   <meta name="theme-color" content="#eef3ff">
   <title>Learn chess</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <meta name="description" content="Learn chess the easy way: short lessons, puzzles you play yourself, and a friendly coach for your moves.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Learn chess">
-  <meta property="og:description" content="Short lessons, puzzles you play, and a coach for your moves.">
+  <meta property="og:description" content="Short lessons, puzzles you play yourself, and Pip coaching your moves.">
+  <meta property="og:image" content="https://aivara-se.github.io/learn-chess/assets/share-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A chess board, and Pip the pawn: short lessons and puzzles for beginners.">
+  <meta name="twitter:card" content="summary_large_image">
   <style>
     /* Self-hosted, latin subset, variable weight. Both families are OFL 1.1
        (assets/fonts/OFL-*.txt). No CDN link: this app makes no third-party
@@ -130,6 +138,13 @@
     button.btn.icon { padding: 12px; min-width: 48px; }
     button.btn svg { width: 20px; height: 20px; }
     button.btn[disabled] { opacity: 0.45; }
+    /* A real 48px target that reads as a line of text, for the one action that
+       deletes something: quiet enough not to invite a thumb, big enough to be
+       usable on purpose. */
+    button.btn.quiet {
+      background: transparent; border-color: transparent; color: var(--ink-mute);
+      font-size: 13px; text-decoration: underline; min-height: 48px;
+    }
     :focus-visible { outline: 3px solid var(--grape); outline-offset: 2px; }
 
     .chip {
@@ -161,6 +176,11 @@
 
     /* board */
     .boardwrap { display: grid; gap: 10px; justify-items: center; }
+    /* As wide as the screen allows, capped so it does not run away on a laptop.
+       The board is the one control that breaks the 48px rule: eight squares
+       across a 360px screen is 41px each, and a chess board that is narrower than
+       the screen is worse than a small target. docs/DESIGN.md carries the
+       measurement. Nothing sits inside a card, or it would lose 32px of width. */
     .board {
       width: 100%; max-width: 430px; aspect-ratio: 1; display: grid;
       grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
@@ -257,7 +277,7 @@
     </svg>
     <div class="who">
       <h1 id="app-title">Learn chess</h1>
-      <p id="app-sub">Pick a lesson and play. Pip helps.</p>
+      <p id="app-sub">Pick a lesson and play.</p>
     </div>
     <span class="chip" id="star-chip" title="Stars you have won">
       <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5 6.1 20.6l1.2-6.5L2.5 9.5l6.6-.9z" fill="#ffb01f"/></svg>
@@ -294,7 +314,7 @@
           </div>
         </div>
         <div class="boardwrap">
-          <div class="board" id="play-board" role="grid" aria-label="Chess board"></div>
+          <div class="board" id="play-board" role="group" aria-label="Chess board"></div>
         </div>
         <div class="coach">
           <svg class="av" viewBox="0 0 64 64" aria-hidden="true">
@@ -330,12 +350,11 @@
           <p class="tiny" id="train-where"></p>
         </div>
         <div class="boardwrap">
-          <div class="board" id="train-board" role="grid" aria-label="Puzzle board"></div>
+          <div class="board" id="train-board" role="group" aria-label="Puzzle board"></div>
         </div>
         <div class="row" style="justify-content:center">
           <button class="btn" id="train-hint">Hint</button>
           <button class="btn" id="train-next">Next puzzle</button>
-          <button class="btn" id="train-reset">Reset</button>
         </div>
       </div>
     </section>
