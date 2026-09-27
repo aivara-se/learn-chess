@@ -93,6 +93,11 @@ Every text pair clears AA. The two "verdict" colours are only ever used this way
   card**: cards cost 32px of width, which is a quarter of every square a child has to
   hit with a finger. Measured square size, 2× device scale: 36.0px at 320px, 41.0px at
   360px, 47.5px at 412px, 53.8px at 900px.
+- The wider board costs height, and the cost is on the play screen, where the move list
+  then sits below the fold on a short phone: 66px of scroll in `main` at 360×740, none from
+  about 412×915 up. It was 32px before the board was let out of the card, so the change is
+  one line of notation for a quarter more square everywhere — which is the trade this app
+  makes, because a child aims at squares and not at the notation.
 - **The board is the one control that breaks the 48px rule**, and the exception is
   measured rather than waived: eight squares cannot be 48px each inside a 360px screen
   (that needs 384px), and a board that does not fill the screen is worse than one whose
