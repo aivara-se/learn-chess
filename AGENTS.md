@@ -8,18 +8,23 @@ This file is the `aivara-se` agent convention, version `2`, adopted from `0bbd7e
 
 ## Current Project Focus
 
-The app is built, restyled as a phone-style app for children, published, and verified locally. Next work: read it on a real phone at 360px and watch a child use it — that is the only test of the copy that matters.
+The app is built, restyled as a phone-style app for children, published, and verified locally. It now
+teaches check, the ways out of it, and checkmate; keeps its own files so a reload with no network still
+opens it; and installs to a home screen. Next work: hand it to a child, watch where they stop, and fix
+that — the copy and the first lesson are the parts a script cannot judge. `docs/DRILLS.md` is where the
+puzzles' answers were last measured; regenerate it in the same pull request that changes a position.
 
 This section is steering, not policy. It is the one place where what matters right now outranks the standing rules below, it changes often, and it is replaced rather than appended to. Keep it short enough to read in full, and current enough to be worth reading.
 
 ## House rules
 
-- **The course content is data, not code.** Lesson text and puzzles live in `js/lessons.js`. Every puzzle's answer must be a move a beginner can find, and every `accepted` list must hold moves verified against Stockfish at depth 18 — a puzzle that rejects a good move teaches the wrong thing. `scripts/verify-site.ts` checks that each position is playable and every answer legal; it cannot check that the answer is best, so that stays a human (or Stockfish) job.
+- **The course content is data, not code.** Lesson text and puzzles live in `js/lessons.js`. Every puzzle's answer must be a move a beginner can find, and every `accepted` list must hold moves verified against Stockfish at depth 18 — a puzzle that rejects a good move teaches the wrong thing. `scripts/verify-site.ts` checks that each position is playable, every answer legal and every `best` accepted; `scripts/verify-drills.ts` runs Stockfish itself and fails a drill whose answer is more than 30 centipawns behind the engine's best. A drill whose list is deliberately narrower than the engine's — because the position is level and the lesson asks for one idea — carries a `note` saying so, and that note is what keeps the exception readable.
 - **Copy is written for a nine-year-old**, and the length budgets are enforced by `scripts/verify-site.ts`: a lesson goal under 55 characters, a title under 40, a body paragraph under 170, a caption under 110, a puzzle prompt under 65, a hint under 55, an explanation under 150. Short sentences, active voice, no jargon.
 - **A star means first try.** Never award one for a puzzle solved after a hint or a wrong answer. The list shows both numbers — puzzles solved and stars earned — and they must stay separate.
 - **The board is drawn from White's side and the engine is not.** The engine numbers squares `0 = a1 … 63 = h8`, so drawing that index in DOM order puts White at the top — which shipped once, because the file and rank labels followed the same convention and nothing looked wrong. Map the cell in row `row` and column `col` to `(7 - row) * 8 + col`, and to `row * 8 + (7 - col)` when flipped. Square colour comes from the square, not the cell (a1 and h8 stay dark). The browser check asserts orientation, the corner labels, a1/h8 colouring and every piece's colour against the position; keep those assertions when you touch the renderer.
-- **Every colour is measured, on the surface it is used on.** `docs/DESIGN.md` carries the table; a new pair without a measurement does not ship. Nothing may be signalled by colour alone: a verdict, a turn or a check is always also a word.
-- **The app must keep working offline and from `file://`-style hosting**: no fetch, no CDN, no external font, no account, no backend. Any feature that needs a server does not belong here.
+- **Every colour is measured, on the surface it is used on.** `docs/DESIGN.md` carries the table; a new pair without a measurement does not ship. Nothing may be signalled by colour alone: a verdict, a turn or a check is always also a word. Every square names itself for a screen reader — coordinate, what stands on it, and whether it is yours, selected, a target or in check.
+- **Nothing counts the course but the app.** The number of lessons and puzzles is derived from `js/lessons.js`; a total written into a file is a lie waiting to happen, and `scripts/verify-site.ts` fails one.
+- **The app must keep working offline and from `file://`-style hosting**: no fetch, no CDN, no external font, no account, no backend. Any feature that needs a server does not belong here. `sw.js` holds the offline copy, so a file the page serves goes into its list in the same commit — and a change to a file already in the list bumps the cache name with it.
 - **Say what the engine can do, and no more.** The opponent is a small alpha-beta search over material and piece-square tables with quiescence, three settings, labelled honestly in the interface. Do not describe it as strong, and do not call its evaluation an engine-grade verdict.
 - **Progress is the visitor's, and stays on their machine.** `localStorage` only; never add analytics, tracking, or anything that sends their moves anywhere.
 - **Copy is for someone who has never played.** Short sentences, no jargon ("tempo", "initiative", "prophylaxis"), no abbreviations left unexplained.
@@ -33,8 +38,9 @@ This section is steering, not policy. It is the one place where what matters rig
 ## Verify before pushing
 
 ```bash
-bun test                            # the rules engine: perft and legality
-bun run scripts/verify-site.ts      # the site-level rules that can be checked mechanically
+bun test                              # the rules engine: perft and legality
+bun run scripts/verify-site.ts        # the site-level rules that can be checked mechanically
+bun run scripts/verify-drills.ts      # every puzzle's answer, against Stockfish
 ```
 
 Run the whole sequence, not just its fast part, and read every result — the exit code of the last command says nothing about the first.
@@ -48,22 +54,23 @@ Then the two things a script cannot see: the app must work on a phone at 360px w
 - **Never** commit to `main` directly. **Never** force-push a branch another agent or person has seen.
 - Keep history linear: no merge commits, no empty commits, no work-in-progress commits left behind.
 - Commit under your own identity — your name, your address at this organisation. Never a generic bot, never another agent's identity.
-- Remote work is always a branch plus a pull request. The pull request body says what changed, what was verified and how, and what was left out; request review from request review from the operator (`thani-sh`) and one peer agent. Leave the working tree clean: no scratch files, no editor backups, no `.env` you created.
+- Remote work is always a branch plus a pull request. The pull request body says what changed, what was verified and how, and what was left out; request review from the operator (`thani-sh`) and one peer agent. Leave the working tree clean: no scratch files, no editor backups, no `.env` you created.
 
 ## Repository Structure
 
 - `index.html`: the app shell — markup and the stylesheet
+- `sw.js`: the offline cache list and the fetch handler
+- `manifest.webmanifest`: what a home screen installs
 - `js/engine.js`: rules, legal move generation, search, evaluation
 - `js/lessons.js`: the course — lesson text, diagrams and verified drills
 - `js/app.js`: the interface — board, coach, progress
 - `tests/`: `bun test` suites
-- `scripts/`: `verify-site.ts`, the mechanically checkable rules
+- `scripts/`: `verify-site.ts` and `verify-drills.ts`, the mechanically checkable rules
 - `assets/fonts/`: self-hosted latin-subset fonts and their licences
-- `docs/`: the authoritative documents — `DESIGN.md`, `PRODUCT.md`, `SYSTEM.md`
+- `assets/`: the mark (`favicon.svg`), the rendered icons and the share card
+- `docs/`: the authoritative documents — `DESIGN.md`, `PRODUCT.md`, `SYSTEM.md`, `DRILLS.md`
 - `README.md`: what the app is, how to run and check it, where things are documented
 - `.agents/skills/`: the convention's skills
-
-New markdown goes in the directory that already owns its subject, and a fact has exactly one home. Never add a second copy of something a document already says; link to it. If a path in the map above stops being true, fix the map in the same pull request. A map that lies is worse than no map.
 
 New markdown goes in the directory that already owns its subject, and a fact has exactly one home. Never add a second copy of something a document already says; link to it. If a path in the map above stops being true, fix the map in the same pull request. A map that lies is worse than no map.
 
@@ -76,7 +83,7 @@ New markdown goes in the directory that already owns its subject, and a fact has
 - .agents/skills/writing/SKILL.md
 - .agents/skills/review/SKILL.md
 
-The first skill this repository should write on its own is the one for authoring drills: verify the answer with Stockfish, phrase the `why` from the position, then play it in the browser.
+The first skill this repository should write on its own is the one for authoring drills: check the answer with `bun run scripts/verify-drills.ts`, phrase the `why` from the position, then play it in the browser — the engine does not know whether a nine-year-old can find the move.
 
 Every skill on disk is listed above, and every skill listed above exists. A new skill is added here in the same pull request that adds it, and a skill deleted from disk is deleted from this list in the same commit. An index that has drifted is worse than a short one.
 

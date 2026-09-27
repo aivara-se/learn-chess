@@ -17,14 +17,16 @@
  *             centipawns of `best` from the same search; narrowed to a single
  *             move when the drill asks for one idea and the position is level,
  *             so that a waiting move cannot be mistaken for the lesson.
+ *   note      only when `accepted` is deliberately not the margin-derived set:
+ *             one line saying why, so the exception is in the record instead of
+ *             in someone's memory. `scripts/verify-drills.ts` reports it.
  *
  * Every best/accepted pair was measured with Stockfish 17 at
- * /usr/games/stockfish (MultiPV=4, depth 18, one thread, hash 16, one fresh
- * engine per position) and re-checked with python-chess: the position is legal,
- * every accepted move is legal in it, and each mate-in-one really is mate. The
- * record of those runs is tmp/drill-verification.txt. If a position changes,
- * measure again — an accepted list that rejects a good move teaches the wrong
- * thing.
+ * /usr/games/stockfish (MultiPV=6, depth 18, one thread, hash 16, one fresh
+ * engine per position). The record of that run is docs/DRILLS.md, written by
+ * scripts/verify-drills.ts and re-runnable by anyone: `bun run
+ * scripts/verify-drills.ts --write`. If a position changes, measure again — an
+ * accepted list that rejects a good move teaches the wrong thing.
  */
 
 export const LESSONS = [
@@ -34,13 +36,22 @@ export const LESSONS = [
     goal: 'Learn the squares and how every piece moves.',
     body: [
       'A chessboard has 64 squares, eight rows called ranks and eight columns called files. Set it up with a light square in each player\'s right-hand corner.',
+      'Every square has a name: first its file letter, then its rank number. The pawn in front of the king starts on e2, and the four middle squares are d4, e4, d5 and e5.',
       'Every game starts with the same 32 pieces. Each side has eight pawns, two rooks, two knights, two bishops, a queen and a king.',
       'A rook slides in a straight line and a bishop slides along a diagonal. A queen does both, a knight jumps in an L, and a king steps one square.',
       'A pawn moves straight ahead and captures one square diagonally. At the far end of the board it becomes a queen.',
     ],
     diagram: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-    diagramCaption: 'The starting position: eight pawns in front and the other pieces behind them.',
+    diagramCaption: 'The starting position, with the file letters along the bottom and the rank numbers up the side.',
     drills: [
+      {
+        fen: '4k3/8/4p3/8/3N4/8/8/4K3 w - - 0 1',
+        prompt: 'Take the black pawn on e6 with your knight.',
+        hint: 'e6 is on the e-file, six squares up from the bottom',
+        why: 'Your knight jumps from d4 to e6 and takes the pawn. A square is named by its file letter first, then its rank number.',
+        best: 'd4e6',
+        accepted: ['d4e6'],
+      },
       {
         fen: '4k3/p7/8/3n4/4P3/8/7P/4K2R w - - 0 1',
         prompt: 'A black knight has stepped in front of your pawn. Take it.',
@@ -58,7 +69,7 @@ export const LESSONS = [
         accepted: ['f3d4'],
       },
       {
-        fen: '4k3/p7/8/3p4/2B5/7P/8/4K2R w - - 0 1',
+        fen: '4k3/p7/8/3p4/2B5/7P/8/4K3 w - - 0 1',
         prompt: 'Your bishop can reach the black pawn on d5. Take it.',
         hint: 'the bishop travels along diagonals only',
         why: 'The bishop takes the pawn on d5 along the diagonal from c4. The pawn on a7 is safe, because your bishop stays on light squares all game.',
@@ -210,6 +221,7 @@ export const LESSONS = [
         // engine's ranking is noise; the drill asks for the king-safety move and
         // accepts only that, rather than telling a learner that a2-a3 is a pass.
         accepted: ['e1g1'],
+        note: 'the position is level, so the drill accepts only the king-safety move',
       },
       {
         fen: 'r1bqk2r/pppp1ppp/2n5/8/1bBPn3/2N2N2/PP3PPP/R1BQK2R w KQkq - 0 8',
@@ -228,6 +240,7 @@ export const LESSONS = [
         // Same as the drill above: a level position, so only the king-safety move
         // counts as the answer.
         accepted: ['e8g8'],
+        note: 'the position is level, so the drill accepts only the king-safety move',
       },
     ],
   },
@@ -274,12 +287,13 @@ export const LESSONS = [
 
   {
     id: 'look-first',
-    title: 'Look first: what is attacked',
-    goal: 'Look before every move, for free pieces and captures.',
+    title: 'Look first: checks and captures',
+    goal: 'Look before every move, for captures and for checks.',
     body: [
       'Before each move, stop and look at the board. Ask three things: what is attacked, what can I take, and what am I leaving undefended?',
       'A piece that nothing defends is loose. Finding a loose piece is the quickest way to win it.',
       'Also count the defenders. If two of your pieces can reach a piece and only one defends it, you can take it.',
+      'Check means a piece attacks your king. You must stop it: move the king, block the attack, or take the checking piece. If none of those is possible, it is checkmate.',
       'Look at your own pieces first, not just at captures. Most beginner games are lost by a piece left where it can be taken.',
     ],
     diagram: '1r2k3/pp6/8/4b3/8/8/5PPP/4R1K1 w - - 0 1',
@@ -300,6 +314,14 @@ export const LESSONS = [
         why: 'Nothing defends the knight on e5, so your pawn takes it back. You give a pawn worth one and win a knight worth three.',
         best: 'd4e5',
         accepted: ['d4e5'],
+      },
+      {
+        fen: '6k1/8/8/8/8/8/4r3/4K3 w - - 0 1',
+        prompt: 'The black rook is checking your king. Take the attacker.',
+        hint: 'the piece that checks you may have nothing defending it',
+        why: 'The rook checks your king and nothing defends it, so you take it. Taking the attacker is the quickest of the three ways out of check.',
+        best: 'e1e2',
+        accepted: ['e1e2'],
       },
       {
         fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',
