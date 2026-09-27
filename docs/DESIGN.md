@@ -48,12 +48,25 @@ The app is one screen tall, like a phone app rather than a web page:
   not puzzles: a puzzle the answer was shown for was not solved first time, and
   `docs/PRODUCT.md` says what a star means. It is repainted by the one function that
   writes progress, so it cannot go stale behind a sheet.
-- The app bar is 63px tall at 360px and up. At 320px its line wraps to two and the bar is
-  104px — the earlier subtitle, "Pick a lesson and play. Pip helps.", cost 122px there, so the
-  line was shortened; below 360px some wrapping is unavoidable and the bar is the only thing
-  that grows.
+- The app bar is 63px tall at 360px and up, and the lines are short enough to stay on one:
+  "A game, with Pip coaching." wrapped at 360px and cost 18px of board on the play screen, so it
+  is "A game with Pip." now. At 320px the line wraps again and the bar is 104px — below 360px some
+  wrapping is unavoidable, and the bar is the only thing that grows with it.
 - `.tabbar` is three tabs — Lessons, Play, Puzzles — each at least 48px tall with an icon and a
-  label; the active one is a soft blue pill. `aria-selected` carries the state.
+  label; the active one is a soft blue pill. `aria-selected` carries the state. Tapping the tab you
+  are already on goes back to where that tab starts: from inside a lesson, the list of lessons. It
+  did nothing at all before, which made the tab look broken and left a lesson a one-way trip.
+- **Nothing is hidden with the `hidden` attribute alone.** An author `display` beats the browser's
+  own `[hidden]` rule, and the lesson list and the lesson view are both `.stack`, which is
+  `display: grid`; so one rule — `[hidden] { display: none !important }` — does the work, and it is
+  the reason the lesson list used not to leave the screen when a lesson opened (it stayed, 1100px
+  above the lesson, so the tap looked like it had done nothing and its buttons stayed in the tab
+  order). Anything that can be hidden this way is checked by opening it and looking.
+- On the play screen the bar above the board carries the turn, the level and a new game; the three
+  buttons under the board are the ones a game is *played* with (Hint, Undo, Flip). Which side you
+  play is chosen in the level sheet, with the other thing you choose once — it used to be a fourth
+  button in that row, which wrapped to two lines and pushed Hint and Undo off the bottom of a
+  640px phone.
 - Long answers arrive in a **bottom sheet** (`.sheet`) with one action button, not inline text:
   a child gets one thing to read and one thing to tap. The sheet comes with a full-bleed scrim, so it is plainly the thing to act on and nothing behind it is left half-covered; the scrim and the sheet appear and disappear together, and tapping the scrim closes it.
 - Safe-area insets are respected at the top and bottom (`env(safe-area-inset-*)`), so it does not
@@ -93,11 +106,19 @@ Every text pair clears AA. The two "verdict" colours are only ever used this way
   card**: cards cost 32px of width, which is a quarter of every square a child has to
   hit with a finger. Measured square size, 2× device scale: 36.0px at 320px, 41.0px at
   360px, 47.5px at 412px, 53.8px at 900px.
-- The wider board costs height, and the cost is on the play screen, where the move list
-  then sits below the fold on a short phone: 66px of scroll in `main` at 360×740, none from
-  about 412×915 up. It was 32px before the board was let out of the card, so the change is
-  one line of notation for a quarter more square everywhere — which is the trade this app
-  makes, because a child aims at squares and not at the notation.
+- **The board takes the room its screen leaves it, and never more.** It is
+  `width: 100%; max-width: min(430px, max(240px, var(--board-room)))`, where `--board-room` is
+  `calc(100dvh - <that screen's chrome>)`: the board is the only thing on a screen that can give
+  way without breaking, and the app must not push its own buttons off a phone. Measured chrome at
+  360×640, in a browser: app bar 63, tab bar 73, main padding 16, the play bar 70, the coach 64,
+  the three buttons 48, the moves line 18, and the gaps between them — so the play screen keeps
+  373px of chrome and lets the last 19px (the moves line) scroll, while the lesson and puzzle
+  screens fit whole (396px and 366px). The 240px floor is deliberate: on a screen too short to fit
+  everything, a board too small to aim at is worse than a screen that scrolls a little.
+- The price, measured: at 360×640 the squares are 33.4px on the play screen, 30.5px in a lesson,
+  and 34.3px on the puzzle screen; at 360×740 and up nothing shrinks and they are 41px or more
+  (36.0px at 320px wide, 47.5px at 412px, 53.8px at 900px). A child on a short phone gets every
+  control and a smaller board, which is the right way round.
 - **The board is the one control that breaks the 48px rule**, and the exception is
   measured rather than waived: eight squares cannot be 48px each inside a 360px screen
   (that needs 384px), and a board that does not fill the screen is worse than one whose
@@ -108,6 +129,12 @@ Every text pair clears AA. The two "verdict" colours are only ever used this way
   on a cheap phone) with nothing on screen to say the tap had landed. Same search, one frame later.
 - Every state marker opens with the same 4px dark frame, `#2c3350` — 10.22:1 on cream and 5.93:1
   on green — and puts its meaning inside it: yellow band for the piece you picked up (which also scales up 12%), green band where Pip suggests a move, red band on a king in check, and a green/red frame plus tint on the answer. The dark frame is why a marker is visible on both tones; without it the yellow measures 1.51:1 on cream and the green 2.55:1 on the green squares, which is there to be seen only because the frame is around it.
+- **The board shows the move the sheet describes.** After two wrong answers the sheet says "Here
+  is the move" and the accepted move is played on the board, marked green and captioned "The move
+  is shown" — this used to leave the child's own wrong move standing while the words described
+  another one, which teaches the wrong position.
+- A puzzle opens with **Back** beside its Hint: the previous step is the text that taught it, and a
+  learner who wants it again should not have to guess first.
 - The last move is a faint dark frame (2.2:1): supplementary, not load-bearing — the move list
   says the same thing in words.
 - Legal targets are a solid dark dot on an empty square and a dark ring with a white inner gap
@@ -121,13 +148,26 @@ Space Grotesk for headings and numbers, Inter for everything else — the family
 
 ## Motion
 
-Three small movements, all removed under `prefers-reduced-motion: reduce`:
+Five movements, all removed under `prefers-reduced-motion: reduce` (one rule, `animation: none
+!important; transition: none !important`), and nothing else on the page animates:
 
-- the sheet sliding up from the bottom edge on a right answer,
-- the piece scaling up when you pick it up,
-- a short confetti drop (18 squares, 1.1s) on a correct answer or a win.
+| What | When | How long |
+|---|---|---|
+| a piece slides from the square it left | every move, the learner's and Pip's | 0.16s, ease-out |
+| a piece scales up when picked up | selection | 0.12s |
+| the sheet slides up from the bottom edge | a verdict or a question | 0.22s |
+| the scrim fades in under the sheet | with the sheet | 0.18s |
+| confetti, 18 squares | a correct answer or a win | 1.1s |
 
-Nothing loops, nothing moves while a child is thinking, and no sound is played.
+- The slide is the one that earns its keep: a redraw cannot show *which* piece went where, and a
+  child who looks away for a second needs to see it. The distance comes from the board, in pixels
+  (`--dx`/`--dy`), because a square is not the piece's own width.
+- The coach's avatar bobs while Pip is working out a reply, and the buttons that would change the
+  game (Hint, Undo, Flip) are disabled for the same time — a locked board with nothing to say so
+  reads as a broken one. A search in flight is guarded by `play.token`, so starting a new game
+  while Pip is thinking cannot land a grade on it.
+- Nothing loops except that one cue, nothing moves while a child is thinking about their own move,
+  and no sound is played.
 
 ## Stars
 
@@ -151,8 +191,10 @@ sheet says "Here is the move", not "Correct!", and the child did not find it. Th
 - The coach's bubble and a visually hidden live region (`#live`) announce every verdict, so a
   screen reader hears the same feedback a child reads. A king left in check is spoken too — the
   coach's line starts with "Check!" — because the red band is a colour and a colour is not a word.
+- The lesson's progress dots are a `role="img"` with a label — "Step 3 of 11, 1 of 4 puzzles won
+  first time" — because three colours of circle say nothing to anyone who cannot see them.
 - Nothing is carried by colour alone: turns, check, verdicts and stars all appear as words or
   numbers too.
 - Tap targets are at least 48px, with one measured exception: the board's own squares, which are as
-  large as the screen allows (36–54px — see the board section).
+  large as the screen allows (30.5–53.8px — see the board section for which screen gets what).
 - Nothing important sits within 8px of a screen edge.

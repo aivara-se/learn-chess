@@ -42,7 +42,8 @@ A beginner's chess course shaped like a small phone app: three tabs, one idea pe
 - **Looks and behaves like an app**: one screen tall, bottom tab bar, one idea per screen, tap
   targets of at least 48px — the board's own squares are the one measured exception, because eight
   of them cannot be 48px each inside a 360px screen (`docs/DESIGN.md` carries the numbers) — no
-  page scroll, no sideways scroll at 360px.
+  page scroll, no sideways scroll at 360px. Nothing a game is played with is ever off-screen: when
+  a phone is short the board gives way, because it is the only thing there that can.
 - **Works offline for real**, from any static host: the app's own files are cached by `sw.js`, so a
   reload with no network still opens it, and a home screen can install it. No build step, no runtime
   config.
