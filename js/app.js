@@ -380,7 +380,8 @@ function renderLessonList() {
      learner (or a parent) can see what the difference is. */
   const progress = el('p', 'tiny');
   progress.style.marginTop = '10px';
-  progress.textContent = `${done} of ${TOTAL_DRILLS} puzzles solved · ${starCount()} stars won. `
+  const stars = starCount();
+  progress.textContent = `${done} of ${TOTAL_DRILLS} puzzles solved · ${stars} ${stars === 1 ? 'star' : 'stars'} won. `
     + 'A star is a puzzle you solved first time.';
   intro.appendChild(progress);
   list.appendChild(intro);
