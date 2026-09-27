@@ -97,8 +97,14 @@
     .appbar .who { flex: 1; min-width: 0; }
     .appbar h1 { font-size: 19px; }
     .appbar p { font-size: 12.5px; color: var(--ink-mute); }
-    main { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 2px 16px 26px; }
-    .screen[hidden] { display: none; }
+    main { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 2px 16px 14px; }
+    /* One rule for everything that is hidden, because `hidden` on its own is not
+       enough: an author `display` beats the browser's own `[hidden]` rule, and the
+       lesson list and the lesson view are both `.stack`, which is `display: grid`.
+       Without this, opening a lesson left the whole list on screen above it — 1100px
+       above it, so the tap looked like it had done nothing — and left the list's
+       buttons in the tab order while they could not be seen. */
+    [hidden] { display: none !important; }
 
     .tabbar {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
@@ -155,6 +161,20 @@
     .chip.good { background: var(--good-soft); border-color: #bfe8d3; color: var(--good); }
     .chip.bad { background: var(--bad-soft); border-color: #f7c9cc; color: var(--bad); }
 
+    /* The play screen is the one that has to hold a board, a coach, its buttons
+       and the moves on a short phone, so it keeps its own tighter rhythm. */
+    #screen-play .stack { gap: 10px; }
+    .playbar { padding: 10px 12px; }
+    #screen-play .bubble { padding: 10px 12px; }
+    /* Everything on a screen that is not the board, measured at 360x640 in a
+       browser (docs/DESIGN.md carries the table): appbar 63, tab bar 73, main
+       padding 16, the play bar 70, the coach 64, three buttons 48, the moves line
+       18, and the gaps between them. The play screen keeps the board bigger and
+       lets the moves line take the last 19px of scroll; the other two fit whole. */
+    #screen-play { --board-room: calc(100dvh - 373px); }
+    #screen-learn #lesson-board { --board-room: calc(100dvh - 396px); }
+    #screen-train { --board-room: calc(100dvh - 366px); }
+
     /* lesson list */
     .lesson {
       display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
@@ -181,8 +201,14 @@
        across a 360px screen is 41px each, and a chess board that is narrower than
        the screen is worse than a small target. docs/DESIGN.md carries the
        measurement. Nothing sits inside a card, or it would lose 32px of width. */
+    /* The board takes the room its screen leaves it and no more: the app must not
+       push its own buttons off a short phone. `--board-room` is what is left of the
+       viewport once that screen's chrome is taken out — measured per screen, in
+       docs/DESIGN.md — with a floor, because a board too small to aim at is worse
+       than one that makes the page scroll a little. */
     .board {
-      width: 100%; max-width: 430px; aspect-ratio: 1; display: grid;
+      width: 100%; aspect-ratio: 1; display: grid;
+      max-width: min(430px, max(240px, var(--board-room, 430px)));
       grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
       border-radius: 18px; overflow: hidden; box-shadow: 0 6px 20px rgba(24, 32, 70, 0.18);
       user-select: none; touch-action: manipulation; border: 4px solid #fff;
@@ -204,6 +230,12 @@
     /* Every state marker starts with a dark frame (#2c3350: 10.22:1 on cream,
        5.93:1 on green, so it is visible on both tones) and puts its meaning
        inside it. Nothing is signalled by a colour alone. */
+    /* The piece that has just moved slides in from where it was. A redraw cannot
+       show which piece went where; a child who looks away for a second needs it,
+       and so does anyone watching over their shoulder. Distance comes from the
+       board, in --dx/--dy, because a square is not the piece's own width. */
+    .sq .pc.walk { animation: walk 0.16s ease-out; }
+    @keyframes walk { from { transform: translate(var(--dx, 0), var(--dy, 0)); } }
     .sq.sel { box-shadow: inset 0 0 0 4px #2c3350, inset 0 0 0 9px #ffb01f; }
     .sq.sel .pc { transform: scale(1.12); }
     .sq.last { box-shadow: inset 0 0 0 4px rgba(44, 51, 80, 0.5); }
@@ -220,6 +252,10 @@
     /* the coach and the puzzle feedback */
     .coach { display: flex; gap: 10px; align-items: flex-start; }
     .coach .av { flex: none; width: 36px; height: 36px; }
+    /* Pip working something out. The board is locked while he does, and a board
+       that ignores taps with no reason shown reads as a broken one. */
+    .coach.thinking .av { animation: think 1.05s ease-in-out infinite; }
+    @keyframes think { 50% { transform: translateY(-4px) rotate(-4deg); } }
     .bubble {
       background: var(--surface); border: 1px solid var(--line); border-radius: 16px 16px 16px 4px;
       padding: 12px 14px; font-size: 14.5px; color: var(--ink-soft); box-shadow: var(--shadow);
@@ -238,7 +274,6 @@
     /* The reward/message sheet. A scrim sits under it, full bleed, so nothing
        else is half-covered and the sheet is plainly the thing to act on. */
     .scrim { position: absolute; inset: 0; z-index: 20; background: rgba(24, 32, 70, 0.32); animation: fade 0.18s ease-out; }
-    .scrim[hidden] { display: none; }
     @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
     .sheet {
       position: absolute; left: 0; right: 0; bottom: 0; z-index: 21;
@@ -247,7 +282,6 @@
       box-shadow: 0 -10px 40px rgba(24, 32, 70, 0.28); animation: up 0.22s ease-out;
       max-height: 60%; overflow-y: auto;
     }
-    .sheet[hidden] { display: none; }
     .sheet .sheethead { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
     .sheet .sheethead .bigicon { width: 44px; height: 44px; flex: none; }
     .sheet h2 { font-size: 20px; }
@@ -299,7 +333,7 @@
     <!-- PLAY -->
     <section class="screen" id="screen-play" data-screen="play" hidden>
       <div class="stack">
-        <div class="card" style="padding:12px 14px">
+        <div class="card playbar">
           <div class="between">
             <span class="chip" id="play-turn">Your move</span>
             <div class="row" style="gap:6px">
@@ -329,7 +363,6 @@
           <button class="btn" id="play-hint">Hint</button>
           <button class="btn" id="play-undo">Undo</button>
           <button class="btn" id="play-flip">Flip</button>
-          <button class="btn" id="play-colour">Play black</button>
         </div>
         <p class="tiny" id="play-moves" style="text-align:center;word-spacing:4px"></p>
       </div>

@@ -8,9 +8,10 @@
  *
  * Rules it keeps: only this origin, only GET, no network from here. Bump CACHE
  * when the files change, and add a new file to FILES in the same commit that
- * adds it — scripts/verify-site.ts checks both.
+ * adds it — scripts/verify-site.ts checks that FILES covers the app and that
+ * every file in it is really here; the bump is checked by reading it.
  */
-const CACHE = 'learn-chess-v1';
+const CACHE = 'learn-chess-v2';
 
 const FILES = [
   './',
