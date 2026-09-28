@@ -310,7 +310,12 @@ function showSheet({ title, text, tone = '', icon = 'star', action = 'Got it', o
   return sheet;
 }
 
+/* `iconSvg()` wraps one of these in an <svg>; the sheet fills its own element
+   with the same markup. Each glyph draws its own circle or uses currentColor, so
+   the same one works on a map stop and inside a sheet. */
 const ICONS = {
+  tick: '<path d="M5 12.8l4.6 4.6L19 7.4" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  lock: '<circle cx="12" cy="12" r="10" fill="#eef1f8"/><path d="M9 11.6V9.4a3 3 0 0 1 6 0v2.2" fill="none" stroke="#5f698a" stroke-width="1.8" stroke-linecap="round"/><rect x="7.6" y="11.6" width="8.8" height="7" rx="1.8" fill="#5f698a"/>',
   star: '<path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5 6.1 20.6l1.2-6.5L2.5 9.5l6.6-.9z" fill="#ffb01f" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/>',
   happy: '<circle cx="12" cy="12" r="10" fill="#e3f7ec"/><circle cx="9" cy="10" r="1.6" fill="#0f7b46"/><circle cx="15" cy="10" r="1.6" fill="#0f7b46"/><path d="M8 14q4 3.6 8 0" fill="none" stroke="#0f7b46" stroke-width="2" stroke-linecap="round"/>',
   hmm: '<circle cx="12" cy="12" r="10" fill="#ffe9ea"/><circle cx="9" cy="10" r="1.6" fill="#b8232b"/><circle cx="15" cy="10" r="1.6" fill="#b8232b"/><path d="M8 16q4-3.6 8 0" fill="none" stroke="#b8232b" stroke-width="2" stroke-linecap="round"/>',
@@ -342,7 +347,7 @@ function confetti() {
 
 /* ---------- Lessons ---------- */
 
-const learn = { lesson: 0, step: 0, state: null, tries: 0 };
+const learn = { lesson: 0, step: 0, state: null, tries: 0, celebrated: false };
 
 function starsFor(lesson) {
   const drills = lesson.drills || [];
@@ -383,6 +388,78 @@ function currentLesson() {
   return 0;
 }
 
+/* ---------- the path ---------- */
+
+/* The stops a learner can take, and what has to be finished before each. The
+   graph lives in js/lessons.js as `requires`; nothing here knows the order. */
+
+const lessonById = new Map(LESSONS.map((l) => [l.id, l]));
+const lessonFinished = (lesson) => (lesson.drills || []).every((_, i) => isSolved(`drill:${lesson.id}:${i}`));
+const lessonOpen = (lesson) => (lesson.requires || []).every((id) => lessonFinished(lessonById.get(id)));
+const firstMissing = (lesson) => (lesson.requires || []).find((id) => !lessonFinished(lessonById.get(id)));
+
+/* How far down the path a lesson is: the longest chain of lessons behind it, so
+   nothing is ever drawn above the lesson it needs. `seen` stops a cycle from
+   hanging the renderer — scripts/verify-site.ts is what fails one. */
+function depthOf(lesson, seen = new Set()) {
+  const reqs = lesson.requires || [];
+  if (!reqs.length) return 0;
+  if (seen.has(lesson.id)) return 0;
+  seen.add(lesson.id);
+  return 1 + Math.max(...reqs.map((id) => depthOf(lessonById.get(id), seen)));
+}
+
+/* Stops are laid out from the graph, never from a hand-written table: one stop
+   sits in the middle, a fork puts its two branches left and right, so the route
+   winds and the picture cannot drift away from the course. */
+const MAP_ROW = 152;
+const MAP_TOP = 46;
+const MAP_COL = [0.19, 0.5, 0.81];
+function mapLayout() {
+  const rows = new Map();
+  for (const lesson of LESSONS) {
+    const d = depthOf(lesson);
+    if (!rows.has(d)) rows.set(d, []);
+    rows.get(d).push(lesson);
+  }
+  const placed = new Map();
+  for (const [d, group] of [...rows.entries()].sort((a, b) => a[0] - b[0])) {
+    const cols = group.length === 1 ? [1] : group.length === 2 ? [0, 2] : [0, 1, 2];
+    group.forEach((lesson, i) => {
+      placed.set(lesson.id, { lesson, depth: d, x: MAP_COL[cols[Math.min(i, cols.length - 1)]], y: MAP_TOP + d * MAP_ROW });
+    });
+  }
+  const deepest = Math.max(...rows.keys());
+  return { placed, height: MAP_TOP + deepest * MAP_ROW + 168 };
+}
+
+/* Where to send a learner: the first stop that is open and not finished. */
+function nextLesson() {
+  return LESSONS.find((l) => lessonOpen(l) && !lessonFinished(l))
+    || LESSONS.find((l) => lessonOpen(l)) || LESSONS[0];
+}
+
+/* What finishing this lesson opens: a stop whose every requirement is now done. */
+const openedBy = (id) => LESSONS.filter((l) => (l.requires || []).includes(id)
+  && (l.requires || []).every((r) => lessonFinished(lessonById.get(r))));
+
+/* Stars become a rank, and the rank is a piece whose reach they have earned: a
+   child who has won five stars is a knight, not "level 2". */
+const RANKS = [['Pawn', 0], ['Knight', 5], ['Bishop', 10], ['Rook', 14], ['Queen', 18], ['King', 23]];
+function rankFor(stars) {
+  let at = 0;
+  while (at + 1 < RANKS.length && stars >= RANKS[at + 1][1]) at += 1;
+  const next = RANKS[at + 1] || null;
+  return {
+    name: RANKS[at][0],
+    next: next ? next[0] : null,
+    need: next ? next[1] - stars : 0,
+    from: RANKS[at][1],
+    to: next ? next[1] : TOTAL_DRILLS,
+    stars,
+  };
+}
+
 function renderLessonList() {
   const list = $('lesson-list');
   list.textContent = '';
@@ -390,41 +467,131 @@ function renderLessonList() {
 
   const intro = el('div', 'card intro');
   intro.appendChild(el('h2', null, 'Hi, I am Pip'));
-  intro.appendChild(el('p', null, `${LESSONS.length} lessons, ${TOTAL_DRILLS} puzzles. Pip helps you play them all.`));
+  intro.appendChild(el('p', null, `${LESSONS.length} lessons, ${TOTAL_DRILLS} puzzles. Finish a lesson and the path opens up — you choose which way to go.`));
   const done = solvedCount();
   const allDone = done === TOTAL_DRILLS;
+  const goTo = nextLesson();
   const start = el('button', 'btn primary wide',
-    allDone ? 'Play it all again' : (done === 0 ? 'Start lesson 1' : `Keep going: lesson ${currentLesson() + 1}`));
+    allDone ? 'Play it all again' : (done === 0 ? 'Start lesson 1' : `Keep going: lesson ${LESSONS.indexOf(goTo) + 1}`));
   start.type = 'button';
-  start.addEventListener('click', () => openLesson(allDone ? 0 : currentLesson()));
+  start.addEventListener('click', () => openLesson(allDone ? 0 : LESSONS.indexOf(goTo)));
   intro.appendChild(start);
+
+  /* The rank ladder. Stars are the number a child watches; the rank is what it
+     is worth, and it is named after a piece they know. */
+  const rank = rankFor(starCount());
+  const rk = el('div', 'rank');
+  const who = el('div', 'who');
+  who.appendChild(el('b', null, `Rank: ${rank.name}`));
+  who.appendChild(el('span', null, rank.next
+    ? `${rank.need} more ${rank.need === 1 ? 'star' : 'stars'} to ${rank.next}`
+    : 'the whole course, every star'));
+  rk.appendChild(who);
+  const bar = el('div', 'bar');
+  const fill = el('i');
+  fill.style.width = `${Math.min(100, Math.round(((rank.stars - rank.from) / Math.max(1, rank.to - rank.from)) * 100))}%`;
+  bar.appendChild(fill);
+  rk.appendChild(bar);
+  intro.appendChild(rk);
   /* Both numbers, in one place, in words: a puzzle solved, and a star for the
      ones solved first time. The header chip carries the stars; this is where a
      learner (or a parent) can see what the difference is. */
-  const progress = el('p', 'tiny');
-  progress.style.marginTop = '10px';
-  const stars = starCount();
-  progress.textContent = `${done} of ${TOTAL_DRILLS} puzzles solved · ${stars} ${stars === 1 ? 'star' : 'stars'} won. `
-    + 'A star is a puzzle you solved first time.';
-  intro.appendChild(progress);
+  /* Both numbers, in words, once there is a number worth reading: on a fresh
+     install "0 of 26 puzzles solved · 0 stars won" is four lines of nothing to
+     read, and the card is the first thing a child sees. */
+  if (done > 0) {
+    const progress = el('p', 'tiny');
+    progress.style.marginTop = '10px';
+    const stars = starCount();
+    progress.textContent = `${done} of ${TOTAL_DRILLS} puzzles solved · ${stars} ${stars === 1 ? 'star' : 'stars'} won. `
+      + 'A star is a puzzle you solved first time.';
+    intro.appendChild(progress);
+  }
   list.appendChild(intro);
+
+  const { placed, height } = mapLayout();
+  const here = allDone ? null : nextLesson();
+  const map = el('div', 'map');
+  map.setAttribute('role', 'group');
+  map.setAttribute('aria-label', 'The path of lessons');
+  map.style.height = `${height}px`;
+
+  /* The route, drawn under the stops: a dotted trail for a leg not walked yet, a
+     solid one for a leg whose lesson is finished. */
+  const NS = 'http://www.w3.org/2000/svg';
+  const route = document.createElementNS(NS, 'svg');
+  route.setAttribute('class', 'route');
+  route.setAttribute('aria-hidden', 'true');
+  for (const { lesson } of placed.values()) {
+    for (const id of lesson.requires || []) {
+      const from = placed.get(id);
+      const to = placed.get(lesson.id);
+      const l = document.createElementNS(NS, 'line');
+      l.setAttribute('x1', `${from.x * 100}%`);
+      l.setAttribute('y1', String(from.y));
+      l.setAttribute('x2', `${to.x * 100}%`);
+      l.setAttribute('y2', String(to.y));
+      if (lessonFinished(lessonById.get(id))) l.setAttribute('class', 'open');
+      route.appendChild(l);
+    }
+  }
+  map.appendChild(route);
 
   LESSONS.forEach((lesson, i) => {
     const s = starsFor(lesson);
-    const allDone = s.of > 0 && s.solved === s.of;
-    const card = el('button', 'lesson' + (allDone ? ' done' : ''));
-    card.type = 'button';
-    card.appendChild(el('span', 'num', allDone ? '\u2713' : String(i + 1)));
-    const txt = el('span', 'txt');
-    txt.appendChild(el('span', 't', lesson.title));
-    txt.appendChild(el('span', 's', allDone
-      ? (s.got === s.of ? 'All puzzles, all first time' : `${s.got} of ${s.of} stars — try again for more`)
-      : (s.solved === 0 ? `${s.of} puzzles` : `${s.solved} of ${s.of} puzzles solved`)));
-    card.appendChild(txt);
-    card.appendChild(starRow(s.got, s.of));
-    card.addEventListener('click', () => openLesson(i));
-    list.appendChild(card);
+    const spot = placed.get(lesson.id);
+    const state = lessonFinished(lesson) ? 'done' : lessonOpen(lesson) ? 'open' : 'locked';
+    const btn = el('button', `node ${state}${here && here.id === lesson.id ? ' here' : ''}`);
+    btn.type = 'button';
+    btn.style.left = `${spot.x * 100}%`;
+    btn.style.top = `${spot.y}px`;
+    const dot = el('span', 'dot');
+    if (state === 'done') dot.appendChild(iconSvg('tick', 25));
+    else if (state === 'locked') dot.appendChild(iconSvg('lock', 25));
+    else dot.appendChild(document.createTextNode(String(i + 1)));
+    btn.appendChild(dot);
+    btn.appendChild(el('span', 'cap', lesson.title));
+    if (state === 'locked') {
+      btn.appendChild(el('span', 'sub', `after lesson ${LESSONS.indexOf(lessonById.get(firstMissing(lesson))) + 1}`));
+    } else {
+      btn.appendChild(starRow(s.got, s.of));
+      btn.appendChild(el('span', 'sub', state === 'done'
+        ? (s.got === s.of ? 'all first time' : `${s.got} of ${s.of} stars`)
+        : (s.solved === 0 ? `${s.of} puzzles` : `${s.solved} of ${s.of} puzzles`)));
+    }
+    btn.setAttribute('aria-label', state === 'locked'
+      ? `${lesson.title}: locked. Finish ${lessonById.get(firstMissing(lesson)).title} first.`
+      : `${lesson.title}: ${s.solved} of ${s.of} puzzles solved, ${s.got} of ${s.of} stars${state === 'done' ? ', finished' : ''}.`);
+    btn.addEventListener('click', () => {
+      if (state !== 'locked') { openLesson(i); return; }
+      /* A locked stop still answers: it names the lesson that opens it, and takes
+         a learner there when that lesson is playable. */
+      const missing = lessonById.get(firstMissing(lesson));
+      const canGo = lessonOpen(missing);
+      showSheet({
+        title: 'Not open yet',
+        text: `Finish “${missing.title}” first — then “${lesson.title}” opens.`,
+        icon: 'lock',
+        action: canGo ? `Go to ${missing.title}` : 'Got it',
+        cancel: 'Not now',
+        onAction: canGo ? () => openLesson(LESSONS.indexOf(missing)) : undefined,
+      });
+    });
+    map.appendChild(btn);
   });
+
+  /* Pip stands where the learner is. The pawn is a clone of the app bar's own, so
+     there is one drawing of him in the repository. */
+  const spot = here && placed.get(here.id);
+  if (spot) {
+    const pip = document.querySelector('.appbar .mascot').cloneNode(true);
+    pip.setAttribute('class', 'pip');
+    pip.setAttribute('aria-hidden', 'true');
+    pip.style.left = `calc(${spot.x * 100}% + 34px)`;
+    pip.style.top = `${spot.y - 14}px`;
+    map.appendChild(pip);
+  }
+  list.appendChild(map);
 
   const truth = el('p', 'tiny');
   truth.style.marginTop = '14px';
@@ -464,8 +631,13 @@ function lessonSteps(lesson) {
 }
 
 function openLesson(i) {
+  const lesson = LESSONS[i];
+  /* The map will not offer a locked lesson, but a stale sheet or a stray call can:
+     it goes back to the path rather than around the course. */
+  if (!lesson || !lessonOpen(lesson)) { backToList(); return; }
   learn.lesson = i;
   learn.step = 0;
+  learn.celebrated = false;
   $('lesson-list').hidden = true;
   $('lesson-view').hidden = false;
   renderStep();
@@ -631,29 +803,43 @@ function renderStep() {
 
   /* done */
   const s = starsFor(lesson);
+  const courseDone = solvedCount() === TOTAL_DRILLS;
   const card = el('div', 'card');
   const head = el('div', 'between');
-  head.appendChild(el('h2', null, 'Lesson finished!'));
+  head.appendChild(el('h2', null, courseDone ? 'The whole course!' : s.got === s.of ? 'All the stars!' : 'Lesson finished!'));
   head.appendChild(starRow(s.got, s.of));
   card.appendChild(head);
-  card.appendChild(el('p', null, s.got === s.of
-    ? 'Every puzzle first time. Brilliant.'
-    : 'You solved every puzzle. Try again to get all the stars first time.'));
+  card.appendChild(el('p', null, courseDone
+    ? 'Every lesson, every puzzle, and Pip thinks you are ready for a real game. Play him whenever you like — he is on the Play tab.'
+    : s.got === s.of
+      ? 'Every puzzle first time. Brilliant — that is a lesson done and a rank closer.'
+      : 'Nice work, that is the lesson done. Play any puzzle again to try for the stars you missed.'));
+  /* The path answers the only question a child has at this point: what now? */
+  const opened = openedBy(lesson.id);
+  if (opened.length) {
+    const p = el('p', 'tiny');
+    p.style.marginTop = '10px';
+    p.textContent = opened.length === 1
+      ? `The path goes on: ${opened[0].title} is open now.`
+      : `The path splits two ways: ${opened.map((l) => l.title).join(' and ')}. Take either.`;
+    card.appendChild(p);
+  }
   const row = el('div', 'row');
   row.style.marginTop = '12px';
-  const next = el('button', 'btn primary', learn.lesson + 1 < LESSONS.length ? 'Next lesson' : 'Back to lessons');
+  const onward = opened[0] || (courseDone ? null : nextLesson());
+  const next = el('button', 'btn primary', onward ? `Next: ${onward.title}` : 'Back to the path');
   next.type = 'button';
-  next.addEventListener('click', () => {
-    if (learn.lesson + 1 < LESSONS.length) openLesson(learn.lesson + 1);
-    else backToList();
-  });
-  const all = el('button', 'btn', 'All lessons');
+  next.addEventListener('click', () => (onward ? openLesson(LESSONS.indexOf(onward)) : backToList()));
+  const all = el('button', 'btn', 'The path');
   all.type = 'button';
   all.addEventListener('click', backToList);
   row.appendChild(next);
   row.appendChild(all);
   card.appendChild(row);
   view.appendChild(card);
+  /* Celebrated once per visit: reaching the end again by walking back through the
+     lesson should not throw confetti every time. */
+  if (!learn.celebrated) { learn.celebrated = true; confetti(); }
 }
 
 function dots(steps, at, lesson) {

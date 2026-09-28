@@ -5,7 +5,18 @@
  * developing, castling, the early queen, looking before you move, and the
  * Italian opening as a model.
  *
- * A lesson is data: { id, title, goal, body[], diagram, diagramCaption, drills[] }.
+ * A lesson is data: { id, title, goal, body[], diagram, diagramCaption, drills[],
+ * requires[] }. `requires` is the lesson that has to be finished first, and it is
+ * the whole of the map — the path forks twice and merges twice:
+ *
+ *   1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ── 8 italian
+ *                       └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘
+ *
+ * so a learner chooses which of the first two to take, and which habit to learn
+ * next, but material still comes before developing and both habits come before
+ * looking for loose pieces. The map is drawn from this and nothing else;
+ * `scripts/verify-site.ts` fails a `requires` that names no lesson, a cycle, or a
+ * lesson no path can reach.
  * A drill is a position, the task in the learner's words, and the moves that
  * count as an answer:
  *   fen       the position, side to move taken from the FEN
@@ -32,6 +43,7 @@
 export const LESSONS = [
   {
     id: 'board-and-pieces',
+    requires: [],
     title: 'The board and the pieces',
     goal: 'Learn the squares and how every piece moves.',
     body: [
@@ -81,6 +93,7 @@ export const LESSONS = [
 
   {
     id: 'piece-values',
+    requires: ['board-and-pieces'],
     title: 'What the pieces are worth',
     goal: 'Know what each piece is worth, and count first.',
     body: [
@@ -120,6 +133,7 @@ export const LESSONS = [
 
   {
     id: 'centre-pawns',
+    requires: ['board-and-pieces'],
     title: 'Put a pawn in the centre',
     goal: 'Take the middle of the board with a pawn.',
     body: [
@@ -160,6 +174,7 @@ export const LESSONS = [
 
   {
     id: 'develop',
+    requires: ['piece-values', 'centre-pawns'],
     title: 'Bring out one new piece every move',
     goal: 'Bring out a new piece with every move.',
     body: [
@@ -200,6 +215,7 @@ export const LESSONS = [
 
   {
     id: 'castle-early',
+    requires: ['develop'],
     title: 'Get the king safe: castle early',
     goal: 'Castle before the middle of the board opens up.',
     body: [
@@ -247,6 +263,7 @@ export const LESSONS = [
 
   {
     id: 'queen-early',
+    requires: ['develop'],
     title: 'Do not bring the queen out early',
     goal: 'Keep the queen at home until the other pieces are out.',
     body: [
@@ -287,6 +304,7 @@ export const LESSONS = [
 
   {
     id: 'look-first',
+    requires: ['castle-early', 'queen-early'],
     title: 'Look first: checks and captures',
     goal: 'Look before every move, for captures and for checks.',
     body: [
@@ -336,6 +354,7 @@ export const LESSONS = [
 
   {
     id: 'italian',
+    requires: ['look-first'],
     title: 'A model opening: the Italian game',
     goal: 'Play the first six moves of the Italian game.',
     body: [
