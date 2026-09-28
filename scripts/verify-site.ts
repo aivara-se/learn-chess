@@ -3,10 +3,11 @@
  *
  *   bun run scripts/verify-site.ts
  *
- * It answers five questions: does every file the page asks for exist, is there
+ * It answers six questions: does every file the page asks for exist, is there
  * any third-party request, is the offline file list complete, does the course
  * hold together (positions legal, answers legal, one idea per drill, copy inside
- * its budgets), and does the shell carry the markup the app needs.
+ * its budgets), is the path of lessons a graph a learner can walk, and does the
+ * shell carry the markup the app needs.
  *
  * It cannot tell you whether a drill's answer is the best move or whether the
  * accepted list is the right width — scripts/verify-drills.ts asks Stockfish
@@ -179,6 +180,57 @@ for (const file of ['js/app.js', 'index.html']) {
   }
   const longestLine = lines.length ? Math.max(...lines.map(([, l]) => l.length)) : 0;
   checks.push(`the app bar lines stay on one line at 360px (longest ${longestLine} characters) and the game's buttons are one row of three`);
+}
+
+/* 9. the path of lessons is a graph a learner can walk. The map in the lessons
+ * tab is drawn from `requires` in js/lessons.js, so a broken graph is a broken
+ * picture: a stop that names nothing, a circle, or a stop no route reaches. */
+{
+  const ids = new Set(LESSONS.map((l) => l.id));
+  if (ids.size !== LESSONS.length) problems.push('two lessons share an id, so the map cannot tell them apart');
+  for (const l of LESSONS) {
+    if (!Array.isArray(l.requires)) { problems.push(`${l.id} has no requires list, so the map cannot place it`); continue; }
+    for (const r of l.requires) {
+      if (!ids.has(r)) problems.push(`${l.id} requires "${r}", which is not a lesson`);
+      if (r === l.id) problems.push(`${l.id} requires itself`);
+    }
+  }
+  const roots = LESSONS.filter((l) => (l.requires || []).length === 0);
+  if (!roots.length) problems.push('no lesson is open at the start: every lesson requires another, so there is nothing to play');
+
+  const colour = new Map();
+  const circles = [];
+  const visit = (l, trail) => {
+    const c = colour.get(l.id);
+    if (c === 2) return;
+    if (c === 1) { circles.push([...trail, l.id].join(' -> ')); return; }
+    colour.set(l.id, 1);
+    for (const r of l.requires || []) {
+      const m = LESSONS.find((x) => x.id === r);
+      if (m) visit(m, [...trail, l.id]);
+    }
+    colour.set(l.id, 2);
+  };
+  for (const l of LESSONS) visit(l, []);
+  if (circles.length) problems.push(`the path goes in a circle: ${circles[0]} — no lesson in it could ever open`);
+
+  const reached = new Set();
+  const walk = (l) => {
+    if (reached.has(l.id)) return;
+    reached.add(l.id);
+    for (const m of LESSONS) if ((m.requires || []).includes(l.id)) walk(m);
+  };
+  for (const l of roots) walk(l);
+  const stranded = LESSONS.filter((l) => !reached.has(l.id));
+  if (stranded.length) problems.push(`no route reaches ${stranded.map((l) => l.id).join(', ')}, so a learner can never open ${stranded.length === 1 ? 'it' : 'them'}`);
+
+  const depth = (l, guard = new Set()) => {
+    const reqs = (l.requires || []).filter((r) => ids.has(r) && r !== l.id);
+    if (!reqs.length || guard.has(l.id)) return 0;
+    guard.add(l.id);
+    return 1 + Math.max(...reqs.map((r) => depth(LESSONS.find((x) => x.id === r), guard)));
+  };
+  checks.push(`the path: ${LESSONS.length} stops, ${roots.length} open at the start, every stop reachable, ${Math.max(...LESSONS.map((l) => depth(l))) + 1} rows deep`);
 }
 
 for (const c of checks) console.log(`ok   ${c}`);
