@@ -347,7 +347,9 @@ for what a child did, that stays. Nine of them, and their rules live in one modu
 - **Where a badge is counted** — four moments that already existed, and no new screen: the sheet that
   ends a game (the first game, a win, the level, the mate), castling inside a game, a first-try answer
   in `record()`, and the card that finishes a lesson. A mate delivered by a puzzle is a checkmate
-  delivered too, and is counted where the game's own checkmate sheet would count it.
+  delivered too, and is counted where the game's own checkmate sheet would count it — the shuffle, a
+  lesson's drill and today's puzzle are the same board under the same rule, so a mate delivered as the
+  day's puzzle counts as well, and the sheet that ends the day says the badge like any other.
 - **Where a badge is said.** On the sheet or the card the moment itself opens — "New badge: “Five in a
   row”." — and on the shelf. Castling in a game is the one exception: a sheet over a live board between
   two moves would be worse than saying nothing, so that badge is only on the shelf.
