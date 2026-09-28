@@ -1457,7 +1457,7 @@ function startDaily() {
 const SUBTITLE = {
   learn: 'Pick a lesson and play.',
   play: 'A game with Pip.',
-  train: 'The puzzles, shuffled.',
+  train: 'Today, then the rest.',
 };
 
 function showScreen(name) {
