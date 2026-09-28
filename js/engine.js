@@ -1007,8 +1007,15 @@ const WORTH = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
 export function findThreat(pos, from, attacker, defender) {
   const pc = pieceAt(pos, from);
   if (!pc || pc.color !== attacker) return null;
+  /* `legalMovesFrom`, and `legalMoves` under it, speaks only for the side to
+     move — and this question is asked the moment the piece has moved, when it is
+     the *other* side's turn: the attacker then yields no moves at all and every
+     answer is null, however big the threat really is. So ask it with the attacker
+     to move. Only the attacker's own moves are read back out; the caller's
+     position is never touched and its `turn` does not change the answer. */
+  const asker = pos.turn === attacker ? pos : { ...clonePos(pos), turn: attacker };
   let best = null;
-  for (const move of legalMovesFrom(pos, from)) {
+  for (const move of legalMovesFrom(asker, from)) {
     const victim = pieceAt(pos, move.to);
     if (!victim || victim.color !== defender || victim.type === 'K') continue;
     const worth = WORTH[victim.type];
