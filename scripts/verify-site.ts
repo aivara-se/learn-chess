@@ -103,12 +103,22 @@ for (const lesson of LESSONS) {
     longest.body = Math.max(longest.body, para.length);
     if (para.length > BUDGET.body) problems.push(`lesson ${lesson.id}: paragraph ${i + 1} is ${para.length} chars (budget ${BUDGET.body})`);
   });
-  if (!lesson.diagram) problems.push(`lesson ${lesson.id} has no diagram position`);
-  else {
-    try { parseFen(lesson.diagram); } catch { problems.push(`lesson ${lesson.id} has an unparseable diagram FEN`); }
+  /* A boss stop is a game, not a page of puzzles: it has no drills and no
+     diagram, and it names the level of the opponent it is won at. Everything
+     else about it is every stop's business — its title, its goal, its copy. */
+  const boss = (lesson as any).boss as { level?: number } | undefined;
+  if (boss) {
+    if (!Number.isInteger(boss.level) || (boss.level as number) < 1 || (boss.level as number) > 3) {
+      problems.push(`lesson ${lesson.id}: a boss stop names the level it is won at, and ${boss.level} is not one of 1, 2 or 3`);
+    }
+  } else {
+    if (!lesson.diagram) problems.push(`lesson ${lesson.id} has no diagram position`);
+    else {
+      try { parseFen(lesson.diagram); } catch { problems.push(`lesson ${lesson.id} has an unparseable diagram FEN`); }
+    }
   }
   const list = lesson.drills ?? [];
-  if (!list.length) problems.push(`lesson ${lesson.id} has no drills`);
+  if (!list.length && !boss) problems.push(`lesson ${lesson.id} has no drills and is not a boss stop`);
   list.forEach((drill: any, i: number) => {
     drills++;
     const where = `${lesson.id} drill ${i + 1}`;
@@ -135,7 +145,8 @@ for (const lesson of LESSONS) {
     }
   });
 }
-checks.push(`${LESSONS.length} lessons, ${drills} puzzles — every FEN legal and every answer a legal move`);
+const bossStops = LESSONS.filter((l) => (l as any).boss).length;
+checks.push(`${LESSONS.length} stops (${bossStops} of them boss games), ${drills} puzzles — every FEN legal and every answer a legal move`);
 checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.prompt}, longest paragraph ${longest.body})`);
 
 /* 6. the shell carries what the app needs */

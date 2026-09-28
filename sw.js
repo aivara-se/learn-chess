@@ -11,16 +11,16 @@
  * adds it — scripts/verify-site.ts checks that FILES covers the app and that
  * every file in it is really here; the bump is checked by reading it.
  */
-/* The cache name ladder, since several pull requests change files at once. Read
-   off the branches rather than guessed: `main` is `v7` (the daily), the badges
-   pull request (#23) holds `v8`, and this branch — the coach-verdict line of #19,
-   rebased onto a `main` that had moved under it — takes `v9`, the next name
-   nobody holds. (#25, the boss stops, still carries `v6`, which is behind
-   `main`'s `v7`; it will need its own name when it is rebased.) Two branches
-   taking "the next number" is the same collision one round later; the names are
-   written down here so the next reader does not have to guess one. A name that
-   means two different sets of files is how a stale copy outlives the change. */
-const CACHE = 'learn-chess-v9';
+/* The cache name ladder, since several pull requests change cached files at once.
+   Read off the branches rather than guessed: `main` is `v9` (the coach-verdict
+   line, #26, landed), the badges line holds `v8` (#27, on `feat/badges-shelf-3`,
+   superseding the closed #23) and `v11` (#28, `feat/badges-shelf-4`, open), and
+   this branch — the boss stops, rebased onto a `main` that had moved under it —
+   takes `v10`, the next name nobody holds. Two branches taking "the next number"
+   is the same collision one round later; the names are written down here so the
+   next reader does not have to guess one. A name that means two different sets of
+   files is how a stale copy outlives the change. */
+const CACHE = 'learn-chess-v10';
 
 const FILES = [
   './',

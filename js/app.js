@@ -21,6 +21,8 @@ const NAMES = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: '
 const FILES = 'abcdefgh';
 const STORE = 'aivara-learn-chess-v2';
 const TOTAL_DRILLS = LESSONS.reduce((n, l) => n + (l.drills || []).length, 0);
+const BOSS_STOPS = LESSONS.filter((l) => l.boss);
+const LESSON_STOPS = LESSONS.filter((l) => !l.boss);
 
 /* ---------- tiny helpers ---------- */
 
@@ -126,6 +128,14 @@ const store = {
     const d = store.read();
     if (!d.best || n > d.best) { d.best = n; store.write(d); }
   },
+  /* A boss stop is won, not solved: one key per level — `boss:<level>` — so the
+     path knows which stops are finished without a second list of stops. */
+  boss(level) {
+    const d = store.read();
+    d.boss = d.boss || {};
+    d.boss[level] = true;
+    store.write(d);
+  },
   /* Sound is a choice, not a score: stored beside the progress only because that
      is what this device already keeps for the child. */
   sound(on) {
@@ -150,6 +160,11 @@ const soundOn = () => !!store.read().sound;
 /* Today's puzzle is done when the day it was finished is today, in the reader's
    own calendar — so it turns over at their midnight, not at UTC's. */
 const dailyDoneToday = () => (store.read().daily || '') === dayStamp(new Date());
+const bossWins = () => (store.read().boss) || {};
+/* A stop whose boss has been beaten at its level or a harder one is finished:
+   a child who has already won against a stronger Pip does not have to prove it
+   again at the easier one. */
+const bossBeaten = (lesson) => Object.keys(bossWins()).some((level) => Number(level) >= lesson.boss.level);
 
 /* Every progress write goes through here, so the two numbers can never drift
    apart or go stale: `done` is a puzzle the answer was found or shown for,
@@ -419,7 +434,11 @@ function currentLesson() {
    graph lives in js/lessons.js as `requires`; nothing here knows the order. */
 
 const lessonById = new Map(LESSONS.map((l) => [l.id, l]));
-const lessonFinished = (lesson) => (lesson.drills || []).every((_, i) => isSolved(`drill:${lesson.id}:${i}`));
+/* A lesson is finished when every puzzle in it is solved; a boss stop has no
+   puzzles and is finished when Pip has been beaten at the level it names. */
+const lessonFinished = (lesson) => (lesson.boss
+  ? bossBeaten(lesson)
+  : (lesson.drills || []).every((_, i) => isSolved(`drill:${lesson.id}:${i}`)));
 const lessonOpen = (lesson) => (lesson.requires || []).every((id) => lessonFinished(lessonById.get(id)));
 const firstMissing = (lesson) => (lesson.requires || []).find((id) => !lessonFinished(lessonById.get(id)));
 
@@ -492,12 +511,17 @@ function renderLessonList() {
 
   const intro = el('div', 'card intro');
   intro.appendChild(el('h2', null, 'Hi, I am Pip'));
-  intro.appendChild(el('p', null, `${LESSONS.length} lessons, ${TOTAL_DRILLS} puzzles. Finish a lesson and the path opens up — you choose which way to go.`));
+  intro.appendChild(el('p', null, `${LESSON_STOPS.length} lessons, ${TOTAL_DRILLS} puzzles and ${BOSS_STOPS.length} boss games. Finish a lesson and the path opens up — you choose which way to go.`));
   const done = solvedCount();
-  const allDone = done === TOTAL_DRILLS;
+  /* The course is its stops, not only its puzzles: an unbeaten boss stop means
+     there is still something on the path to do. */
+  const allDone = LESSONS.every(lessonFinished);
   const goTo = nextLesson();
-  const start = el('button', 'btn primary wide',
-    allDone ? 'Play it all again' : (done === 0 ? 'Start lesson 1' : `Keep going: lesson ${LESSONS.indexOf(goTo) + 1}`));
+  const label = allDone ? 'Play it all again'
+    : done === 0 ? 'Start lesson 1'
+      : goTo.boss ? 'Keep going: the boss game'
+        : `Keep going: lesson ${LESSONS.indexOf(goTo) + 1}`;
+  const start = el('button', 'btn primary wide', label);
   start.type = 'button';
   start.addEventListener('click', () => openLesson(allDone ? 0 : LESSONS.indexOf(goTo)));
   intro.appendChild(start);
@@ -565,6 +589,7 @@ function renderLessonList() {
   LESSONS.forEach((lesson, i) => {
     const s = starsFor(lesson);
     const spot = placed.get(lesson.id);
+    const boss = !!lesson.boss;
     const state = lessonFinished(lesson) ? 'done' : lessonOpen(lesson) ? 'open' : 'locked';
     const btn = el('button', `node ${state}${here && here.id === lesson.id ? ' here' : ''}`);
     btn.type = 'button';
@@ -573,11 +598,16 @@ function renderLessonList() {
     const dot = el('span', 'dot');
     if (state === 'done') dot.appendChild(iconSvg('tick', 25));
     else if (state === 'locked') dot.appendChild(iconSvg('lock', 25));
+    /* A boss stop wears a king instead of a number: it is not the next lesson,
+       it is the game at the end of the branch. */
+    else if (boss) dot.appendChild(document.createTextNode('\u265A'));
     else dot.appendChild(document.createTextNode(String(i + 1)));
     btn.appendChild(dot);
     btn.appendChild(el('span', 'cap', lesson.title));
     if (state === 'locked') {
       btn.appendChild(el('span', 'sub', `after lesson ${LESSONS.indexOf(lessonById.get(firstMissing(lesson))) + 1}`));
+    } else if (boss) {
+      btn.appendChild(el('span', 'sub', state === 'done' ? 'beaten' : 'beat Pip'));
     } else {
       btn.appendChild(starRow(s.got, s.of));
       btn.appendChild(el('span', 'sub', state === 'done'
@@ -586,7 +616,9 @@ function renderLessonList() {
     }
     btn.setAttribute('aria-label', state === 'locked'
       ? `${lesson.title}: locked. Finish ${lessonById.get(firstMissing(lesson)).title} first.`
-      : `${lesson.title}: ${s.solved} of ${s.of} puzzles solved, ${s.got} of ${s.of} stars${state === 'done' ? ', finished' : ''}.`);
+      : boss
+        ? `${lesson.title}: a game against Pip, ${state === 'done' ? 'won' : 'not won yet. Win it to finish the branch'}.`
+        : `${lesson.title}: ${s.solved} of ${s.of} puzzles solved, ${s.got} of ${s.of} stars${state === 'done' ? ', finished' : ''}.`);
     btn.addEventListener('click', () => {
       if (state !== 'locked') { openLesson(i); return; }
       /* A locked stop still answers: it names the lesson that opens it, and takes
@@ -630,7 +662,7 @@ function renderLessonList() {
     startOver.type = 'button';
     startOver.addEventListener('click', () => showSheet({
       title: 'Start over?',
-      text: `This clears ${done} solved puzzles and ${starCount()} stars on this device, and cannot be undone.`,
+      text: `This clears ${done} solved puzzles, ${starCount()} stars and ${Object.keys(bossWins()).length} boss wins on this device, and cannot be undone.`,
       icon: 'hmm',
       action: 'Yes, clear it',
       cancel: 'Keep my stars',
@@ -660,6 +692,8 @@ function openLesson(i) {
   /* The map will not offer a locked lesson, but a stale sheet or a stray call can:
      it goes back to the path rather than around the course. */
   if (!lesson || !lessonOpen(lesson)) { backToList(); return; }
+  /* A boss stop is not a lesson to read: it opens the game it is won by. */
+  if (lesson.boss) { bossSheet(lesson); return; }
   learn.lesson = i;
   learn.step = 0;
   learn.celebrated = false;
@@ -828,7 +862,7 @@ function renderStep() {
 
   /* done */
   const s = starsFor(lesson);
-  const courseDone = solvedCount() === TOTAL_DRILLS;
+  const courseDone = LESSONS.every(lessonFinished);
   const card = el('div', 'card');
   const head = el('div', 'between');
   head.appendChild(el('h2', null, courseDone ? 'The whole course!' : s.got === s.of ? 'All the stars!' : 'Lesson finished!'));
@@ -912,6 +946,7 @@ const play = {
   pos: null, history: [], moves: [], seen: [], level: 2, colour: 'w', flip: false,
   thinking: false, over: false, state: null, started: false,
   token: 0,     // bumped by a new game, so a search in flight cannot land on it
+  boss: null,   // the boss stop this game belongs to, or null for a free game
 };
 
 function newGame() {
@@ -1047,6 +1082,16 @@ function userMove(move) {
 function setThinking(on) {
   document.querySelector('#screen-play .coach').classList.toggle('thinking', on);
   for (const id of ['play-hint', 'play-undo', 'play-flip']) $(id).disabled = on;
+  /* A boss game has no Undo: its stop is finished by a win the child played,
+     never by one rewound to (the stop's own card says so before it starts). */
+  if (play.boss && !on) $('play-undo').disabled = true;
+}
+
+/* Leaving a boss game: the level and the side belong to the stop, so changing
+   either one hands the child a free game instead. */
+function leaveBossGame() {
+  play.boss = null;
+  $('play-undo').disabled = false;
 }
 
 /* What Pip thought of the move just played, in a child's words — and he has
@@ -1142,11 +1187,19 @@ function finishIfOver() {
     play.state.over = true;
     play.state.locked = true;
     const youWin = pos.turn !== play.colour;
+    /* A boss stop is finished by a checkmate the child delivered — `youWin` is
+       exactly that, so a Pip win leaves the stop open. A win can only be a
+       rewound one in a free game, because a boss game has no Undo at all. */
+    const boss = play.boss;
+    if (youWin && boss) { store.boss(boss.boss.level); renderLessonList(); }
+    if (youWin) play.boss = null;
     $('play-turn').textContent = youWin ? 'You win!' : 'Pip wins';
     confetti();
     showSheet({
       title: youWin ? 'Checkmate — you win!' : 'Checkmate — Pip won',
-      text: youWin ? 'Well played. Start another game while you are warm.' : 'Good try. Undo a move or start again — every game teaches something.',
+      text: youWin
+        ? (boss ? `That finishes “${boss.title}” — that stop on the path is done.` : 'Well played. Start another game while you are warm.')
+        : (boss ? 'Good try. Start again and beat him this time — a boss stop is finished only by a win.' : 'Good try. Undo a move or start again — every game teaches something.'),
       icon: youWin ? 'trophy' : 'hmm',
       action: 'New game',
       onAction: newGame,
@@ -1164,9 +1217,11 @@ function finishIfOver() {
     $('play-turn').textContent = 'Draw';
     showSheet({
       title: 'A draw',
-      text: isStalemate(pos)
-        ? 'Nobody can move, so the game is a draw. That happens — start again.'
-        : 'Neither side can win from here: the same position three times, fifty moves without a capture, or too little material left. Start again.',
+      text: play.boss
+        ? 'A draw does not finish a boss stop — no win, no tick. Start again and mate him.'
+        : isStalemate(pos)
+          ? 'Nobody can move, so the game is a draw. That happens — start again.'
+          : 'Neither side can win from here: the same position three times, fifty moves without a capture, or too little material left. Start again.',
       icon: 'star',
       action: 'New game',
       onAction: newGame,
@@ -1185,6 +1240,7 @@ function updateMoves() {
 }
 
 function undo() {
+  if (play.boss) return;   // a boss game is never rewound — see setThinking
   if (play.thinking || !play.history.length) return;
   while (play.history.length) {
     const last = play.history.pop();
@@ -1226,15 +1282,31 @@ function levelSheet() {
   head.appendChild(el('h2', null, 'How strong should Pip play?'));
   sheet.appendChild(head);
   sheet.appendChild(el('p', null, 'Pip is a small chess program, not a champion. Level 1 is sleepy and makes mistakes on purpose.'));
+  /* A boss game belongs to a stop, and the stop names the level: the one thing
+     the child must not do by accident is walk out of it without knowing. */
+  if (play.boss) {
+    const note = el('p', 'tiny');
+    note.style.marginTop = '8px';
+    note.textContent = `This is a boss game for “${play.boss.title}”, played at ${LEVEL_NAME[play.boss.boss.level]}. Changing the level or the side starts a free game instead.`;
+    sheet.appendChild(note);
+  }
   for (const level of [1, 2, 3]) {
     const b = el('button', 'btn wide' + (level === play.level ? ' primary' : ''), level === 1 ? 'Level 1 — sleepy' : level === 2 ? 'Level 2 — club beginner' : 'Level 3 — plays properly');
     b.type = 'button';
     b.style.marginTop = '8px';
     b.addEventListener('click', () => {
+      /* A level change out of a boss game abandons the stop, and the sheet has
+         just promised the child a free game: a free game means a fresh board, so
+         the game is restarted here. Leaving the old board up was the bug — the
+         child stayed on it, out of the boss game with nothing on screen saying
+         so, and a win from there finished no stop. */
+      const abandonsBoss = !!play.boss && level !== play.boss.boss.level;
+      if (abandonsBoss) leaveBossGame();
       play.level = level;
       $('play-level-label').textContent = LEVEL_NAME[level];
       closeSheet();
-      coachSay('', `Pip will play ${level === 1 ? 'sleepily' : level === 2 ? 'like a club beginner' : 'properly'} now.`);
+      if (abandonsBoss) newGame();
+      coachSay('', `${abandonsBoss ? 'New game — ' : ''}Pip will play ${level === 1 ? 'sleepily' : level === 2 ? 'like a club beginner' : 'properly'} now.`);
     });
     sheet.appendChild(b);
   }
@@ -1255,6 +1327,7 @@ function levelSheet() {
       if (play.colour === side) { closeSheet(); return; }
       play.colour = side;
       play.flip = side === 'b';
+      leaveBossGame();
       newGame();
       closeSheet();
     });
@@ -1291,6 +1364,33 @@ function levelSheet() {
   $('scrim').hidden = false;
   const first = sheet.querySelector('button');
   if (first) first.focus();
+}
+
+/* ---------- boss stops ---------- */
+
+/* A boss stop is a whole game, so the stop's card says what finishing it takes
+   before the child has made a move, and then hands them to the play screen at
+   the level the stop names. */
+function bossSheet(lesson) {
+  showSheet({
+    title: lesson.goal,
+    text: `${(lesson.body || []).join(' ')} Undo is off in a boss game, so the win has to be the one you play.`,
+    icon: 'trophy',
+    action: 'Play the boss game',
+    cancel: 'Not now',
+    onAction: () => startBossGame(lesson),
+  });
+}
+
+function startBossGame(lesson) {
+  play.boss = lesson;
+  play.level = lesson.boss.level;
+  $('play-level-label').textContent = LEVEL_NAME[play.level];
+  play.colour = 'w';
+  play.flip = false;
+  newGame();
+  showScreen('play');
+  coachSay('', `Boss game: beat Pip to finish “${lesson.title}”. Undo is off here.`);
 }
 
 /* ---------- Puzzles ---------- */

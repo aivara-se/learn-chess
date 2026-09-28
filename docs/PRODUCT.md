@@ -22,6 +22,10 @@ A beginner's chess course shaped like a small phone app: three tabs, a path of l
   locked stop says which lesson opens it and offers to walk you there. Progress is remembered in
   the browser, as two separate numbers — puzzles solved, and stars for the ones solved first time
   (`docs/DESIGN.md`).
+- **A boss stop ends each branch of the path**: a whole game against Pip, at a level the stop names,
+  played as White on the play screen. It is finished only by a checkmate the child delivers — a draw,
+  a stalemate or a loss leaves it open — and the stop says so before the first move. Undo is off in a
+  boss game, so the win is one the child played, and a boss win is not a star (`docs/DESIGN.md`).
 - A **rank** to grow into: stars are worth a piece's rank, from Pawn at nothing to King at every
   star in the course. The reward for finishing a lesson is the next part of the path opening; the
   reward for doing it well is the rank.
