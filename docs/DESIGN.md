@@ -13,6 +13,7 @@ manifest.webmanifest       what a home screen needs to install it
 js/engine.js               rules, legal move generation, search, evaluation
 js/lessons.js              the course: lesson text, diagram positions, drills
 js/app.js                  the interface: screens, board, coach, stars
+js/badges.js               the badges a child earned once, and the shelf's rules
 assets/fonts/              Inter + Space Grotesk, latin subset, woff2, OFL 1.1
 assets/favicon.svg         the app mark, and the source of the PNG icons
 assets/icon-*.png          the icons the manifest and a home screen ask for
@@ -21,6 +22,7 @@ docs/                      DESIGN.md, PRODUCT.md, SYSTEM.md, DRILLS.md
 scripts/verify-site.ts     the rules that can be checked mechanically
 scripts/verify-drills.ts   the same rules, against Stockfish
 tests/engine.test.ts       perft and legality tests for the engine
+tests/badges.test.ts       the badge rules, without a browser
 ```
 
 No build step, no dependency, no request to any third party: the files are the app.
@@ -110,6 +112,8 @@ drawn from the course itself:
 - **Stars become a rank**: Pawn (0), Knight (5), Bishop (10), Rook (14), Queen (18), King (23), shown
   with the stars still to win for the next one. A child watching a number becomes a child watching
   which piece they are — the same idea as the course, in one line.
+- Between the rank and the map sits the **shelf of badges** — what a child has to show for what they
+  actually did; *Badges* below has the whole of it.
 
 ## Colour
 
@@ -213,8 +217,49 @@ Five movements, all removed under `prefers-reduced-motion: reduce` (one rule, `a
 A puzzle gives a **star** when it is solved on the first try, which is why the card at the top of the path says both numbers in words — "12 of 26 puzzles solved · 7 stars won. A star is a puzzle you solved first time." — while each stop carries its own stars, and the chip in the app bar carries the total alone. On a fresh install that line is not shown at all: "0 of 26 puzzles solved · 0 stars won" is four lines of nothing to read on the first screen a child sees, and there is nothing to explain until there is a number. Neither total is written down anywhere: both are counted from `js/lessons.js`, and `scripts/verify-site.ts` fails a shell that hard-codes one. Progress lives in `localStorage`, on the visitor's own device, and is never sent anywhere.
 
 Showing a learner the move after two wrong answers marks the puzzle **solved**, never a star: the
-sheet says "Here is the move", not "Correct!", and the child did not find it. The two keys in
-`localStorage` are `done` (a puzzle the answer was found or shown for) and `first` (a star).
+sheet says "Here is the move", not "Correct!", and the child did not find it. The keys in
+`localStorage` are `done` (a puzzle the answer was found or shown for), `first` (a star) and `badges`
+(the best a child has got towards each badge — *Badges* below says what they are).
+
+## Badges
+
+A star rewards the moment — a puzzle solved first time. A badge is the other half: something to show
+for what a child did, that stays. Nine of them, and their rules live in one module, `js/badges.js`.
+
+- **A badge is data**: `{ id, name, what, of, unit }` — what it is called, how a child earns it in one
+  line, how many it takes, and what is being counted. `of` is a number, or a function of the totals the
+  app hands in: the badge for every star in the course reads the count the app derived from
+  `js/lessons.js`, so no total is written down twice and the course can grow under it.
+- **The record is one number per badge**, in `localStorage` under the same key as the stars: the best a
+  child has ever got towards it. The same field answers both questions — earned is `number >= of`, how
+  close is `of - number` — and because the number only grows, the moment it reaches `of` happens once.
+  That is what "earned once" means here: a badge cannot be handed out twice, and there is no separate
+  flag to drift out of step with the count. `store.reset()` clears them with everything else, which is
+  why the "start over" sheet names them: "This clears 12 solved puzzles, 7 stars and 3 badges on this
+  device, and cannot be undone."
+- **The nine**: first game finished against Pip, first win, a win at each level (1, 2, 3), first castle
+  in a game, first checkmate delivered, five first-try answers in a row, and every star in the course.
+- **A run is memory, not a record.** Five in a row counts consecutive first-try answers while the tab is
+  open; a wrong answer ends the row, and so does a reload. What is stored is the best row a child ever
+  had, so a run that starts again cannot hand the badge out twice.
+- **Where a badge is counted** — four moments that already existed, and no new screen: the sheet that
+  ends a game (the first game, a win, the level, the mate), castling inside a game, a first-try answer
+  in `record()`, and the card that finishes a lesson. A mate delivered by a puzzle is a checkmate
+  delivered too, and is counted where the game's own checkmate sheet would count it.
+- **Where a badge is said.** On the sheet or the card the moment itself opens — "New badge: “Five in a
+  row”." — and on the shelf. Castling in a game is the one exception: a sheet over a live board between
+  two moves would be worse than saying nothing, so that badge is only on the shelf.
+- **The shelf** sits between the rank and the map, so "what have I got?" is answered before the path is
+  walked: a chip for every badge, earned ones first as green chips with a trophy, then a line naming the
+  nearest one — "Next: Five in a row — 3 more first-try answers." — then the rest as grey chips with a
+  padlock, which is how a stop on the path that is not open reads. The earned chips and the grey ones
+  add up to the count in the heading. Every chip carries the state as words for a screen reader too
+  (", earned" / ", not yet"), because a colour and a padlock are not a sentence. Nothing new was added
+  to the stylesheet: `.card`, `.row`, `.chip`, `.chip.good` and `.sr` carry it, and the shelf is 346px
+  of the lessons tab at 360px on a fresh install, 336px with six badges on it; the tab's list is 1635px
+  of scroll from a fresh install, 1729px with the game's badges on it.
+- **Badges are never sent anywhere**, and the module holds no storage and no DOM of its own: it is given
+  the app's own read and write, which is what makes the rules checkable by `bun test` without a browser.
 
 ## Accessibility
 
@@ -233,7 +278,8 @@ sheet says "Here is the move", not "Correct!", and the child did not find it. Th
 - The lesson's progress dots are a `role="img"` with a label — "Step 3 of 11, 1 of 4 puzzles won
   first time" — because three colours of circle say nothing to anyone who cannot see them.
 - Nothing is carried by colour alone: turns, check, verdicts and stars all appear as words or
-  numbers too.
+  numbers too. A badge chip is the same: it reads "First game — earned" or "First castle — not yet"
+  to a screen reader, because a green chip and a padlock are not a sentence.
 - Tap targets are at least 48px, with one measured exception: the board's own squares, which are as
   large as the screen allows (30.5–53.8px — see the board section for which screen gets what).
 - Nothing important sits within 8px of a screen edge.

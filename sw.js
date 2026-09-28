@@ -11,13 +11,14 @@
  * adds it — scripts/verify-site.ts checks that FILES covers the app and that
  * every file in it is really here; the bump is checked by reading it.
  */
-const CACHE = 'learn-chess-v3';
+const CACHE = 'learn-chess-v4';
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
   'js/app.js',
+  'js/badges.js',
   'js/engine.js',
   'js/lessons.js',
   'assets/favicon.svg',
