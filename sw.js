@@ -12,21 +12,22 @@
  * every file in it is really here; the bump is checked by reading it.
  */
 /* The cache name ladder, since several pull requests change cached files at once.
-   Read off the branches rather than guessed: `main` is `v9` (the coach-verdict
-   line, #26, landed), the badges line holds `v8` (#27, on `feat/badges-shelf-3`,
-   superseding the closed #23) and `v11` (#28, `feat/badges-shelf-4`, open), and
-   this branch — the boss stops, rebased onto a `main` that had moved under it —
-   takes `v10`, the next name nobody holds. Two branches taking "the next number"
-   is the same collision one round later; the names are written down here so the
-   next reader does not have to guess one. A name that means two different sets of
-   files is how a stale copy outlives the change. */
-const CACHE = 'learn-chess-v10';
+   Read off the branches rather than guessed: `main` is `v10` (the boss stops
+   landed as `f18ca48`), `feat/boss-stops` and this branch's superseded
+   predecessors hold names below that, and this branch — the badges shelf,
+   re-applied on today's `main` — takes `v11`, the next name nobody else holds.
+   Two branches taking "the next number" is the same collision one round later;
+   the names are written down here so the next reader does not have to guess one.
+   A name that means two different sets of files is how a stale copy outlives the
+   change. */
+const CACHE = 'learn-chess-v11';
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
   'js/app.js',
+  'js/badges.js',
   'js/daily.js',
   'js/engine.js',
   'js/lessons.js',
