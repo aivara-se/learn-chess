@@ -11,13 +11,21 @@
  * adds it — scripts/verify-site.ts checks that FILES covers the app and that
  * every file in it is really here; the bump is checked by reading it.
  */
-const CACHE = 'learn-chess-v5';
+/* The cache name ladder, since three pull requests change files at once: main is
+   `v5` (the sound module), `v6` is held by the coach-verdict pull request (#19),
+   and this branch takes `v7` — the next name nobody holds. The badges branch
+   (#23) takes `v8`. Two branches taking "the next number" is the same collision
+   one round later; the names are written down here so the next reader does not
+   have to guess one. A name that means two different sets of files is how a stale
+   copy outlives the change. */
+const CACHE = 'learn-chess-v7';
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
   'js/app.js',
+  'js/daily.js',
   'js/engine.js',
   'js/lessons.js',
   'js/sound.js',
