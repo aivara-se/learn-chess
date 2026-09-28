@@ -8,6 +8,7 @@
  * The rules, the search and the evaluation come from js/engine.js; the course
  * comes from js/lessons.js. Nothing here talks to a server.
  */
+import { createBook } from './badges.js';
 import {
   START_FEN, parseFen, legalMoves, makeMove, isCheckmate, isStalemate,
   isDraw, inCheck, san, findBestMove, searchEval, findThreat,
@@ -155,11 +156,117 @@ const dailyDoneToday = () => (store.read().daily || '') === dayStamp(new Date())
    apart or go stale: `done` is a puzzle the answer was found or shown for,
    `first` is a star — solved with no wrong answer and no hint. A star is also
    one of the two things in this app that makes a sound, and both ways of earning
-   one come through here, so the chime cannot miss a call site. */
+   one come through here, so the chime cannot miss a call site.
+
+   Two badges are counted from here as well, because this is the one place a
+   puzzle result lands, whether it was played in a lesson or in the shuffle: the
+   run of first-try answers, and the star total the last badge asks for. It
+   answers the badges this answer earned, so the sheet that is already opening
+   can say so. */
 function record(key, firstTry) {
   store.solved(key);
   if (firstTry) { store.clean(key); sound.star(); }
+  firstTryRun = firstTry ? firstTryRun + 1 : 0;
+  const earned = [firstTry ? book.note('streak-5', firstTryRun) : null, book.note('all-stars', starCount())];
   paintStarCount();
+  return earned.filter(Boolean);
+}
+
+/* ---------- badges ---------- */
+
+/* The book of firsts. It reads and writes the same record as the stars, so
+   "start over" clears the badges with everything else, and a badge is handed out
+   once because its number only ever grows. `firstTryRun` is a run, not a tally,
+   and lives in memory: a wrong answer ends it, and so does closing the tab. */
+const book = createBook({
+  read: () => store.read(),
+  write: (d) => store.write(d),
+  totals: { stars: TOTAL_DRILLS },
+});
+let firstTryRun = 0;
+
+/* How far off the nearest badge is, in one line a child reads: a badge that
+   takes one moment is named by what earns it, a badge that counts says what is
+   left to count. */
+function reachLine({ badge, of, need }) {
+  return of === 1
+    ? `Next: ${badge.name} — ${badge.what}.`
+    : `Next: ${badge.name} — ${need} more ${badge.unit}.`;
+}
+
+/* A list of things, in words a child reads: "one, two and three". */
+function andList(parts) {
+  return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
+}
+
+/* The news, said where the child already is. There is no badge screen: the sheet
+   or the card the moment itself opens carries the line. */
+function badgeNews(earned) {
+  if (!earned.length) return '';
+  return ` New ${earned.length === 1 ? 'badge' : 'badges'}: ${andList(earned.map((badge) => `“${badge.name}”`))}.`;
+}
+
+/* The shelf: what a child has to show for it. Earned badges first, as green
+   chips with a trophy; the rest as plain chips with a padlock — the reading the
+   path already uses for a stop that is not open — with the nearest one named
+   underneath. Every chip also says out loud which it is, because a tick and a
+   padlock are shapes and a colour is not a word. */
+function badgeShelf() {
+  const { earned, next, locked, total } = book.shelf();
+  const card = el('div', 'card');
+  const head = el('div', 'between');
+  head.appendChild(el('h2', null, 'My badges'));
+  head.appendChild(el('span', 'chip', `${earned.length} of ${total} badges`));
+  card.appendChild(head);
+  const spaced = (node) => { node.style.marginTop = '10px'; return node; };
+
+  if (earned.length) {
+    const row = el('div', 'row');
+    for (const { badge } of earned) {
+      const chip = el('span', 'chip good');
+      chip.title = badge.what;
+      chip.appendChild(iconSvg('trophy', 16));
+      chip.appendChild(el('span', null, badge.name));
+      chip.appendChild(el('span', 'sr', ' — earned'));
+      row.appendChild(chip);
+    }
+    card.appendChild(spaced(row));
+  } else {
+    card.appendChild(spaced(el('p', 'tiny', 'Nothing yet. Everything you earn shows up here.')));
+  }
+
+  card.appendChild(spaced(el('p', 'tiny', next ? reachLine(next) : 'Every badge earned.')));
+
+  /* Every badge has a chip — the earned ones green with a trophy, the rest grey
+     with a padlock, exactly how a stop on the path that is not open reads — so
+     the count in the heading is the number of chips on the shelf, and the line
+     above names the nearest one. */
+  const rest = next ? [next, ...locked] : locked;
+  if (rest.length) {
+    const row = el('div', 'row');
+    row.style.marginTop = '8px';
+    for (const { badge } of rest) {
+      const chip = el('span', 'chip');
+      chip.title = badge.what;
+      chip.appendChild(iconSvg('lock', 16));
+      chip.appendChild(el('span', null, badge.name));
+      chip.appendChild(el('span', 'sr', ' — not yet'));
+      row.appendChild(chip);
+    }
+    card.appendChild(row);
+  }
+  return card;
+}
+
+/* What "start over" would delete, in words, counting only what is there: a
+   child who has won a game and solved nothing has a badge to lose. */
+const plural = (n, one) => `${n} ${one}${n === 1 ? '' : 's'}`;
+function cleared(done, stars, badges) {
+  const bits = [];
+  if (done) bits.push(plural(done, 'solved puzzle'));
+  if (stars) bits.push(plural(stars, 'star'));
+  if (badges) bits.push(plural(badges, 'badge'));
+  return andList(bits);
 }
 
 /* ---------- board ---------- */
@@ -534,6 +641,10 @@ function renderLessonList() {
   }
   list.appendChild(intro);
 
+  /* What a child has to show for it, right under what the stars are worth: the
+     shelf answers "what have I got?" before the path answers "where am I?" */
+  list.appendChild(badgeShelf());
+
   const { placed, height } = mapLayout();
   const here = allDone ? null : nextLesson();
   const map = el('div', 'map');
@@ -624,13 +735,18 @@ function renderLessonList() {
   list.appendChild(truth);
 
   /* Clearing progress deletes something a child earned, so it is not a button in
-     the middle of another screen: it lives here, says what it deletes, and asks. */
-  if (done > 0) {
-    const startOver = el('button', 'btn quiet wide', 'Start over and clear my stars');
+     the middle of another screen: it lives here, says what it deletes, and asks.
+     Badges are something earned too — a won game earns one before a single puzzle
+     is solved — so the question is asked whenever there is anything to clear. */
+  const badges = book.shelf().earned.length;
+  if (done > 0 || badges > 0) {
+    const startOver = el('button', 'btn quiet wide', badges
+      ? 'Start over and clear my stars and badges'
+      : 'Start over and clear my stars');
     startOver.type = 'button';
     startOver.addEventListener('click', () => showSheet({
       title: 'Start over?',
-      text: `This clears ${done} solved puzzles and ${starCount()} stars on this device, and cannot be undone.`,
+      text: `This clears ${cleared(done, starCount(), badges)} on this device, and cannot be undone.`,
       icon: 'hmm',
       action: 'Yes, clear it',
       cancel: 'Keep my stars',
@@ -638,6 +754,7 @@ function renderLessonList() {
         store.reset();
         train.streak = 0;
         train.current = null;
+        firstTryRun = 0;
         renderLessonList();
         refreshTrain();
         announce('Progress cleared.');
@@ -779,11 +896,17 @@ function renderStep() {
       turnCap.textContent = ok ? 'Puzzle solved' : (state.pos.turn === 'w' ? 'White to move — your turn' : 'Black to move — your turn');
       if (ok) {
         state.locked = true;
-        record(key, learn.tries === 1);
+        const fresh = record(key, learn.tries === 1);
+        /* A puzzle can deliver mate, and that is the same thing a game's
+           checkmate sheet is: the badge is counted wherever the mate is. */
+        if (isCheckmate(state.pos)) {
+          const badge = book.note('checkmate', 1);
+          if (badge) fresh.push(badge);
+        }
         confetti();
         showSheet({
           title: 'Correct!',
-          text: drill.why,
+          text: drill.why + badgeNews(fresh),
           icon: 'happy',
           action: 'Next',
           onAction: () => { learn.step += 1; renderStep(); },
@@ -847,6 +970,16 @@ function renderStep() {
     p.textContent = opened.length === 1
       ? `The path goes on: ${opened[0].title} is open now.`
       : `The path splits two ways: ${opened.map((l) => l.title).join(' and ')}. Take either.`;
+    card.appendChild(p);
+  }
+  /* The nearest badge, on the card that already asks what next. The shelf says
+     the same thing, and this is the moment a child is looking: the reward for
+     finishing a lesson is the next part of the path, and the next badge. */
+  const nextBadge = book.shelf().next;
+  if (nextBadge) {
+    const p = el('p', 'tiny');
+    p.style.marginTop = '10px';
+    p.textContent = reachLine(nextBadge);
     card.appendChild(p);
   }
   const row = el('div', 'row');
@@ -1013,6 +1146,11 @@ function threatWords(after, move, childColour) {
 function userMove(move) {
   if (play.over || play.thinking) return;
   const pos = play.pos;
+  /* Castling inside a game is one of the moments a badge comes from, and the one
+     with no sheet of its own: a sheet over a live board between two moves would
+     be worse than saying nothing, so this badge is only on the shelf. */
+  const moved = pieceAt(pos, move.from);
+  if (moved && moved.type === 'k' && Math.abs(move.to - move.from) === 2) book.note('castle', 1);
   const token = ++play.token;   // a new game while Pip is thinking must not grade this move
   play.history.push({ pos, move });
   play.moves.push({ san: san(pos, move), colour: pos.turn });
@@ -1143,10 +1281,18 @@ function finishIfOver() {
     play.state.locked = true;
     const youWin = pos.turn !== play.colour;
     $('play-turn').textContent = youWin ? 'You win!' : 'Pip wins';
+    /* The moment the game is decided is the moment its badges are counted: a game
+       finished at all, and — if it went the child's way — the first win, the win
+       at the level they chose, and the first checkmate delivered. */
+    const fresh = [book.note('first-game', 1)];
+    if (youWin) {
+      fresh.push(book.note('first-win', 1), book.note(`win-level-${play.level}`, 1), book.note('checkmate', 1));
+    }
     confetti();
     showSheet({
       title: youWin ? 'Checkmate — you win!' : 'Checkmate — Pip won',
-      text: youWin ? 'Well played. Start another game while you are warm.' : 'Good try. Undo a move or start again — every game teaches something.',
+      text: (youWin ? 'Well played. Start another game while you are warm.' : 'Good try. Undo a move or start again — every game teaches something.')
+        + badgeNews(fresh.filter(Boolean)),
       icon: youWin ? 'trophy' : 'hmm',
       action: 'New game',
       onAction: newGame,
@@ -1162,11 +1308,15 @@ function finishIfOver() {
     play.state.over = true;
     play.state.locked = true;
     $('play-turn').textContent = 'Draw';
+    /* A drawn game is still a game finished — that is the badge, and it is the
+       one a child earns first, before they can win anything. */
+    const fresh = [book.note('first-game', 1)].filter(Boolean);
     showSheet({
       title: 'A draw',
-      text: isStalemate(pos)
+      text: (isStalemate(pos)
         ? 'Nobody can move, so the game is a draw. That happens — start again.'
-        : 'Neither side can win from here: the same position three times, fifty moves without a capture, or too little material left. Start again.',
+        : 'Neither side can win from here: the same position three times, fifty moves without a capture, or too little material left. Start again.')
+        + badgeNews(fresh),
       icon: 'star',
       action: 'New game',
       onAction: newGame,
@@ -1391,13 +1541,17 @@ function nextPuzzle() {
       state.locked = true;
       train.streak += 1;
       $('train-where').textContent = `${pick.lesson.title} · solved`;
-      record(pick.key, train.tries === 1);
+      const fresh = record(pick.key, train.tries === 1);
+      if (isCheckmate(state.pos)) {
+        const badge = book.note('checkmate', 1);
+        if (badge) fresh.push(badge);
+      }
       store.streak(train.streak);
       confetti();
       refreshTrain();
       showSheet({
         title: 'Correct!',
-        text: pick.drill.why,
+        text: pick.drill.why + badgeNews(fresh),
         icon: 'happy',
         action: 'Next puzzle',
         onAction: nextPuzzle,
