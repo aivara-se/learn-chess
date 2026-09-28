@@ -11,10 +11,13 @@
  * adds it — scripts/verify-site.ts checks that FILES covers the app and that
  * every file in it is really here; the bump is checked by reading it.
  */
-/* The name is v8 and not v6: v6 is held by the open coach-verdict pull request
-   (#19) and v7 by the rebased daily puzzle (#24), and a name that means two
-   different sets of files is how a stale copy outlives the change. Landing out
-   of order is harmless as long as no two states share a name. */
+/* The cache name ladder, since several pull requests change cached files at once:
+   main is `v7` (the daily puzzle, #24, landed), `v6` is still held by the open
+   coach-verdict (#19) and boss-stops (#25) branches, and this branch takes `v8` —
+   the next name nobody holds. Two branches taking "the next number" is the same
+   collision one round later; the names are written down here so the next reader
+   does not have to guess one. A name that means two different sets of files is how
+   a stale copy outlives the change. */
 const CACHE = 'learn-chess-v8';
 
 const FILES = [
@@ -23,6 +26,7 @@ const FILES = [
   'manifest.webmanifest',
   'js/app.js',
   'js/badges.js',
+  'js/daily.js',
   'js/engine.js',
   'js/lessons.js',
   'js/sound.js',
