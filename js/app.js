@@ -10,7 +10,7 @@
  */
 import {
   START_FEN, parseFen, legalMoves, makeMove, isCheckmate, isStalemate,
-  isDraw, inCheck, san, findBestMove, searchEval,
+  isDraw, inCheck, san, findBestMove, searchEval, findThreat,
 } from './engine.js';
 import { LESSONS } from './lessons.js';
 import { sound } from './sound.js';
@@ -77,8 +77,11 @@ function describeMove(pos, move) {
   else if (move.promotion) verb = `make a new ${NAMES[move.promotion]}`;
   else if ((piece.type === 'n' || piece.type === 'b') && (Math.floor(move.from / 8) === 0 || Math.floor(move.from / 8) === 7)) verb = `bring the ${NAMES[piece.type]} out`;
   else if (piece.type === 'p' && [27, 28, 35, 36].includes(move.to)) verb = 'take the middle';
-  return { san: san(pos, move), text: bits.join(', ') || 'keeps things tidy', verb };
+  return { san: san(pos, move), text: bits.join(', ') || 'keeps things tidy', verb, empty: bits.length === 0 };
 }
+
+/* 'Perfect!' already ends in a full stop of its own. */
+const stop = (w) => (/[!?.]$/.test(w) ? w : w + '.');
 
 /* How a played move rates, in a child's words. */
 function verdict(loss) {
@@ -943,6 +946,7 @@ function newGame() {
      new game, rather than once at load: a tablet with a mouse plugged in gets the
      truth too. */
   const click = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  setReply('');
   coachSay(play.colour === 'w' ? 'good' : '', play.colour === 'w'
     ? `You are White. ${click ? 'Click' : 'Tap'} a pawn, then ${click ? 'click' : 'tap'} the square in front of it.`
     : 'You are Black. Pip opens the game.');
@@ -955,6 +959,55 @@ function coachSay(tone, text) {
   bubble.className = `bubble${tone ? ' ' + tone : ''}`;
   bubble.textContent = text;
   announce(text);
+}
+
+/* Two voices, two places. The bubble is Pip judging *your* move and it keeps it
+   until you move again; this line is *what just happened* — his own move, a
+   threat, a check. One element could not hold both: his reply used to be written
+   into the bubble 332ms after every tap, so the grade was gone before it could
+   be read. Built here rather than in index.html so the play screen's markup and
+   its height budget are untouched. */
+let replyEl = null;
+function replyLine() {
+  if (!replyEl) {
+    replyEl = el('p', 'tiny', '');
+    replyEl.id = 'play-reply';
+    replyEl.style.textAlign = 'center';
+    /* Above the move list, not below it. The play screen's height budget lets
+       the move list take the last of the scroll on a short phone; putting his
+       move under it would push the one sentence that matters into the same hole. */
+    $('play-moves').before(replyEl);
+  }
+  return replyEl;
+}
+function setReply(text) {
+  replyLine().textContent = text;
+  if (text) announce(text);
+}
+
+/* Pip's move in words a beginner reads, instead of SAN. `before` is the position
+   he moved FROM — this describes the move, so it reads the piece and its victim
+   as they stood, not as they stand now. (`threatWords` below wants the position
+   after it: two questions, two positions, named so they cannot be swapped.) */
+function pipMoveWords(before, move) {
+  const piece = pieceAt(before, move.from);
+  const victim = pieceAt(before, move.to);
+  if (piece.type === 'k' && Math.abs(move.to - move.from) === 2) return 'Pip castled.';
+  if (victim) return `Pip took your ${NAMES[victim.type]} on ${squareName(move.to)}.`;
+  if (move.promotion) return `Pip made a new ${NAMES[move.promotion]}.`;
+  return `Pip moved a ${NAMES[piece.type]} to ${squareName(move.to)}.`;
+}
+
+/* The biggest thing Pip's move is now threatening, said out loud — and nothing
+   at all when there is nothing to say, because an alarm that fires on every
+   move is not an alarm. The chess is `findThreat`; the words are here. */
+function threatWords(after, move, childColour) {
+  const t = findThreat(after, move.to, childColour === 'w' ? 'b' : 'w', childColour);
+  if (!t) return '';
+  const attacker = pieceAt(after, t.from);
+  const victim = pieceAt(after, t.to);
+  if (!attacker || !victim) return '';
+  return `Pip's ${NAMES[attacker.type]} ${t.defended ? 'is attacking' : 'can take'} your ${NAMES[victim.type]}.`;
 }
 
 function userMove(move) {
@@ -996,7 +1049,11 @@ function setThinking(on) {
   for (const id of ['play-hint', 'play-undo', 'play-flip']) $(id).disabled = on;
 }
 
-/* What Pip thought of the move just played, in a child's words. */
+/* What Pip thought of the move just played, in a child's words — and he has
+   something to say about every one of them. He did not before: `said` started
+   as the bare score and only two branches replaced it, one needing the move to
+   *be* the engine's best and the other a loss of 70cp, so a good move and a
+   blunder both read "Pip says the game is level." */
 function gradeMove(pos, move) {
   const cfg = DEPTH[play.level];
   const before = searchEval(pos, { depth: cfg.evalDepth });
@@ -1005,18 +1062,35 @@ function gradeMove(pos, move) {
   const mine = play.colour === 'w' ? afterEval : -afterEval;
   const loss = Math.max(0, play.colour === 'w' ? before - afterEval : afterEval - before);
   const v = verdict(loss);
-  let said = `Pip says ${scoreWords(mine)}.`;
-  if (best && best.move && sameMove(move, best.move)) {
-    said = `${v.word} That is the move Pip would play. Pip says ${scoreWords(mine)}.`;
-  } else if (best && best.move && loss >= 70) {
+  /* The move the engine would have played cannot be criticised for the score it
+     leaves behind: that drop is the opponent's reply, not the child's choice. */
+  const bestIsThis = best && best.move && sameMove(move, best.move);
+  const mate = isCheckmate(play.pos);
+  const gaveCheck = inCheck(play.pos, play.pos.turn);
+  const d = describeMove(pos, move);
+  /* The check is announced in front of the sentence, so it is not also listed
+     as a reason the move was good. */
+  const rest = d.text.split(', ').filter((b) => b !== 'says check').join(', ');
+  let said;
+  if (mate) {
+    said = 'Perfect! Checkmate — the game is yours.';
+  } else if (bestIsThis) {
+    said = `Perfect! That is the move Pip would play${rest ? ` — it ${rest}` : ''}.`;
+  } else if (loss <= 40) {
+    /* "Nice move. Pip says you are a little ahead." — no invented reason: a
+       filler clause is worse than a short honest sentence. */
+    said = rest && !d.empty ? `${v.word} — it ${rest}.` : stop(v.word);
+  } else if (best && best.move) {
     const b = describeMove(pos, best.move);
-    const piece = pieceAt(pos, best.move.from);
-    said = `${v.word} Better was the ${NAMES[piece.type]} move — it ${b.text}. Pip says ${scoreWords(mine)}.`;
+    said = `${stop(v.word)} Better was the ${NAMES[pieceAt(pos, best.move.from).type]} move${b.empty ? '' : ` — it ${b.text}`}.`;
+  } else {
+    said = stop(v.word);
   }
+  said += ` Pip says ${scoreWords(mine)}.`;
   /* A king in check is the one thing on the board a beginner must not miss, and
      the red frame alone does not say it out loud. */
-  if (inCheck(play.pos, play.pos.turn)) said = 'Check! ' + said;
-  coachSay(v.tone, said);
+  if (gaveCheck && !mate) said = 'Check! ' + said;
+  coachSay(mate || bestIsThis || loss <= 40 ? 'good' : v.tone, said);
 }
 
 function engineTurn() {
@@ -1042,10 +1116,16 @@ function engineTurn() {
       paint(play.state);
       sound.move();          // Pip's piece lands too — the ear hears both sides move
       updateMoves();
+      /* What happened goes on the reply line. The bubble is left alone: the
+         grade the child has not finished reading lives there. */
+      const bits = [pipMoveWords(pos, res.move)];
+      if (isCheckmate(play.pos)) bits.push('That is checkmate.');
+      else if (inCheck(play.pos, play.pos.turn)) bits.push('Your king is in check.');
+      const threat = threatWords(play.pos, res.move, play.colour);
+      if (threat) bits.push(threat);
+      setReply(bits.join(' '));
       if (finishIfOver()) return;
       $('play-turn').textContent = 'Your move';
-      const mine = inCheck(play.pos, play.pos.turn) ? ' Your king is in check.' : '';
-      coachSay('', `Pip played ${describeMove(pos, res.move).san}.${mine} Your move.`);
       return;
     }
     /* no move found at all: the game is over, but say so with the buttons back */
@@ -1121,6 +1201,7 @@ function undo() {
   paint(play.state);
   updateMoves();
   $('play-turn').textContent = 'Your move';
+  setReply('');
   coachSay('', 'Taken back. Your move.');
 }
 
