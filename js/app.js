@@ -1047,7 +1047,7 @@ function gradeMove(pos, move) {
   if (mate) {
     said = 'Perfect! Checkmate — the game is yours.';
   } else if (bestIsThis) {
-    said = `Perfect! That is the move Pip would play${rest ? ` — it ${rest}` : ''}.`;
+    said = `Perfect! That is the move Pip would play${rest && !d.empty ? ` — it ${rest}` : ''}.`;
   } else if (loss <= 40) {
     /* "Nice move. Pip says you are a little ahead." — no invented reason: a
        filler clause is worse than a short honest sentence. */
