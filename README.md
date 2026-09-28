@@ -10,7 +10,8 @@ Live at <https://aivara-se.github.io/learn-chess/> (a custom subdomain can be po
 - **Lessons and puzzles** — `js/lessons.js`: the course; `docs/DRILLS.md` is what its answers were measured against.
 - **Interface** — `js/app.js`: the board, the coach, the stars and progress in `localStorage`.
 - **Sound** — `js/sound.js`: a clack when a piece lands and a chime for a star, made with Web Audio oscillators, so there is no audio file to load.
-- **Tests** — `tests/engine.test.ts`, run with `bun test`; perft counts prove the move generator.
+- **Badges** — `js/badges.js`: the things a child earned once — a game finished, a first win, a castle, a run of first-try answers — and the shelf on the path where they show up.
+- **Tests** — `tests/engine.test.ts` and `tests/badges.test.ts`, run with `bun test`; perft counts prove the move generator, and the badge rules are checked without a browser.
 - **Checks** — `scripts/verify-site.ts` (files, offline list, markup, the course's own budgets) and `scripts/verify-drills.ts` (every puzzle's answer, against Stockfish).
 - **Mark** — `assets/favicon.svg`, with the rendered icons and the 1200×630 share card beside it.
 
