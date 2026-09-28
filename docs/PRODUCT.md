@@ -2,7 +2,7 @@
 
 ## What this product is
 
-A beginner's chess course shaped like a small phone app: three tabs, one idea per card, puzzles you play with a finger, stars to collect, and Pip the pawn coaching your moves in a sentence a child can read. It runs entirely in the browser — nothing is installed, nothing is sent anywhere.
+A beginner's chess course shaped like a small phone app: three tabs, a path of lessons that opens as you walk it, one idea per card, puzzles you play with a finger, stars to collect into a rank, and Pip the pawn coaching your moves in a sentence a child can read. It runs entirely in the browser — nothing is installed, nothing is sent anywhere.
 
 ## Who it is for
 
@@ -15,9 +15,16 @@ A beginner's chess course shaped like a small phone app: three tabs, one idea pe
 
 ## In scope
 
-- A course: lessons in a fixed order, each with an explanation and drills that are played, not
-  read. Progress is remembered in the browser, as two separate numbers — puzzles solved, and stars
-  for the ones solved first time (`docs/DESIGN.md`).
+- A course laid out as a **path**: lessons are stops on one route, each with an explanation and
+  drills that are played, not read. The route forks twice and merges twice, so a learner chooses
+  which of two lessons to take first — but never which order to learn in, because a merge only
+  opens when both of its branches are finished. A stop opens when the lesson before it is done; a
+  locked stop says which lesson opens it and offers to walk you there. Progress is remembered in
+  the browser, as two separate numbers — puzzles solved, and stars for the ones solved first time
+  (`docs/DESIGN.md`).
+- A **rank** to grow into: stars are worth a piece's rank, from Pawn at nothing to King at every
+  star in the course. The reward for finishing a lesson is the next part of the path opening; the
+  reward for doing it well is the rank.
 - A rule a beginner cannot play without: what check is, the three ways out of it, and what makes
   checkmate. A course that teaches eight habits and not this one leaves a learner who cannot finish
   a game.

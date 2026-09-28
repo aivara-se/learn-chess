@@ -8,14 +8,20 @@ This file is the `aivara-se` agent convention, version `2`, adopted from `0bbd7e
 
 ## Current Project Focus
 
-The app is built, restyled as a phone-style app for children, published, and verified locally. It teaches
-check, the ways out of it, and checkmate; keeps its own files so a reload with no network still opens it;
-installs to a home screen; and now behaves the way a child taps it — a lesson opens at the top of the
-screen, a puzzle has a way back to the text, a piece slides from the square it left, the board shows the
-move when the answer is revealed, and every control stays on a 640px phone. Next work: hand it to a child,
-watch where they stop, and fix that — the copy and the first lesson are the parts a script cannot judge.
-`docs/DRILLS.md` is where the puzzles' answers were last measured; regenerate it in the same pull request
-that changes a position.
+The app is published and verified locally. It teaches check, the ways out of it, and checkmate; keeps its
+own files so a reload with no network still opens it; installs to a home screen; behaves the way a child
+taps it; and the eight lessons are now a **path that opens as you walk it** — two forks, two merges, a stop
+that says which lesson unlocks it, and stars that make a rank from Pawn to King.
+
+Next work, in the order it is worth doing: (1) the coach's verdict on a move is written into the bubble and
+overwritten 332ms later by Pip's own move, so a child never reads it — see the measurements in
+`docs/DESIGN.md`; (2) make Pip's move name what it attacks ("my knight is attacking your queen"), because
+"Pip played Nd4" is not a sentence an eight-year-old can read; (3) more course, in the same shape: a
+mate-in-one ladder and a lesson on finishing a won game — the course is 26 puzzles, and a child who likes
+chess finishes it in half an hour; (4) a tablet and laptop layout, where the board is still capped at 430px
+inside a 520px column. Then hand it to a child, watch where they stop, and fix that — the copy and the first
+lesson are the parts a script cannot judge. `docs/DRILLS.md` is where the puzzles' answers were last
+measured; regenerate it in the same pull request that changes a position.
 
 This section is steering, not policy. It is the one place where what matters right now outranks the standing rules below, it changes often, and it is replaced rather than appended to. Keep it short enough to read in full, and current enough to be worth reading.
 
@@ -29,6 +35,7 @@ This section is steering, not policy. It is the one place where what matters rig
 - **Nothing is hidden with the `hidden` attribute alone.** An author `display` beats the browser's own `[hidden]` rule, and the lesson list and the lesson view are both `.stack`, which is `display: grid` — so the stylesheet carries `[hidden] { display: none !important }`, and it is the reason a lesson used to open *underneath* the list that was supposed to have gone (the tap changed nothing you could see, the two screenshots were byte-identical, and the list's cards stayed in the tab order). Anything that opens something else is looked at, not asserted.
 - **Every animation is off under `prefers-reduced-motion: reduce`**, checked with the preference switched on. Only the piece that just moved slides: a redraw cannot show which piece went where, and that is the one movement here that earns its keep.
 - **A control a child needs stays on screen at 360×640, and the board is what gives way.** Before the board did, Hint, Undo and Flip sat below the fold on a 640px phone (166px of scroll) and a puzzle's board was cut in half. The board takes `--board-room` — what its screen has left after its own chrome — down to a 240px floor; the constants are measured in a browser, the table is in `docs/DESIGN.md`, and a new element in a screen's chrome is a smaller board on the smallest phones. Nothing else gives way, and a line of copy is long enough to cost 18px of board when it wraps.
+- **The path is a graph in `js/lessons.js`, and the map is drawn from it.** A lesson's `requires` names the lessons that must be finished before it can be opened; the lessons tab is a route built from that, and nothing about the order is written anywhere else. Do not hand-place a stop or hand-write the order in `js/app.js` — the layout is derived so it cannot disagree with the course. `scripts/verify-site.ts` fails a `requires` that names no lesson, a circle, or a stop no route can reach, because a learner stranded behind a graph bug has no way round it. A fork is a choice for the learner; a merge is where the teaching order is enforced, so a merge must require **every** branch.
 - **Nothing counts the course but the app.** The number of lessons and puzzles is derived from `js/lessons.js`; a total written into a file is a lie waiting to happen, and `scripts/verify-site.ts` fails one.
 - **The app must keep working offline and from `file://`-style hosting**: no fetch, no CDN, no external font, no account, no backend. Any feature that needs a server does not belong here. `sw.js` holds the offline copy, so a file the page serves goes into its list in the same commit — and a change to a file already in the list bumps the cache name with it.
 - **Say what the engine can do, and no more.** The opponent is a small alpha-beta search over material and piece-square tables with quiescence, three settings, labelled honestly in the interface. Do not describe it as strong, and do not call its evaluation an engine-grade verdict.
@@ -68,7 +75,7 @@ Then the two things a script cannot see: the app must work on a phone — no hor
 - `sw.js`: the offline cache list and the fetch handler
 - `manifest.webmanifest`: what a home screen installs
 - `js/engine.js`: rules, legal move generation, search, evaluation
-- `js/lessons.js`: the course — lesson text, diagrams and verified drills
+- `js/lessons.js`: the course — lesson text, diagrams, verified drills, and `requires`, the graph the path is drawn from
 - `js/app.js`: the interface — board, coach, progress
 - `tests/`: `bun test` suites
 - `scripts/`: `verify-site.ts` and `verify-drills.ts`, the mechanically checkable rules
