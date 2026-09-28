@@ -15,7 +15,7 @@ Live at <https://aivara-se.github.io/learn-chess/> (a custom subdomain can be po
 - **Checks** — `scripts/verify-site.ts` (files, offline list, markup, the course's own budgets) and `scripts/verify-drills.ts` (every puzzle's answer, against Stockfish).
 - **Mark** — `assets/favicon.svg`, with the rendered icons and the 1200×630 share card beside it.
 
-Three tabs: **Lessons** (a path of lessons, each stepping through one idea and the puzzles that go with it), **Play** (a game with the coach), **Puzzles** (today's puzzle first, then the same positions shuffled, with a streak). A star is earned by solving a puzzle first time, so the app counts two things: puzzles solved, and stars won.
+Three tabs: **Lessons** (a path of lessons, each stepping through one idea and the puzzles that go with it, and each branch of the path ending in a boss game against Pip), **Play** (a game with the coach), **Puzzles** (today's puzzle first, then the same positions shuffled, with a streak). A star is earned by solving a puzzle first time, so the app counts two things: puzzles solved, and stars won — a boss game is finished by a checkmate instead, and it earns no star.
 
 ```bash
 bun test                              # the rules of chess

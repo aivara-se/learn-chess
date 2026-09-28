@@ -106,11 +106,12 @@ The lessons tab is not a list of cards, it is a **route a learner walks**, and t
 drawn from the course itself:
 
 - **The graph is data.** `requires` on each lesson in `js/lessons.js` names the lessons that must be
-  finished before it. The path forks three times and merges twice:
+  finished before it. The path forks three times and merges twice, and each of its two ends finishes in
+  a boss stop:
 
   ```
-  1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ─┬─ 8 finish-it
-                      └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘                └─ 9 italian ── 10 mate-in-one
+  1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ─┬─ 8 finish-it ─── 11 boss
+                      └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘                └─ 9 italian ── 10 mate-in-one ── 12 boss
   ```
 
   A fork is a choice, and there is always one open: a learner who is stuck on values can take the
@@ -118,6 +119,18 @@ drawn from the course itself:
   a centre and know what the pieces are worth, and you cannot look for loose pieces before you
   know to castle and to keep the queen home. The third fork is finishing a game with the queen or
   opening with the Italian, and the ladder of mates in one comes after the Italian.
+- **A boss stop is a game, not a page of puzzles.** `boss: { level }` on a lesson marks it: it has no
+  drills and no diagram, and it wears a king in its circle instead of a number. It is the last stop of a
+  branch, because the habit the branch taught is the thing the game tests. Tapping it says what finishing
+  it takes — that a win is a checkmate the child delivers, and that a draw or a loss leaves it open — and
+  then opens the play screen with Pip at the level the stop names, the child playing White. The win is
+  written to `boss:<level>` in the progress, and `lessonFinished` reads it for a boss, which is how the
+  map knows the stop is done. **Undo is off in a boss game** (`setThinking` keeps the button disabled and
+  `undo()` refuses), so the win can never be one rewound to, and the win is therefore recorded only in a
+  boss game and never in a free one. Changing the level or the side leaves the boss game and starts a free
+  game instead — the board is cleared with it, because a child who stayed on the old board would be out of
+  the boss game with nothing on screen saying so, and a win from there would finish no stop. A boss win
+  earns no star: it finishes a stop, it does not solve a puzzle.
 - **The picture is derived, never hand-placed.** Row is the longest chain of lessons behind a stop;
   a lone stop sits in the middle column and a fork puts its branches left and right. There is no
   table of coordinates to fall out of date, and `scripts/verify-site.ts` fails a graph that names a
@@ -315,8 +328,10 @@ call sites above — `record` plays the chime because both ways of earning a sta
 A puzzle gives a **star** when it is solved on the first try, which is why the card at the top of the path says both numbers in words — "12 of 35 puzzles solved · 7 stars won. A star is a puzzle you solved first time." — while each stop carries its own stars, and the chip in the app bar carries the total alone. On a fresh install that line is not shown at all: "0 of 35 puzzles solved · 0 stars won" is four lines of nothing to read on the first screen a child sees, and there is nothing to explain until there is a number. Neither total is written down anywhere: both are counted from `js/lessons.js`, and `scripts/verify-site.ts` fails a shell that hard-codes one. Progress lives in `localStorage`, on the visitor's own device, and is never sent anywhere.
 
 Showing a learner the move after two wrong answers marks the puzzle **solved**, never a star: the
-sheet says "Here is the move", not "Correct!", and the child did not find it. The two keys in
-`localStorage` are `done` (a puzzle the answer was found or shown for) and `first` (a star).
+sheet says "Here is the move", not "Correct!", and the child did not find it. The keys in
+`localStorage` are `done` (a puzzle the answer was found or shown for), `first` (a star) and `boss`
+(a game won, one entry per level of Pip). A boss win is not a star: it finishes a stop, it does not
+solve a puzzle, and the two numbers above never count it.
 
 ## Accessibility
 

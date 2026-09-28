@@ -4,21 +4,25 @@
  * before you move has five), in order: the board and the pieces, what material
  * is worth, pawns in the centre, developing, castling, the early queen, looking
  * before you move, finishing a won game with the queen, the Italian opening as
- * a model, and the shapes a mate in one takes.
+ * a model, and the shapes a mate in one takes — and then a boss stop closes each
+ * end of the path, a whole game against Pip that is finished by checkmating him.
  *
  * A lesson is data: { id, title, goal, body[], diagram, diagramCaption, drills[],
- * requires[] }. `requires` is the lesson that has to be finished first, and it is
- * the whole of the map — the path forks three times and merges twice:
+ * requires[] }. A **boss stop** is that shape without the drills, plus
+ * `boss: { level }` — the strength of Pip the game is won at. `requires` is the
+ * lesson that has to be finished first, and it is the whole of the map — the
+ * path forks three times and merges twice, and every end finishes in a boss:
  *
- *   1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ─┬─ 8 finish-it
- *                       └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘                └─ 9 italian ── 10 mate-in-one
+ *   1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ─┬─ 8 finish-it ─── 11 boss
+ *                       └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘                └─ 9 italian ── 10 mate-in-one ── 12 boss
  *
  * so a learner chooses which of the first two to take, which habit to learn
  * next, and whether to learn to finish a game before the Italian opening — but
  * material still comes before developing, both habits come before looking for
- * loose pieces, and the Italian comes before the ladder of mates in one. The map
- * is drawn from this and nothing else; `scripts/verify-site.ts` fails a
- * `requires` that names no lesson, a cycle, or a lesson no path can reach.
+ * loose pieces, the Italian comes before the ladder of mates in one, and each
+ * end of the path is closed by a game rather than another puzzle. The map is
+ * drawn from this and nothing else; `scripts/verify-site.ts` fails a `requires`
+ * that names no lesson, a cycle, or a lesson no path can reach.
  * A drill is a position, the task in the learner's words, and the moves that
  * count as an answer:
  *   fen       the position, side to move taken from the FEN
@@ -510,6 +514,34 @@ export const LESSONS = [
         best: 'a2g2',
         accepted: ['a2g2'],
       },
+    ],
+  },
+
+  /* The two boss stops. A branch ends in a game rather than another puzzle: the
+     habit the branch taught is the thing the game tests. It carries no drills
+     and no diagram — the stop is won on the play screen, by checkmating Pip —
+     and `boss.level` is the strength of Pip it is won against. */
+  {
+    id: 'boss-first-game',
+    requires: ['finish-it'],
+    boss: { level: 1 },
+    title: 'Boss: beat Pip',
+    goal: 'Beat Pip in a real game to finish this branch.',
+    body: [
+      'This stop is a whole game, not a puzzle: you play White, and Pip plays at his sleepiest.',
+      'Win it by checkmate. A draw or a loss leaves the stop open, so you can start again.',
+    ],
+  },
+
+  {
+    id: 'boss-last-game',
+    requires: ['mate-in-one'],
+    boss: { level: 2 },
+    title: 'Boss: the last game',
+    goal: 'Beat a stronger Pip to finish the whole path.',
+    body: [
+      'The last game on the path: you play White, and this time Pip plays properly.',
+      'Win it by checkmate. A draw or a loss leaves the stop open, so you can start again.',
     ],
   },
 ];
