@@ -101,21 +101,22 @@ shrank to make room for words.
 
 ## The path
 
-The lessons tab is not a list of eight cards, it is a **route a learner walks**, and the route is
+The lessons tab is not a list of cards, it is a **route a learner walks**, and the route is
 drawn from the course itself:
 
 - **The graph is data.** `requires` on each lesson in `js/lessons.js` names the lessons that must be
-  finished before it. The path forks twice and merges twice:
+  finished before it. The path forks three times and merges twice:
 
   ```
-  1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ── 8 italian
-                      └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘
+  1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ─┬─ 8 finish-it
+                      └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘                └─ 9 italian ── 10 mate-in-one
   ```
 
   A fork is a choice, and there is always one open: a learner who is stuck on values can take the
   centre instead. The merges are what keep the teaching order — you cannot develop before you have
   a centre and know what the pieces are worth, and you cannot look for loose pieces before you
-  know to castle and to keep the queen home.
+  know to castle and to keep the queen home. The third fork is finishing a game with the queen or
+  opening with the Italian, and the ladder of mates in one comes after the Italian.
 - **The picture is derived, never hand-placed.** Row is the longest chain of lessons behind a stop;
   a lone stop sits in the middle column and a fork puts its branches left and right. There is no
   table of coordinates to fall out of date, and `scripts/verify-site.ts` fails a graph that names a
@@ -131,8 +132,8 @@ drawn from the course itself:
   the centre of their dot, which is the coordinate the lines and Pip are placed at.
 - **Pip stands where the learner is** — the next stop that is open and unfinished, breathing gently.
   He is a clone of the app bar's own pawn: one drawing of the character in the repository.
-- The whole path is 974px tall at 360px wide and scrolls inside `main`, which is what the brief
-  meant by a scrollable map; at 360×640 that is 828px of scroll. Every stop still clears 48px to
+- The whole path is 1126px tall at 360px wide and scrolls inside `main`, which is what the brief
+  meant by a scrollable map; at 360×640 that is 941px of scroll. Every stop still clears 48px to
   tap (64px), and every stop is a real button, in the tab order, in course order.
 - **Stars become a rank**: Pawn (0), Knight (5), Bishop (10), Rook (14), Queen (18), King (23), shown
   with the stars still to win for the next one. A child watching a number becomes a child watching
@@ -261,7 +262,7 @@ call sites above — `record` plays the chime because both ways of earning a sta
 
 ## Stars
 
-A puzzle gives a **star** when it is solved on the first try, which is why the card at the top of the path says both numbers in words — "12 of 26 puzzles solved · 7 stars won. A star is a puzzle you solved first time." — while each stop carries its own stars, and the chip in the app bar carries the total alone. On a fresh install that line is not shown at all: "0 of 26 puzzles solved · 0 stars won" is four lines of nothing to read on the first screen a child sees, and there is nothing to explain until there is a number. Neither total is written down anywhere: both are counted from `js/lessons.js`, and `scripts/verify-site.ts` fails a shell that hard-codes one. Progress lives in `localStorage`, on the visitor's own device, and is never sent anywhere.
+A puzzle gives a **star** when it is solved on the first try, which is why the card at the top of the path says both numbers in words — "12 of 35 puzzles solved · 7 stars won. A star is a puzzle you solved first time." — while each stop carries its own stars, and the chip in the app bar carries the total alone. On a fresh install that line is not shown at all: "0 of 35 puzzles solved · 0 stars won" is four lines of nothing to read on the first screen a child sees, and there is nothing to explain until there is a number. Neither total is written down anywhere: both are counted from `js/lessons.js`, and `scripts/verify-site.ts` fails a shell that hard-codes one. Progress lives in `localStorage`, on the visitor's own device, and is never sent anywhere.
 
 Showing a learner the move after two wrong answers marks the puzzle **solved**, never a star: the
 sheet says "Here is the move", not "Correct!", and the child did not find it. The two keys in

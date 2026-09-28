@@ -16,7 +16,7 @@ A beginner's chess course shaped like a small phone app: three tabs, a path of l
 ## In scope
 
 - A course laid out as a **path**: lessons are stops on one route, each with an explanation and
-  drills that are played, not read. The route forks twice and merges twice, so a learner chooses
+  drills that are played, not read. The route forks three times and merges twice, so a learner chooses
   which of two lessons to take first — but never which order to learn in, because a merge only
   opens when both of its branches are finished. A stop opens when the lesson before it is done; a
   locked stop says which lesson opens it and offers to walk you there. Progress is remembered in
@@ -26,8 +26,9 @@ A beginner's chess course shaped like a small phone app: three tabs, a path of l
   star in the course. The reward for finishing a lesson is the next part of the path opening; the
   reward for doing it well is the rank.
 - A rule a beginner cannot play without: what check is, the three ways out of it, and what makes
-  checkmate. A course that teaches eight habits and not this one leaves a learner who cannot finish
-  a game.
+  checkmate. Then how to finish: the three shapes a mate in one takes, and driving a lone king to
+  the edge with the queen before bringing your own king up. A learner who wins material and cannot
+  mate does not win the game.
 - A game with a coach: while playing, each move is graded (best, good, playable, inaccuracy,
   mistake, blunder) and the reason is stated in plain language, with the stronger move named.
 - A training mode: the same positions again, shuffled, with a streak, for repetition.
