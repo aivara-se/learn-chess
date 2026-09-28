@@ -12,6 +12,7 @@ sw.js                      the offline cache: the app's own files, nothing else
 manifest.webmanifest       what a home screen needs to install it
 js/engine.js               rules, legal move generation, search, evaluation
 js/lessons.js              the course: lesson text, diagram positions, drills
+js/daily.js                today's puzzle, picked from the date and nothing else
 js/app.js                  the interface: screens, board, coach, stars
 assets/fonts/              Inter + Space Grotesk, latin subset, woff2, OFL 1.1
 assets/favicon.svg         the app mark, and the source of the PNG icons
@@ -110,6 +111,43 @@ drawn from the course itself:
 - **Stars become a rank**: Pawn (0), Knight (5), Bishop (10), Rook (14), Queen (18), King (23), shown
   with the stars still to win for the next one. A child watching a number becomes a child watching
   which piece they are — the same idea as the course, in one line.
+
+## The daily
+
+A child who has finished the course has nothing waiting for them the next day, so the Puzzles tab opens on
+**today's puzzle**: one of the course's own positions, the same one for everyone, chosen from the date and
+from nothing else. It is played on the same board, with the same sheets, the same Hint and the same star rule
+as everything else — the only thing that is the daily's own is that it stops for the day once it is finished.
+
+- **The pick is derived, not stored.** `js/daily.js` turns a date into a place in the course's list of
+  puzzles: the day number (in the reader's own calendar, built from `Date.UTC` of the local year, month and
+  day, so a daylight-saving shift cannot move the boundary) is stepped through the list by a stride that
+  shares no factor with its length. So the same day is the same puzzle everywhere, the next day is a
+  different one, and every puzzle comes up once before any comes up twice — none of which a hash of the date
+  can promise, because two days can hash to the same place. The price is that adding a puzzle to the course
+  can change which day gets which entry: derived and never wrong, only different.
+- **One thing is stored**: `daily`, the day whose puzzle is finished. Nothing about the play, and nothing
+  about the puzzle. A second play in the same day is therefore not a play — the board is a record of the
+  puzzle, with the move that finishes it marked on it and no piece to pick up — and that is what keeps the
+  daily from being a way to farm stars. A drill already starred in the shuffle gains nothing when it comes
+  up as the daily: `first` is a set of keys, not a counter.
+- **A wrong answer does not end the day** — the child gets the second go they get everywhere else — but
+  **being shown the move does**, with `record` given `false`: solved, and not starred, exactly as a puzzle
+  the answer was shown for in a lesson.
+- **Where the switch is, and why there.** The tab is one board with two places it can be — **Today** and
+  **Shuffled** — switched by two buttons in the row that already held Hint and Next, and named by the chip
+  in the card's head ("Today's puzzle" in the daily, the count chip in the shuffle; one of them at a time,
+  and the pressed button is the place you are in). The puzzles screen fits whole at 360×640, on 366px of
+  chrome, so anything new above the board is paid for by the board: a third chip in that head row squeezes
+  all three narrow enough to wrap their own text — measured at 19px past the fold at 360×640 — and one more
+  line of copy costs 18px of it. Two more buttons in a row that is one line of three down to 320px cost
+  nothing, so the switch went there.
+- **The lines are measured too.** "Done for today — a new one tomorrow" is 36 characters, and the daily's own
+  line is the shuffle's own line ("What the pieces are worth · White to move"). A prefix like "Today's
+  puzzle · " put every longer lesson title over the one-line budget — 57 to 67 characters, measured wrapping
+  at 360px — so the name of the place lives in the chip and in the button, and not in that line.
+- **Neither place is a wall.** The shuffle is a button away while the daily is up, and Today brings the daily
+  back after the day is done (to the finished board, not to a fresh one).
 
 ## Colour
 
@@ -233,7 +271,8 @@ sheet says "Here is the move", not "Correct!", and the child did not find it. Th
 - The lesson's progress dots are a `role="img"` with a label — "Step 3 of 11, 1 of 4 puzzles won
   first time" — because three colours of circle say nothing to anyone who cannot see them.
 - Nothing is carried by colour alone: turns, check, verdicts and stars all appear as words or
-  numbers too.
+  numbers too. The daily is the same rule: which place the board is in is named by a chip and by the
+  pressed button, and the day being done is a sentence, not a tint.
 - Tap targets are at least 48px, with one measured exception: the board's own squares, which are as
   large as the screen allows (30.5–53.8px — see the board section for which screen gets what).
 - Nothing important sits within 8px of a screen edge.
