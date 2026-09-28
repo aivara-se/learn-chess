@@ -220,6 +220,18 @@ Every text pair clears AA. The two "verdict" colours are only ever used this way
   373px of chrome and lets the last 19px (the moves line) scroll, while the lesson and puzzle
   screens fit whole (396px and 366px). The 240px floor is deliberate: on a screen too short to fit
   everything, a board too small to aim at is worse than a screen that scrolls a little.
+- **The coach has two voices, and they live in two places.** The bubble is Pip judging *your*
+  move: it keeps what it said until you move again. The line under the buttons is *what just
+  happened* — his move in words, a threat, a check — and it is written above the move list, so on
+  a short phone the SAN record is what falls into the scroll, not the sentence about your queen.
+  One element could not hold both: his reply used to be written into the bubble 332ms after every
+  tap, so the grade was gone before it could be read. Measured at 360×640: the reply line now ends
+  at 571px with the tab bar at 567px (the record scrolls, as it always did); at 360×740 it ends at
+  632px, 35px clear of the bar, and at 412×915 it fits with nothing to scroll.
+- **Every move gets a verdict word**, and the reason for praise rather than only for blame. When
+  the played move *is* the engine's own choice the sentence says so and is toned good whatever the
+  score does next, because the drop is the reply, not the choice. The check is announced in front
+  of the sentence and is not also listed as a reason the move was good.
 - The price, measured: at 360×640 the squares are 33.4px on the play screen, 30.5px in a lesson,
   and 34.3px on the puzzle screen; at 360×740 and up nothing shrinks and they are 41px or more
   (36.0px at 320px wide, 47.5px at 412px, 53.8px at 900px). A child on a short phone gets every
