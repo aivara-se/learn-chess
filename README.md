@@ -9,11 +9,12 @@ Live at <https://aivara-se.github.io/learn-chess/> (a custom subdomain can be po
 - **Rules and opponent** — `js/engine.js`: move generation, search and evaluation.
 - **Lessons and puzzles** — `js/lessons.js`: the course; `docs/DRILLS.md` is what its answers were measured against.
 - **Interface** — `js/app.js`: the board, the coach, the stars and progress in `localStorage`.
+- **Sound** — `js/sound.js`: a clack when a piece lands and a chime for a star, made with Web Audio oscillators, so there is no audio file to load.
 - **Tests** — `tests/engine.test.ts`, run with `bun test`; perft counts prove the move generator.
 - **Checks** — `scripts/verify-site.ts` (files, offline list, markup, the course's own budgets) and `scripts/verify-drills.ts` (every puzzle's answer, against Stockfish).
 - **Mark** — `assets/favicon.svg`, with the rendered icons and the 1200×630 share card beside it.
 
-Three tabs: **Lessons** (eight lessons, each stepping through one idea and the puzzles that go with it), **Play** (a game with the coach), **Puzzles** (the same positions shuffled, with a streak). A star is earned by solving a puzzle first time, so the app counts two things: puzzles solved, and stars won.
+Three tabs: **Lessons** (a path of lessons, each stepping through one idea and the puzzles that go with it), **Play** (a game with the coach), **Puzzles** (the same positions shuffled, with a streak). A star is earned by solving a puzzle first time, so the app counts two things: puzzles solved, and stars won.
 
 ```bash
 bun test                              # the rules of chess

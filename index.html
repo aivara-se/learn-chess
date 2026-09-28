@@ -326,6 +326,57 @@
       animation: fall 1.1s ease-in forwards;
     }
     @keyframes fall { to { transform: translateY(70vh) rotate(540deg); opacity: 0; } }
+    /* ---------- a wider screen: a tablet held sideways, a laptop ---------- */
+    /* The app is a phone until 900px of width, and every measurement above is a
+       phone's. Above that there is room the phone layout could only waste, so the
+       board stops being capped at 430px, takes the left of the screen, and the
+       coach, the controls and the moves sit beside it. 900px because the two
+       columns leave the board 444px there and only 364px at 820px — less than the
+       430px the phone layout gives it — so a tablet in portrait keeps the phone
+       column. */
+    @media (min-width: 900px) {
+      .phone { max-width: 1028px; }
+      .appbar { padding: calc(14px + env(safe-area-inset-top)) 24px 10px; }
+      main { padding: 2px 24px 16px; }
+      /* The tab bar keeps its three tabs at the size a thumb expects and stops
+         stretching them across a laptop. */
+      .tabbar { grid-template-columns: repeat(3, minmax(0, 168px)); justify-content: center; gap: 10px; }
+      .screen > .stack { width: 100%; max-width: 980px; margin: 0 auto; }
+      /* The board grows past its phone cap, but only as far as the wide layout's
+         own chrome leaves it — its own constants, measured in a browser and in
+         docs/DESIGN.md — and no further than a board a laptop can use. */
+      .board { max-width: min(560px, max(320px, var(--board-room, 560px))); }
+      #screen-play { --board-room: calc(100dvh - 168px); }
+      #screen-train { --board-room: calc(100dvh - 168px); }
+      #screen-learn #lesson-board { --board-room: calc(100dvh - 168px); }
+      /* The board on the left; everything a game is played with on the right. The
+         board is the tallest thing on the screen, so its column is a row-span and
+         the rest stack down the other one. */
+      #screen-play > .stack,
+      #screen-train > .stack {
+        display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+        gap: 14px 28px; align-items: start;
+      }
+      #screen-play .boardwrap,
+      #screen-train .boardwrap { grid-column: 1; grid-row: 1 / span 6; }
+      #screen-play > .stack > :not(.boardwrap),
+      #screen-train > .stack > :not(.boardwrap) { grid-column: 2; }
+      /* A mouse gets a full-width target: the coach's bubble fills its column and
+         the three buttons divide it between them. */
+      #screen-play .coach .bubble { flex: 1; }
+      #screen-play > .stack > .row > .btn,
+      #screen-train > .stack > .row > .btn { flex: 1; }
+      /* A lesson's puzzle has the same shape as a game. A read step has no board of
+         its own, so it stays a column — a comfortable measure, not a laptop's. */
+      #lesson-view:has(> .boardwrap) {
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+        gap: 14px 28px; align-items: start;
+      }
+      #lesson-view:has(> .boardwrap) > .boardwrap { grid-column: 1; grid-row: 1 / span 6; }
+      #lesson-view:has(> .boardwrap) > :not(.boardwrap) { grid-column: 2; }
+      #lesson-view:not(:has(> .boardwrap)) { max-width: 640px; }
+      #lesson-list { max-width: 720px; }
+    }
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
     .sr {
       position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;

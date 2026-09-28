@@ -13,6 +13,7 @@ import {
   isDraw, inCheck, san, findBestMove, searchEval, findThreat,
 } from './engine.js';
 import { LESSONS } from './lessons.js';
+import { sound } from './sound.js';
 
 const GLYPH = { k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E', p: '\u265F' };
 const NAMES = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
@@ -124,19 +125,29 @@ const store = {
     const d = store.read();
     if (!d.best || n > d.best) { d.best = n; store.write(d); }
   },
+  /* Sound is a choice, not a score: stored beside the progress only because that
+     is what this device already keeps for the child. */
+  sound(on) {
+    const d = store.read();
+    if (on) d.sound = true; else delete d.sound;
+    store.write(d);
+  },
   reset() { store.write({}); },
 };
 const solvedCount = () => Object.keys((store.read().done) || {}).length;
 const starCount = () => Object.keys((store.read().first) || {}).length;
 const isSolved = (key) => !!((store.read().done || {})[key]);
 const isFirstTry = (key) => !!((store.read().first || {})[key]);
+const soundOn = () => !!store.read().sound;
 
 /* Every progress write goes through here, so the two numbers can never drift
    apart or go stale: `done` is a puzzle the answer was found or shown for,
-   `first` is a star — solved with no wrong answer and no hint. */
+   `first` is a star — solved with no wrong answer and no hint. A star is also
+   one of the two things in this app that makes a sound, and both ways of earning
+   one come through here, so the chime cannot miss a call site. */
 function record(key, firstTry) {
   store.solved(key);
-  if (firstTry) store.clean(key);
+  if (firstTry) { store.clean(key); sound.star(); }
   paintStarCount();
 }
 
@@ -920,8 +931,13 @@ function newGame() {
   paint(play.state);
   updateMoves();
   setReply('');
+  /* A mouse does not tap. On a screen whose pointer hovers, the one instruction a
+     child reads before their first move says click instead. Read here, at every
+     new game, rather than once at load: a tablet with a mouse plugged in gets the
+     truth too. */
+  const click = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   coachSay(play.colour === 'w' ? 'good' : '', play.colour === 'w'
-    ? 'You are White. Tap a pawn, then tap the square in front of it.'
+    ? `You are White. ${click ? 'Click' : 'Tap'} a pawn, then ${click ? 'click' : 'tap'} the square in front of it.`
     : 'You are Black. Pip opens the game.');
   $('play-turn').textContent = 'Your move';
   if (play.colour === 'b') engineTurn();
@@ -997,6 +1013,7 @@ function userMove(move) {
   play.state.selected = null;
   play.state.targets = new Set();
   paint(play.state);          // the child sees the move before anything is worked out
+  sound.move();               // the clack lands with the piece, not with the grading
   updateMoves();
 
   /* The grade is a search, and it used to run before the repaint: a tap at level 3
@@ -1086,6 +1103,7 @@ function engineTurn() {
       play.state.locked = false;
       setThinking(false);
       paint(play.state);
+      sound.move();          // Pip's piece lands too — the ear hears both sides move
       updateMoves();
       /* What happened goes on the reply line. The bubble is left alone: the
          grade the child has not finished reading lives there. */
@@ -1234,6 +1252,30 @@ function levelSheet() {
   sides.appendChild(choice);
   sheet.appendChild(sides);
   sheet.appendChild(el('p', 'tiny', 'Changing the side starts a new game.'));
+  /* Sound belongs here, with the two other things a child chooses once before a
+     game. It is off until they turn it on, and that click is also the gesture a
+     browser's autoplay policy asks for before a page may make a noise at all —
+     so the context is unlocked by this button and never at load. */
+  const audio = el('div', 'row');
+  audio.style.marginTop = '16px';
+  audio.appendChild(el('p', 'tiny', 'Sound'));
+  const audioChoice = el('div', 'row');
+  audioChoice.style.marginTop = '6px';
+  const soundBtn = el('button', 'btn' + (sound.enabled() ? ' primary' : ''), sound.enabled() ? 'Sound: on' : 'Sound: off');
+  soundBtn.type = 'button';
+  soundBtn.setAttribute('aria-pressed', String(sound.enabled()));
+  soundBtn.addEventListener('click', () => {
+    const next = !sound.enabled();
+    sound.setEnabled(next);
+    store.sound(next);
+    soundBtn.textContent = next ? 'Sound: on' : 'Sound: off';
+    soundBtn.classList.toggle('primary', next);
+    soundBtn.setAttribute('aria-pressed', String(next));
+  });
+  audioChoice.appendChild(soundBtn);
+  audio.appendChild(audioChoice);
+  sheet.appendChild(audio);
+  sheet.appendChild(el('p', 'tiny', 'A clack when a piece moves, a chime for a star.'));
   sheet.hidden = false;
   $('scrim').hidden = false;
   const first = sheet.querySelector('button');
@@ -1397,6 +1439,10 @@ function main() {
       navigator.serviceWorker.register('sw.js').catch(() => { /* offline is a bonus, never a blocker */ });
     });
   }
+
+  /* The child's own choice, put back. It must not make a sound or create an
+     AudioContext — only the toggle's gesture may do that. */
+  sound.restore(soundOn());
 
   renderLessonList();
   refreshTrain();

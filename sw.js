@@ -11,7 +11,9 @@
  * adds it — scripts/verify-site.ts checks that FILES covers the app and that
  * every file in it is really here; the bump is checked by reading it.
  */
-const CACHE = 'learn-chess-v4';
+/* v6: the coach's verdict and the threat line (js/app.js, js/engine.js) on top of
+   the sound module's v5 — two file sets that must never share a cache name. */
+const CACHE = 'learn-chess-v6';
 
 const FILES = [
   './',
@@ -20,6 +22,7 @@ const FILES = [
   'js/app.js',
   'js/engine.js',
   'js/lessons.js',
+  'js/sound.js',
   'assets/favicon.svg',
   'assets/icon-180.png',
   'assets/icon-192.png',

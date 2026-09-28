@@ -12,6 +12,7 @@ sw.js                      the offline cache: the app's own files, nothing else
 manifest.webmanifest       what a home screen needs to install it
 js/engine.js               rules, legal move generation, search, evaluation
 js/lessons.js              the course: lesson text, diagram positions, drills
+js/sound.js                the two sounds: a clack for a move, a chime for a star
 js/app.js                  the interface: screens, board, coach, stars
 assets/fonts/              Inter + Space Grotesk, latin subset, woff2, OFL 1.1
 assets/favicon.svg         the app mark, and the source of the PNG icons
@@ -67,28 +68,55 @@ The app is one screen tall, like a phone app rather than a web page:
   play is chosen in the level sheet, with the other thing you choose once — it used to be a fourth
   button in that row, which wrapped to two lines and pushed Hint and Undo off the bottom of a
   640px phone.
+- The coach's first line says **click** rather than tap on a screen whose pointer hovers and is fine
+  (`newGame()` reads `(hover: hover) and (pointer: fine)`, at every new game, so a tablet with a
+  mouse plugged in is told the truth too). A laptop told to tap its own screen is a small lie, and it
+  is the kind that makes an app read as built for somebody else.
 - Long answers arrive in a **bottom sheet** (`.sheet`) with one action button, not inline text:
   a child gets one thing to read and one thing to tap. The sheet comes with a full-bleed scrim, so it is plainly the thing to act on and nothing behind it is left half-covered; the scrim and the sheet appear and disappear together, and tapping the scrim closes it.
 - Safe-area insets are respected at the top and bottom (`env(safe-area-inset-*)`), so it does not
   sit under a phone's notch or home bar.
 
+### A wider screen (≥900px)
+
+Every measurement above is a phone's, and it stays true below 900px. **At 900px and up the app stops
+being a phone**: the board moves to the left and keeps growing, and the coach, the controls and the
+moves sit beside it. 900px is where the two columns still leave the board more than the phone's 430px
+— the 980px column minus the 380px side column and the 28px gutter is 444px at 900px (measured) — and
+at 820px the same two columns would leave it 364px, *smaller* than the 430px the phone layout gives it.
+A tablet in portrait therefore keeps the phone column, complete and centred, rather than a board that
+shrank to make room for words.
+
+- `.phone` widens to 1028px; the content column (`.screen > .stack`) is capped at 980px and centred,
+  so the app bar and the tab bar span the app rather than the window.
+- The tab bar keeps its three tabs at the size a thumb expects (168 × 58px at 1280px) instead of
+  stretching them across a laptop; the bar itself stays a bottom bar, because it is where a thumb
+  and a trackpad both look for it.
+- The play and puzzle screens are a two-column grid: the board's column is `1fr`, the side column
+  holds everything a game is played with and caps at 380px. The coach's bubble fills that column and
+  Hint/Undo/Flip divide it, so a mouse gets a full-width target. A lesson's puzzle is the same two
+  columns (`#lesson-view:has(> .boardwrap)`); a read step has no board of its own and stays a column
+  at a 640px measure, and the path is capped at 720px.
+- The board's 4px white frame, the coach bubble and the buttons are unchanged — only their column is.
+
 ## The path
 
-The lessons tab is not a list of eight cards, it is a **route a learner walks**, and the route is
+The lessons tab is not a list of cards, it is a **route a learner walks**, and the route is
 drawn from the course itself:
 
 - **The graph is data.** `requires` on each lesson in `js/lessons.js` names the lessons that must be
-  finished before it. The path forks twice and merges twice:
+  finished before it. The path forks three times and merges twice:
 
   ```
-  1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ── 8 italian
-                      └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘
+  1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ─┬─ 8 finish-it
+                      └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘                └─ 9 italian ── 10 mate-in-one
   ```
 
   A fork is a choice, and there is always one open: a learner who is stuck on values can take the
   centre instead. The merges are what keep the teaching order — you cannot develop before you have
   a centre and know what the pieces are worth, and you cannot look for loose pieces before you
-  know to castle and to keep the queen home.
+  know to castle and to keep the queen home. The third fork is finishing a game with the queen or
+  opening with the Italian, and the ladder of mates in one comes after the Italian.
 - **The picture is derived, never hand-placed.** Row is the longest chain of lessons behind a stop;
   a lone stop sits in the middle column and a fork puts its branches left and right. There is no
   table of coordinates to fall out of date, and `scripts/verify-site.ts` fails a graph that names a
@@ -104,8 +132,8 @@ drawn from the course itself:
   the centre of their dot, which is the coordinate the lines and Pip are placed at.
 - **Pip stands where the learner is** — the next stop that is open and unfinished, breathing gently.
   He is a clone of the app bar's own pawn: one drawing of the character in the repository.
-- The whole path is 974px tall at 360px wide and scrolls inside `main`, which is what the brief
-  meant by a scrollable map; at 360×640 that is 828px of scroll. Every stop still clears 48px to
+- The whole path is 1126px tall at 360px wide and scrolls inside `main`, which is what the brief
+  meant by a scrollable map; at 360×640 that is 941px of scroll. Every stop still clears 48px to
   tap (64px), and every stop is a real button, in the tab order, in course order.
 - **Stars become a rank**: Pawn (0), Knight (5), Bishop (10), Rook (14), Queen (18), King (23), shown
   with the stars still to win for the next one. A child watching a number becomes a child watching
@@ -170,6 +198,14 @@ Every text pair clears AA. The two "verdict" colours are only ever used this way
   and 34.3px on the puzzle screen; at 360×740 and up nothing shrinks and they are 41px or more
   (36.0px at 320px wide, 47.5px at 412px, 53.8px at 900px). A child on a short phone gets every
   control and a smaller board, which is the right way round.
+- **Above 900px the board's ceiling and its chrome are the wide layout's own numbers.** The board is
+  `max-width: min(560px, max(320px, var(--board-room)))`, and `--board-room` is
+  `calc(100dvh - 168px)`: measured in a browser at ≥900px, the app bar is 65, the tab bar 73 and
+  `main`'s padding 18 (2 + 16), so 156px of chrome and 12px of slack. Measured board and squares,
+  2× device scale: **560px / 69.0px at 1024×768, 1280×800, 1440×900 and 1920×1080** (the ceiling
+  binds, not the height), **444px / 54.5px at 900×640 and 900×700** (the left column binds), and
+  **352px / 43px at 1000×520** (the height binds). The 320px floor is the phone's 240px one, raised
+  because a wide screen has the room: a board below it is worse than a screen that scrolls a little.
 - **The board is the one control that breaks the 48px rule**, and the exception is
   measured rather than waived: eight squares cannot be 48px each inside a 360px screen
   (that needs 384px), and a board that does not fill the screen is worse than one whose
@@ -217,12 +253,28 @@ Five movements, all removed under `prefers-reduced-motion: reduce` (one rule, `a
   game (Hint, Undo, Flip) are disabled for the same time — a locked board with nothing to say so
   reads as a broken one. A search in flight is guarded by `play.token`, so starting a new game
   while Pip is thinking cannot land a grade on it.
-- Nothing loops except that one cue, nothing moves while a child is thinking about their own move,
-  and no sound is played.
+- Nothing loops except that one cue, and nothing moves while a child is thinking about their own move.
+
+## Sound
+
+Two sounds, both made in the page: a **clack** when a piece lands on the board — the learner's move and
+Pip's — and a **chime of three notes up** for a star, which is a puzzle solved on the first try. They are
+Web Audio oscillators in `js/sound.js`: no audio file, no fetch, nothing to break offline, and only the two
+call sites above — `record` plays the chime because both ways of earning a star go through it.
+
+- **Off until the child turns it on**, in the level sheet beside the strength of Pip and the side they play —
+  the other two things chosen once. That click is also the gesture the browser's autoplay policy asks for, so
+  the `AudioContext` is created there and never at load; the choice is stored with the progress (`sound` in
+  `localStorage`) and put back at startup without touching audio. Turning it on plays one clack, which is how
+  a child knows the device can hear it.
+- **Nothing on a wrong answer.** The sheet already says it in words, and a buzzer teaches a child to stop
+  trying.
+- A reader whose device asks for less motion (`prefers-reduced-motion: reduce`) is not given sound either:
+  the toggle starts off for everyone, so nobody hears any of this unless they turn it on themselves.
 
 ## Stars
 
-A puzzle gives a **star** when it is solved on the first try, which is why the card at the top of the path says both numbers in words — "12 of 26 puzzles solved · 7 stars won. A star is a puzzle you solved first time." — while each stop carries its own stars, and the chip in the app bar carries the total alone. On a fresh install that line is not shown at all: "0 of 26 puzzles solved · 0 stars won" is four lines of nothing to read on the first screen a child sees, and there is nothing to explain until there is a number. Neither total is written down anywhere: both are counted from `js/lessons.js`, and `scripts/verify-site.ts` fails a shell that hard-codes one. Progress lives in `localStorage`, on the visitor's own device, and is never sent anywhere.
+A puzzle gives a **star** when it is solved on the first try, which is why the card at the top of the path says both numbers in words — "12 of 35 puzzles solved · 7 stars won. A star is a puzzle you solved first time." — while each stop carries its own stars, and the chip in the app bar carries the total alone. On a fresh install that line is not shown at all: "0 of 35 puzzles solved · 0 stars won" is four lines of nothing to read on the first screen a child sees, and there is nothing to explain until there is a number. Neither total is written down anywhere: both are counted from `js/lessons.js`, and `scripts/verify-site.ts` fails a shell that hard-codes one. Progress lives in `localStorage`, on the visitor's own device, and is never sent anywhere.
 
 Showing a learner the move after two wrong answers marks the puzzle **solved**, never a star: the
 sheet says "Here is the move", not "Correct!", and the child did not find it. The two keys in
@@ -247,5 +299,5 @@ sheet says "Here is the move", not "Correct!", and the child did not find it. Th
 - Nothing is carried by colour alone: turns, check, verdicts and stars all appear as words or
   numbers too.
 - Tap targets are at least 48px, with one measured exception: the board's own squares, which are as
-  large as the screen allows (30.5–53.8px — see the board section for which screen gets what).
+  large as the screen allows (30.5–69px — see the board section for which screen gets what).
 - Nothing important sits within 8px of a screen edge.
