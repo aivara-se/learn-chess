@@ -3,7 +3,7 @@
  * Three screens, switched from a bottom tab bar, the way a small phone app
  * works: Lessons (a course in steps, each ending in positions you play),
  * Play (a game against a sleepy-but-honest opponent, with Pip coaching), and
- * Puzzles (the same positions shuffled, with a streak).
+ * Puzzles (today's puzzle, then the same positions shuffled, with a streak).
  *
  * The rules, the search and the evaluation come from js/engine.js; the course
  * comes from js/lessons.js. Nothing here talks to a server.
@@ -13,6 +13,7 @@ import {
   isDraw, inCheck, san, findBestMove, searchEval,
 } from './engine.js';
 import { LESSONS } from './lessons.js';
+import { dayStamp, dailyDrill } from './daily.js';
 
 const GLYPH = { k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E', p: '\u265F' };
 const NAMES = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
@@ -121,12 +122,22 @@ const store = {
     const d = store.read();
     if (!d.best || n > d.best) { d.best = n; store.write(d); }
   },
+  /* The daily stores one thing: the day whose puzzle is finished. Nothing about
+     the play is kept — what the puzzle is comes from the date (js/daily.js). */
+  daily(stamp) {
+    const d = store.read();
+    d.daily = stamp;
+    store.write(d);
+  },
   reset() { store.write({}); },
 };
 const solvedCount = () => Object.keys((store.read().done) || {}).length;
 const starCount = () => Object.keys((store.read().first) || {}).length;
 const isSolved = (key) => !!((store.read().done || {})[key]);
 const isFirstTry = (key) => !!((store.read().first || {})[key]);
+/* Today's puzzle is done when the day it was finished is today, in the reader's
+   own calendar — so it turns over at their midnight, not at UTC's. */
+const dailyDoneToday = () => (store.read().daily || '') === dayStamp(new Date());
 
 /* Every progress write goes through here, so the two numbers can never drift
    apart or go stale: `done` is a puzzle the answer was found or shown for,
@@ -1161,7 +1172,11 @@ function levelSheet() {
 
 /* ---------- Puzzles ---------- */
 
-const train = { current: null, streak: 0, tries: 0, state: null };
+/* The tab is one board and two places the board can be: today's puzzle, and the
+   shuffle this tab was before the daily existed. `mode` says which one is out. */
+const train = { current: null, streak: 0, tries: 0, state: null, mode: 'shuffled' };
+let todayBtn = null;
+let dailyChip = null;
 
 function allDrills() {
   const out = [];
@@ -1175,9 +1190,48 @@ function refreshTrain() {
   $('train-solved').textContent = String(allDrills().filter((x) => done[x.key]).length);
   $('train-total').textContent = String(TOTAL_DRILLS);
   paintStarCount();
+  paintTrainMode();
 }
 
+/* Which of the two places is on the board, said in words as well as in colour:
+   the chip in the card's head names it, and the button that got you there is the
+   pressed one. One chip at a time, because a third chip in that row squeezes all
+   three narrow enough to wrap their own text — measured, and it cost 19px of
+   board at 360x640 (docs/DESIGN.md carries the numbers). */
+function paintTrainMode() {
+  const daily = train.mode === 'today';
+  dailyChip.hidden = !daily;
+  $('train-solved').closest('.chip').hidden = daily;
+  todayBtn.className = `btn${daily ? ' primary' : ''}`;
+  $('train-next').className = `btn${daily ? '' : ' primary'}`;
+  todayBtn.setAttribute('aria-pressed', String(daily));
+  $('train-next').setAttribute('aria-pressed', String(!daily));
+}
+
+/* The switch between the two places: a button each, in the row of buttons that
+   was already under the board. Two more buttons cost the board nothing there —
+   the row is one line of three down to 320px (measured) — where a new control
+   row, or one more line of copy, would have cost it 18px at 360x640, the screen
+   this app is most used on. */
+function wireTrain() {
+  const next = $('train-next');
+  next.textContent = 'Shuffled';
+  dailyChip = el('span', 'chip', "Today's puzzle");
+  const rightChip = $('train-solved').closest('.chip');
+  rightChip.parentNode.insertBefore(dailyChip, rightChip);
+  todayBtn = el('button', 'btn', 'Today');
+  todayBtn.type = 'button';
+  todayBtn.id = 'train-today';
+  todayBtn.addEventListener('click', startDaily);
+  next.parentNode.insertBefore(todayBtn, next);
+  paintTrainMode();
+}
+
+/* The shuffle: the course's positions in a random order. A puzzle already solved
+   comes back once the course has been through, and playing one twice cannot win
+   a second star — `first` is a set of keys, not a counter. */
 function nextPuzzle() {
+  train.mode = 'shuffled';
   const done = (store.read().done) || {};
   const left = allDrills().filter((x) => !done[x.key]);
   const pool = left.length ? left : allDrills();
@@ -1187,6 +1241,7 @@ function nextPuzzle() {
   const pos = parseFen(pick.drill.fen);
   $('train-prompt').textContent = pick.drill.prompt;
   $('train-where').textContent = `${pick.lesson.title} · ${pos.turn === 'w' ? 'White' : 'Black'} to move`;
+  $('train-hint').disabled = false;
 
   const b = $('train-board');
   const state = {
@@ -1250,6 +1305,106 @@ function nextPuzzle() {
   refreshTrain();
 }
 
+function finishDaily() {
+  store.daily(dayStamp(new Date()));
+  $('train-where').textContent = 'Done for today — a new one tomorrow';
+  $('train-hint').disabled = true;
+}
+
+/* Today's puzzle: one of the course's own positions, picked from the date by
+   js/daily.js, played on the same board with the same sheets and the same star
+   rule as the shuffle. The only thing that is the daily's own is that it stops
+   for the day once it is finished — which is also what keeps it from being
+   farmed for stars: a second play in the same day is not a play. */
+function startDaily() {
+  /* A tap on Today from inside the daily is not a restart. Restarting it would
+     put the tries counter back to nought and hand out a first-try star nobody
+     earned. */
+  if (train.mode === 'today' && train.current) return;
+  const pick = dailyDrill(new Date(), allDrills());
+  if (!pick) return nextPuzzle();
+  train.mode = 'today';
+  train.current = pick;
+  train.tries = 0;
+  const finished = dailyDoneToday();
+  const pos = parseFen(pick.drill.fen);
+  $('train-prompt').textContent = pick.drill.prompt;
+  $('train-where').textContent = finished
+    ? 'Done for today — a new one tomorrow'
+    : `${pick.lesson.title} · ${pos.turn === 'w' ? 'White' : 'Black'} to move`;
+  /* Nothing to solve once the day's puzzle is done, so the board is a record of
+     it: the position, the move that finishes it, and no piece to pick up. */
+  $('train-hint').disabled = finished;
+
+  const state = {
+    container: $('train-board'),
+    pos,
+    selected: null,
+    targets: new Set(),
+    flip: pos.turn === 'b',
+    accepted: (pick.drill.accepted || []).map((u) => u.toLowerCase()),
+    locked: finished,
+    over: false,
+    last: null,
+    hintMove: finished ? uciToMove(pos, String(pick.drill.best || pick.drill.accepted[0]).toLowerCase()) : null,
+  };
+  train.state = state;
+  state.onSquare = tapHandler(state);
+  state.onMove = (move) => {
+    const ok = state.accepted.includes(toUci(move));
+    train.tries += 1;
+    state.flash = { square: move.to, ok };
+    state.last = move;
+    state.pos = makeMove(pos, move);
+    /* The day's puzzle is over the moment its answer is found or shown, so it is
+       painted finished rather than playable: a board still offering pieces to
+       pick up is a board that looks open, and this one is done for the day. */
+    if (ok || train.tries > 1) state.locked = true;
+    paint(state);
+    if (ok) {
+      train.streak += 1;
+      record(pick.key, train.tries === 1);
+      store.streak(train.streak);
+      finishDaily();
+      refreshTrain();
+      confetti();
+      showSheet({
+        title: 'Correct!',
+        text: `${pick.drill.why} Come back tomorrow for a new one.`,
+        icon: 'happy',
+        action: 'Shuffled puzzles',
+        onAction: nextPuzzle,
+      });
+    } else {
+      train.streak = 0;
+      refreshTrain();
+      const best = uciToMove(pos, String(pick.drill.best || state.accepted[0]).toLowerCase());
+      const d = best ? describeMove(pos, best) : null;
+      if (train.tries === 1) {
+        setTimeout(() => { state.flash = null; state.pos = pos; state.selected = null; state.targets = new Set(); paint(state); }, 700);
+        showSheet({ title: 'Not that one', text: `${pick.drill.hint}. Have another go.`, icon: 'hmm', action: 'Try again', onAction: () => { state.locked = false; state.pos = pos; paint(state); } });
+      } else {
+        /* The answer shown ends the day's puzzle too: a child who cannot find it
+           still needs a way to put it down for the day, and being shown the move
+           is where the course has always ended a puzzle. It is not a star —
+           `record` is given `false`, as it is everywhere else. */
+        record(pick.key, false);
+        finishDaily();
+        refreshTrain();
+        showSheet({
+          title: 'Here is the move',
+          text: d ? `The move is to ${d.verb}. ${pick.drill.why}` : pick.drill.why,
+          icon: 'hmm',
+          action: 'Shuffled puzzles',
+          onAction: nextPuzzle,
+        });
+      }
+    }
+  };
+  paint(state);
+  refreshTrain();
+}
+
 /* ---------- screens ---------- */
 
 /* The app bar says what the tab is for. It used to say "Pick a lesson and play"
@@ -1272,7 +1427,9 @@ function showScreen(name) {
   closeSheet();
   document.querySelector('main').scrollTop = 0;
   if (name === 'play' && !play.pos) newGame();
-  if (name === 'train' && !train.current) nextPuzzle();
+  /* The tab opens on the day's puzzle until that is done, and on the shuffle
+     after it. A tab you are already on keeps the place you left it in. */
+  if (name === 'train' && !train.current) (dailyDoneToday() ? nextPuzzle : startDaily)();
   if (name === 'learn') renderLessonList();
 }
 
@@ -1317,6 +1474,7 @@ function main() {
     });
   }
 
+  wireTrain();
   renderLessonList();
   refreshTrain();
   showScreen('learn');

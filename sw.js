@@ -11,13 +11,17 @@
  * adds it — scripts/verify-site.ts checks that FILES covers the app and that
  * every file in it is really here; the bump is checked by reading it.
  */
-const CACHE = 'learn-chess-v3';
+/* The cache name goes to v5 rather than v4: v4 is taken by the open coach-verdict
+   pull request, and a name that means two different sets of files is how a stale
+   copy outlives the change. */
+const CACHE = 'learn-chess-v5';
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
   'js/app.js',
+  'js/daily.js',
   'js/engine.js',
   'js/lessons.js',
   'assets/favicon.svg',
