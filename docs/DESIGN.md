@@ -308,8 +308,10 @@ for what a child did, that stays. Nine of them, and their rules live in one modu
   add up to the count in the heading. Every chip carries the state as words for a screen reader too
   (", earned" / ", not yet"), because a colour and a padlock are not a sentence. Nothing new was added
   to the stylesheet: `.card`, `.row`, `.chip`, `.chip.good` and `.sr` carry it, and the shelf is 346px
-  of the lessons tab at 360px on a fresh install, 336px with six badges on it; the tab's list is 1635px
-  of scroll from a fresh install, 1729px with the game's badges on it.
+  of the lessons tab at 360px on a fresh install, 336px with six badges on it; the tab's list is 1787px
+  of scroll from a fresh install, 1881px with the game's badges on it — both re-measured on today's
+  `main`, whose mate-in-one ladder grew the course to 10 lessons and 35 puzzles (+152px of list, the
+  shelf unchanged).
 - **Badges are never sent anywhere**, and the module holds no storage and no DOM of its own: it is given
   the app's own read and write, which is what makes the rules checkable by `bun test` without a browser.
 
