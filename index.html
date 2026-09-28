@@ -330,9 +330,10 @@
     /* The app is a phone until 900px of width, and every measurement above is a
        phone's. Above that there is room the phone layout could only waste, so the
        board stops being capped at 430px, takes the left of the screen, and the
-       coach, the controls and the moves sit beside it. 900px is the breakpoint
-       rather than the 520px column because below it the board is a phone's board:
-       a 430–560px board also needs the height an 820×1180 tablet does not have. */
+       coach, the controls and the moves sit beside it. 900px because the two
+       columns leave the board 444px there and only 364px at 820px — less than the
+       430px the phone layout gives it — so a tablet in portrait keeps the phone
+       column. */
     @media (min-width: 900px) {
       .phone { max-width: 1028px; }
       .appbar { padding: calc(14px + env(safe-area-inset-top)) 24px 10px; }
