@@ -28,8 +28,10 @@ A beginner's chess course shaped like a small phone app: three tabs, a path of l
 - A rule a beginner cannot play without: what check is, the three ways out of it, and what makes
   checkmate. A course that teaches eight habits and not this one leaves a learner who cannot finish
   a game.
-- A game with a coach: while playing, each move is graded (best, good, playable, inaccuracy,
-  mistake, blunder) and the reason is stated in plain language, with the stronger move named.
+- A game with a coach: **every** move is graded and the reason is stated in plain language, with
+  the stronger move named. The grade stays on screen until the next move; what Pip's own move did
+  — what he took, what he is attacking, whose king is in check — is said on its own line beside it,
+  because a sentence that replaces the grade is a grade nobody reads.
 - A training mode: the same positions again, shuffled, with a streak, for repetition.
 - Honest labelling: the opponent is a small search over material and piece-square tables, and
   it says so.

@@ -168,9 +168,10 @@
     #screen-play .bubble { padding: 10px 12px; }
     /* Everything on a screen that is not the board, measured at 360x640 in a
        browser (docs/DESIGN.md carries the table): appbar 63, tab bar 73, main
-       padding 16, the play bar 70, the coach 64, three buttons 48, the moves line
-       18, and the gaps between them. The play screen keeps the board bigger and
-       lets the moves line take the last 19px of scroll; the other two fit whole. */
+       padding 16, the play bar 70, the coach 64, three buttons 48, the record lines
+       18 each, and the gaps between them. The play screen keeps the board bigger
+       and lets the record lines (Pip's last move, then the move list) take the last
+       of the scroll; the other two fit whole. */
     #screen-play { --board-room: calc(100dvh - 373px); }
     #screen-learn #lesson-board { --board-room: calc(100dvh - 396px); }
     #screen-train { --board-room: calc(100dvh - 366px); }
