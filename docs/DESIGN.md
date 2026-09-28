@@ -12,6 +12,7 @@ sw.js                      the offline cache: the app's own files, nothing else
 manifest.webmanifest       what a home screen needs to install it
 js/engine.js               rules, legal move generation, search, evaluation
 js/lessons.js              the course: lesson text, diagram positions, drills
+js/sound.js                the two sounds: a clack for a move, a chime for a star
 js/app.js                  the interface: screens, board, coach, stars
 assets/fonts/              Inter + Space Grotesk, latin subset, woff2, OFL 1.1
 assets/favicon.svg         the app mark, and the source of the PNG icons
@@ -239,8 +240,24 @@ Five movements, all removed under `prefers-reduced-motion: reduce` (one rule, `a
   game (Hint, Undo, Flip) are disabled for the same time — a locked board with nothing to say so
   reads as a broken one. A search in flight is guarded by `play.token`, so starting a new game
   while Pip is thinking cannot land a grade on it.
-- Nothing loops except that one cue, nothing moves while a child is thinking about their own move,
-  and no sound is played.
+- Nothing loops except that one cue, and nothing moves while a child is thinking about their own move.
+
+## Sound
+
+Two sounds, both made in the page: a **clack** when a piece lands on the board — the learner's move and
+Pip's — and a **chime of three notes up** for a star, which is a puzzle solved on the first try. They are
+Web Audio oscillators in `js/sound.js`: no audio file, no fetch, nothing to break offline, and only the two
+call sites above — `record` plays the chime because both ways of earning a star go through it.
+
+- **Off until the child turns it on**, in the level sheet beside the strength of Pip and the side they play —
+  the other two things chosen once. That click is also the gesture the browser's autoplay policy asks for, so
+  the `AudioContext` is created there and never at load; the choice is stored with the progress (`sound` in
+  `localStorage`) and put back at startup without touching audio. Turning it on plays one clack, which is how
+  a child knows the device can hear it.
+- **Nothing on a wrong answer.** The sheet already says it in words, and a buzzer teaches a child to stop
+  trying.
+- A reader whose device asks for less motion (`prefers-reduced-motion: reduce`) is not given sound either:
+  the toggle starts off for everyone, so nobody hears any of this unless they turn it on themselves.
 
 ## Stars
 
