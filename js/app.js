@@ -916,8 +916,13 @@ function newGame() {
   play.state.onMove = (move) => userMove(move);
   paint(play.state);
   updateMoves();
+  /* A mouse does not tap. On a screen whose pointer hovers, the one instruction a
+     child reads before their first move says click instead. Read here, at every
+     new game, rather than once at load: a tablet with a mouse plugged in gets the
+     truth too. */
+  const click = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   coachSay(play.colour === 'w' ? 'good' : '', play.colour === 'w'
-    ? 'You are White. Tap a pawn, then tap the square in front of it.'
+    ? `You are White. ${click ? 'Click' : 'Tap'} a pawn, then ${click ? 'click' : 'tap'} the square in front of it.`
     : 'You are Black. Pip opens the game.');
   $('play-turn').textContent = 'Your move';
   if (play.colour === 'b') engineTurn();
