@@ -11,7 +11,11 @@
  * adds it — scripts/verify-site.ts checks that FILES covers the app and that
  * every file in it is really here; the bump is checked by reading it.
  */
-const CACHE = 'learn-chess-v6';
+/* The name is v8 and not v6: v6 is held by the open coach-verdict pull request
+   (#19) and v7 by the rebased daily puzzle (#24), and a name that means two
+   different sets of files is how a stale copy outlives the change. Landing out
+   of order is harmless as long as no two states share a name. */
+const CACHE = 'learn-chess-v8';
 
 const FILES = [
   './',
