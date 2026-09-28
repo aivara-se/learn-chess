@@ -15,6 +15,7 @@
  */
 import { parseFen, legalMoves } from '../js/engine.js';
 import { LESSONS } from '../js/lessons.js';
+import { PACKS } from '../js/packs.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const problems: string[] = [];
@@ -71,7 +72,7 @@ checks.push('fonts, licences, icons, share card, manifest and offline worker are
 /* 4. the offline list is the app's own files, and all of them exist */
 const sw = await read('sw.js');
 const listed = [...sw.matchAll(/^\s*'([^']+)',$/gm)].map((m) => m[1]);
-const CACHE_FLOOR = ['index.html', 'js/app.js', 'js/engine.js', 'js/lessons.js',
+const CACHE_FLOOR = ['index.html', 'js/app.js', 'js/engine.js', 'js/lessons.js', 'js/packs.js',
   'assets/fonts/inter-latin.woff2', 'assets/fonts/space-grotesk-latin.woff2'];
 for (const need of CACHE_FLOOR) {
   if (!listed.includes(need)) problems.push(`sw.js does not cache ${need}, so the app is not offline without it`);
@@ -91,27 +92,42 @@ let drills = 0;
 const BUDGET = { title: 40, goal: 55, caption: 110, body: 170, prompt: 65, hint: 55, why: 150 };
 let longest = { prompt: 0, body: 0 };
 const ids = new Set<string>();
-for (const lesson of LESSONS) {
-  if (!lesson.id || !lesson.title || !lesson.goal) problems.push(`lesson without id/title/goal: ${lesson.title}`);
-  if (ids.has(lesson.id)) problems.push(`two lessons share the id ${lesson.id}`);
-  ids.add(lesson.id);
-  if (!Array.isArray(lesson.body) || lesson.body.length < 2) problems.push(`lesson ${lesson.id} has no body text`);
-  if ((lesson.title ?? '').length > BUDGET.title) problems.push(`lesson ${lesson.id}: title is ${lesson.title.length} chars (budget ${BUDGET.title})`);
-  if ((lesson.goal ?? '').length > BUDGET.goal) problems.push(`lesson ${lesson.id}: goal is ${lesson.goal.length} chars (budget ${BUDGET.goal})`);
-  if (lesson.diagramCaption && lesson.diagramCaption.length > BUDGET.caption) problems.push(`lesson ${lesson.id}: caption is ${lesson.diagramCaption.length} chars (budget ${BUDGET.caption})`);
-  (lesson.body ?? []).forEach((para: string, i: number) => {
-    longest.body = Math.max(longest.body, para.length);
-    if (para.length > BUDGET.body) problems.push(`lesson ${lesson.id}: paragraph ${i + 1} is ${para.length} chars (budget ${BUDGET.body})`);
-  });
-  if (!lesson.diagram) problems.push(`lesson ${lesson.id} has no diagram position`);
-  else {
-    try { parseFen(lesson.diagram); } catch { problems.push(`lesson ${lesson.id} has an unparseable diagram FEN`); }
+/* A stop is a stop: a lesson's drills and a pack's puzzles are checked the same
+   way, and a failure names the stop it came from. A lesson also carries the copy
+   a pack does not (a goal, a body, a diagram); a pack carries the lesson that
+   opens it, and has to be exactly three puzzles. */
+for (const stop of [...LESSONS, ...PACKS] as any[]) {
+  const isLesson = (stop as any).goal != null;
+  if (!stop.id || !stop.title) problems.push(`a stop without id/title: ${stop.title}`);
+  if (ids.has(stop.id)) problems.push(`two stops share the id ${stop.id}, so the map cannot tell them apart`);
+  ids.add(stop.id);
+  if (!isLesson) {
+    if (!stop.idea) problems.push(`pack ${stop.id} has no idea line, and the map shows one`);
+    if (!LESSONS.some((l) => l.id === stop.opensWith)) {
+      problems.push(`pack ${stop.id} opens with "${stop.opensWith}", which is not a lesson, so nothing could ever open it`);
+    }
+    if ((stop.drills ?? []).length !== 3) problems.push(`pack ${stop.id} has ${(stop.drills ?? []).length} puzzles: a pack is three`);
   }
-  const list = lesson.drills ?? [];
-  if (!list.length) problems.push(`lesson ${lesson.id} has no drills`);
+  if (isLesson) {
+    if (!stop.goal) problems.push(`lesson without a goal: ${stop.title}`);
+    if (!Array.isArray(stop.body) || stop.body.length < 2) problems.push(`lesson ${stop.id} has no body text`);
+    if ((stop.title ?? '').length > BUDGET.title) problems.push(`lesson ${stop.id}: title is ${stop.title.length} chars (budget ${BUDGET.title})`);
+    if ((stop.goal ?? '').length > BUDGET.goal) problems.push(`lesson ${stop.id}: goal is ${stop.goal.length} chars (budget ${BUDGET.goal})`);
+    if (stop.diagramCaption && stop.diagramCaption.length > BUDGET.caption) problems.push(`lesson ${stop.id}: caption is ${stop.diagramCaption.length} chars (budget ${BUDGET.caption})`);
+    (stop.body ?? []).forEach((para: string, i: number) => {
+      longest.body = Math.max(longest.body, para.length);
+      if (para.length > BUDGET.body) problems.push(`lesson ${stop.id}: paragraph ${i + 1} is ${para.length} chars (budget ${BUDGET.body})`);
+    });
+    if (!stop.diagram) problems.push(`lesson ${stop.id} has no diagram position`);
+    else {
+      try { parseFen(stop.diagram); } catch { problems.push(`lesson ${stop.id} has an unparseable diagram FEN`); }
+    }
+  }
+  const list = stop.drills ?? [];
+  if (!list.length) problems.push(`${isLesson ? 'lesson' : 'pack'} ${stop.id} has no ${isLesson ? 'drills' : 'puzzles'}`);
   list.forEach((drill: any, i: number) => {
     drills++;
-    const where = `${lesson.id} drill ${i + 1}`;
+    const where = `${stop.id} drill ${i + 1}`;
     let pos;
     try { pos = parseFen(drill.fen); } catch { problems.push(`${where}: unparseable FEN`); return; }
     const moves = legalMoves(pos);
@@ -135,7 +151,7 @@ for (const lesson of LESSONS) {
     }
   });
 }
-checks.push(`${LESSONS.length} lessons, ${drills} puzzles — every FEN legal and every answer a legal move`);
+checks.push(`${LESSONS.length} lessons and ${PACKS.length} packs, ${drills} puzzles — every FEN legal and every answer a legal move`);
 checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.prompt}, longest paragraph ${longest.body})`);
 
 /* 6. the shell carries what the app needs */

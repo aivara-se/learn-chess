@@ -1,7 +1,7 @@
 # DRILLS.md — what the course was measured against
 
-Every drill in `js/lessons.js` is checked against an engine, and this is the record
-of that run. It is generated, not written by hand:
+Every drill in `js/lessons.js` and every puzzle in `js/packs.js` is checked against
+an engine, and this is the record of that run. It is generated, not written by hand:
 
 ```bash
 bun run scripts/verify-drills.ts --write
@@ -46,8 +46,18 @@ not fail a run.
 | `italian#1` | white | `c2c3` | -6 | `c2c3` | -6 | 0 | `c2c3` |
 | `italian#2` | white | `d2d4` | 4 | `d2d4` | 4 | 0 | `d2d4` |
 | `italian#3` | black | `f6e4` | 48 | `f6e4` | 48 | 0 | `f6e4` |
+| `fork#1` | white | `d5f6` | 518 | `d5f6` | 518 | 0 | `d5f6` |
+| `fork#2` | white | `c6e7` | 533 | `c6e7` | 533 | 0 | `c6e7` |
+| `fork#3` | white | `b4c6` | 37 | `b4c6` | 37 | 0 | `b4c6` |
+| `pin#1` | white | `d4d5` | 539 | `d4d5` | 539 | 0 | `d4d5` |
+| `pin#2` | white | `b5c6` | 454 | `b5c6` | 454 | 0 | `b5c6` |
+| `pin#3` | white | `b4c6` | 535 | `b4c6` | 535 | 0 | `b4c6` |
+| `back-rank#1` | white | `e1e8` | 99999 | `e1e8` | 99999 | 0 | `e1e8` |
+| `back-rank#2` | white | `e1e8` | 99999 | `e1e8` | 99999 | 0 | `e1e8` |
+| `back-rank#3` | white | `d1d8` | 99999 | `d1d8` | 99999 | 0 | `d1d8` |
 
 ## Notes
 
 - `castle-early#1` — the position is level, so the drill accepts only the king-safety move
 - `castle-early#3` — the position is level, so the drill accepts only the king-safety move
+- `pin#3` — White is already a piece up, so the engine's own margin also keeps quiet moves; the drill asks for the pin's consequence.

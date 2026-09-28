@@ -20,6 +20,7 @@
  */
 import { existsSync } from 'node:fs';
 import { LESSONS } from '../js/lessons.js';
+import { PACKS } from '../js/packs.js';
 
 const ENGINE = process.env.STOCKFISH
   || (existsSync('/usr/games/stockfish') ? '/usr/games/stockfish' : 'stockfish');
@@ -108,6 +109,17 @@ LESSONS.forEach((lesson) => (lesson.drills || []).forEach((drill, i) => drills.p
   accepted: drill.accepted,
   note: (drill as { note?: string }).note,
 })));
+/* A pack is content too, so it is measured by the same rule as a lesson's
+   drills: its own id carries the pack's name, and the record in docs/DRILLS.md
+   says which stop each row belongs to. */
+PACKS.forEach((pack) => (pack.drills || []).forEach((drill, i) => drills.push({
+  id: `${pack.id}#${i + 1}`,
+  lesson: pack.title,
+  fen: drill.fen,
+  best: drill.best,
+  accepted: drill.accepted,
+  note: (drill as { note?: string }).note,
+})));
 
 /* Ask the engine its name, then let it go: reading its stdout to the end would
    wait for an exit that never comes, because it is waiting for `quit`. */
@@ -178,8 +190,8 @@ if (WRITE) {
   const doc = [
     '# DRILLS.md — what the course was measured against',
     '',
-    'Every drill in `js/lessons.js` is checked against an engine, and this is the record',
-    'of that run. It is generated, not written by hand:',
+    'Every drill in `js/lessons.js` and every puzzle in `js/packs.js` is checked against',
+    'an engine, and this is the record of that run. It is generated, not written by hand:',
     '',
     '```bash',
     'bun run scripts/verify-drills.ts --write',
