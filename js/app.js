@@ -1640,14 +1640,22 @@ function startDaily() {
     paint(state);
     if (ok) {
       train.streak += 1;
-      record(pick.key, train.tries === 1);
+      const fresh = record(pick.key, train.tries === 1);
+      /* The day's puzzle is a puzzle like any other: the answer can deliver mate,
+         and a mate is the same thing here as on the shuffle, the lesson board and
+         the game's own checkmate sheet. Counted in the same place, and said on the
+         sheet that is already opening. */
+      if (isCheckmate(state.pos)) {
+        const badge = book.note('checkmate', 1);
+        if (badge) fresh.push(badge);
+      }
       store.streak(train.streak);
       finishDaily();
       refreshTrain();
       confetti();
       showSheet({
         title: 'Correct!',
-        text: `${pick.drill.why} Come back tomorrow for a new one.`,
+        text: `${pick.drill.why} Come back tomorrow for a new one.${badgeNews(fresh)}`,
         icon: 'happy',
         action: 'Shuffled puzzles',
         onAction: nextPuzzle,
