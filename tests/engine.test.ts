@@ -24,6 +24,7 @@ import {
   isDraw,
   squareName,
   parseSquare,
+  findThreat,
 } from '../js/engine.js';
 
 /* perft, written here on top of the public API */
@@ -609,5 +610,54 @@ describe('search', () => {
     const start = Date.now();
     findBestMove(pos, { depth: 3, seed: 1 });
     expect(Date.now() - start).toBeLessThan(2000);
+  });
+});
+
+/* What the coach is allowed to say about the piece that just moved. This is the
+ * whole of the "Pip's knight is attacking your queen" sentence's truth: the
+ * words are added in js/app.js, and they are only as honest as these answers. */
+describe('findThreat', () => {
+  const at = (fen: string, from: string, attacker: string, defender: string) =>
+    findThreat(parseFen(fen), parseSquare(from), attacker, defender);
+
+  test('a knight attacking the queen is a threat', () => {
+    const t = at('7k/8/8/8/3n4/5Q2/8/6K1 b - - 0 1', 'd4', 'b', 'w')!;
+    expect(t.victim).toBe('Q');            // engine.js types are upper case
+    expect(t.type).toBe('N');
+    expect(t.to).toBe(parseSquare('f3'));
+  });
+
+  test('an undefended piece can be taken', () => {
+    const t = at('r6k/8/8/R7/8/8/8/6K1 b - - 0 1', 'a8', 'b', 'w')!;
+    expect(t.victim).toBe('R');
+    expect(t.defended).toBe(false);
+  });
+
+  test('the bigger piece wins the argument: a pawn attacking a knight', () => {
+    const t = at('7k/8/8/4p3/3N4/8/8/6K1 b - - 0 1', 'e5', 'b', 'w')!;
+    expect(t.victim).toBe('N');
+    expect(t.defended).toBe(false);
+  });
+
+  test('a defended piece of equal value is a trade, not a threat', () => {
+    expect(at('r6k/8/8/R7/8/8/8/R5K1 b - - 0 1', 'a8', 'b', 'w')).toBe(null);
+  });
+
+  test('a pawn is not news', () => {
+    expect(at('r6k/8/8/P7/8/8/8/6K1 b - - 0 1', 'a8', 'b', 'w')).toBe(null);
+  });
+
+  test('the king is never named — check is said in its own words', () => {
+    expect(at('6k1/8/8/8/8/8/5q2/6K1 b - - 0 1', 'f2', 'b', 'w')).toBe(null);
+  });
+
+  test('a piece standing on an empty square has no threat to report', () => {
+    expect(at('7k/8/8/8/8/8/8/6K1 b - - 0 1', 'd4', 'b', 'w')).toBe(null);
+  });
+
+  test('the biggest victim is the one named', () => {
+    // knight on d5 forking the queen on b4 and the rook on f4: the queen wins
+    const t = at('7k/8/8/3n4/1Q3R2/8/8/6K1 b - - 0 1', 'd5', 'b', 'w')!;
+    expect(t.victim).toBe('Q');
   });
 });
