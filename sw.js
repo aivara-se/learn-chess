@@ -20,6 +20,7 @@ const FILES = [
   'js/app.js',
   'js/engine.js',
   'js/lessons.js',
+  'js/sound.js',
   'assets/favicon.svg',
   'assets/icon-180.png',
   'assets/icon-192.png',
