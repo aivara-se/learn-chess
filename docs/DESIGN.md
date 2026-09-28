@@ -67,10 +67,36 @@ The app is one screen tall, like a phone app rather than a web page:
   play is chosen in the level sheet, with the other thing you choose once — it used to be a fourth
   button in that row, which wrapped to two lines and pushed Hint and Undo off the bottom of a
   640px phone.
+- The coach's first line says **click** rather than tap on a screen whose pointer hovers and is fine
+  (`newGame()` reads `(hover: hover) and (pointer: fine)`, at every new game, so a tablet with a
+  mouse plugged in is told the truth too). A laptop told to tap its own screen is a small lie, and it
+  is the kind that makes an app read as built for somebody else.
 - Long answers arrive in a **bottom sheet** (`.sheet`) with one action button, not inline text:
   a child gets one thing to read and one thing to tap. The sheet comes with a full-bleed scrim, so it is plainly the thing to act on and nothing behind it is left half-covered; the scrim and the sheet appear and disappear together, and tapping the scrim closes it.
 - Safe-area insets are respected at the top and bottom (`env(safe-area-inset-*)`), so it does not
   sit under a phone's notch or home bar.
+
+### A wider screen (≥900px)
+
+Every measurement above is a phone's, and it stays true below 900px. **At 900px and up the app stops
+being a phone**: the board moves to the left and keeps growing, and the coach, the controls and the
+moves sit beside it. 900px is where the two columns still leave the board more than the phone's 430px
+— the 980px column minus the 380px side column and the 28px gutter is 444px at 900px (measured) — and
+at 820px the same two columns would leave it 364px, *smaller* than the 430px the phone layout gives it.
+A tablet in portrait therefore keeps the phone column, complete and centred, rather than a board that
+shrank to make room for words.
+
+- `.phone` widens to 1028px; the content column (`.screen > .stack`) is capped at 980px and centred,
+  so the app bar and the tab bar span the app rather than the window.
+- The tab bar keeps its three tabs at the size a thumb expects (168 × 58px at 1280px) instead of
+  stretching them across a laptop; the bar itself stays a bottom bar, because it is where a thumb
+  and a trackpad both look for it.
+- The play and puzzle screens are a two-column grid: the board's column is `1fr`, the side column
+  holds everything a game is played with and caps at 380px. The coach's bubble fills that column and
+  Hint/Undo/Flip divide it, so a mouse gets a full-width target. A lesson's puzzle is the same two
+  columns (`#lesson-view:has(> .boardwrap)`); a read step has no board of its own and stays a column
+  at a 640px measure, and the path is capped at 720px.
+- The board's 4px white frame, the coach bubble and the buttons are unchanged — only their column is.
 
 ## The path
 
@@ -158,6 +184,14 @@ Every text pair clears AA. The two "verdict" colours are only ever used this way
   and 34.3px on the puzzle screen; at 360×740 and up nothing shrinks and they are 41px or more
   (36.0px at 320px wide, 47.5px at 412px, 53.8px at 900px). A child on a short phone gets every
   control and a smaller board, which is the right way round.
+- **Above 900px the board's ceiling and its chrome are the wide layout's own numbers.** The board is
+  `max-width: min(560px, max(320px, var(--board-room)))`, and `--board-room` is
+  `calc(100dvh - 168px)`: measured in a browser at ≥900px, the app bar is 65, the tab bar 73 and
+  `main`'s padding 18 (2 + 16), so 156px of chrome and 12px of slack. Measured board and squares,
+  2× device scale: **560px / 69.0px at 1024×768, 1280×800, 1440×900 and 1920×1080** (the ceiling
+  binds, not the height), **444px / 54.5px at 900×640 and 900×700** (the left column binds), and
+  **352px / 43px at 1000×520** (the height binds). The 320px floor is the phone's 240px one, raised
+  because a wide screen has the room: a board below it is worse than a screen that scrolls a little.
 - **The board is the one control that breaks the 48px rule**, and the exception is
   measured rather than waived: eight squares cannot be 48px each inside a 360px screen
   (that needs 384px), and a board that does not fill the screen is worse than one whose
@@ -235,5 +269,5 @@ sheet says "Here is the move", not "Correct!", and the child did not find it. Th
 - Nothing is carried by colour alone: turns, check, verdicts and stars all appear as words or
   numbers too.
 - Tap targets are at least 48px, with one measured exception: the board's own squares, which are as
-  large as the screen allows (30.5–53.8px — see the board section for which screen gets what).
+  large as the screen allows (30.5–69px — see the board section for which screen gets what).
 - Nothing important sits within 8px of a screen edge.
