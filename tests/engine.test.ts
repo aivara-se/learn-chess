@@ -660,4 +660,52 @@ describe('findThreat', () => {
     const t = at('7k/8/8/3n4/1Q3R2/8/8/6K1 b - - 0 1', 'd5', 'b', 'w')!;
     expect(t.victim).toBe('Q');
   });
+
+  /* The cases above build the attacker's turn by hand, which is exactly what the
+   * page does NOT do: `engineTurn` calls this the moment Pip's move has landed,
+   * so `pos.turn` is the child's and the piece that just moved belongs to the
+   * side that is *not* to move. Every answer was null for that reason on the real
+   * page (`legalMovesFrom` filtered by side to move), while these passed. The
+   * four below ask the question the way the app asks it. */
+
+  const play = (fen: string, ...ucis: string[]) =>
+    ucis.reduce((pos: any, uci) => {
+      const from = parseSquare(uci.slice(0, 2));
+      const to = parseSquare(uci.slice(2, 4));
+      const m = legalMoves(pos).find((x: any) => x.from === from && x.to === to);
+      if (!m) throw new Error(`no legal move ${uci}`);
+      return makeMove(pos, m);
+    }, parseFen(fen));
+
+  test('the position the page asks about: the child is to move and the fork still counts', () => {
+    // The ticket's own line: 1. e4 Nc6 2. Qf3, and Pip's reply ...Ne5 forking f3.
+    const after = play(START_FEN, 'e2e4', 'b8c6', 'd1f3', 'c6e5');
+    expect(after.turn).toBe('w');                        // it is the child's turn
+    const t = findThreat(after, parseSquare('e5'), 'b', 'w')!;
+    expect(t.victim).toBe('Q');
+    expect(t.to).toBe(parseSquare('f3'));
+    expect(t.defended).toBe(true);                       // g2 defends f3: "is attacking"
+  });
+
+  test("whose turn it is does not change the answer", () => {
+    const after = play(START_FEN, 'e2e4', 'b8c6', 'd1f3', 'c6e5');
+    const attackerToMove = { ...after, turn: 'b' };
+    expect(findThreat(attackerToMove, parseSquare('e5'), 'b', 'w'))
+      .toEqual(findThreat(after, parseSquare('e5'), 'b', 'w'));
+  });
+
+  test('and the alarm stays quiet on a position the page really asks about', () => {
+    // After 1. e4 Nc6 the knight attacks b4/d4/a5/e5/a7/e7/b8/d8 — nothing white.
+    const after = play(START_FEN, 'e2e4', 'b8c6');
+    expect(after.turn).toBe('w');
+    expect(findThreat(after, parseSquare('c6'), 'b', 'w')).toBe(null);
+  });
+
+  test('the caller keeps its turn and its position', () => {
+    const after = play(START_FEN, 'e2e4', 'b8c6', 'd1f3', 'c6e5');
+    const board = after.board.join('');
+    findThreat(after, parseSquare('e5'), 'b', 'w');
+    expect(after.turn).toBe('w');
+    expect(after.board.join('')).toBe(board);
+  });
 });
