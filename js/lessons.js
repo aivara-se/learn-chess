@@ -1,22 +1,24 @@
 /* Learn chess — the course.
  *
- * Eight lessons for someone who has never played, three drills each, in order:
- * the board and the pieces, what material is worth, pawns in the centre,
- * developing, castling, the early queen, looking before you move, and the
- * Italian opening as a model.
+ * Ten lessons for someone who has never played, three drills each (looking
+ * before you move has five), in order: the board and the pieces, what material
+ * is worth, pawns in the centre, developing, castling, the early queen, looking
+ * before you move, finishing a won game with the queen, the Italian opening as
+ * a model, and the shapes a mate in one takes.
  *
  * A lesson is data: { id, title, goal, body[], diagram, diagramCaption, drills[],
  * requires[] }. `requires` is the lesson that has to be finished first, and it is
- * the whole of the map — the path forks twice and merges twice:
+ * the whole of the map — the path forks three times and merges twice:
  *
- *   1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ── 8 italian
- *                       └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘
+ *   1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ─┬─ 8 finish-it
+ *                       └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘                └─ 9 italian ── 10 mate-in-one
  *
- * so a learner chooses which of the first two to take, and which habit to learn
- * next, but material still comes before developing and both habits come before
- * looking for loose pieces. The map is drawn from this and nothing else;
- * `scripts/verify-site.ts` fails a `requires` that names no lesson, a cycle, or a
- * lesson no path can reach.
+ * so a learner chooses which of the first two to take, which habit to learn
+ * next, and whether to learn to finish a game before the Italian opening — but
+ * material still comes before developing, both habits come before looking for
+ * loose pieces, and the Italian comes before the ladder of mates in one. The map
+ * is drawn from this and nothing else; `scripts/verify-site.ts` fails a
+ * `requires` that names no lesson, a cycle, or a lesson no path can reach.
  * A drill is a position, the task in the learner's words, and the moves that
  * count as an answer:
  *   fen       the position, side to move taken from the FEN
@@ -349,6 +351,66 @@ export const LESSONS = [
         best: 'h5f7',
         accepted: ['h5f7'],
       },
+      {
+        fen: '6k1/5ppp/8/8/8/8/8/R3K3 w - - 0 1',
+        prompt: 'His king is boxed in by its own pawns. Finish the game.',
+        hint: 'the far row of the board, where his king stands',
+        why: 'The rook goes to a8 and checks the king on g8. Its own pawns fill f7, g7 and h7, and the rook covers the back rank, so there is no way out.',
+        best: 'a1a8',
+        accepted: ['a1a8'],
+      },
+    ],
+  },
+
+  {
+    id: 'finish-it',
+    requires: ['look-first'],
+    title: 'Finish it: mate with the queen',
+    goal: 'Trap the lone king, then mate him with your queen.',
+    body: [
+      'A queen on her own cannot mate a king. He runs away from every check she gives, and the game goes on for ever. Your king has to come and help.',
+      'First, fence him in. A queen in the middle of the board draws a line the king cannot cross, and every move he makes he has less room.',
+      'Then keep your queen one knight move away from his king. From there she is safe, because he cannot take her, and every step he takes is a step towards the edge.',
+      'Last, walk your king up. When your king stands beside him the queen comes right up too, your king guards her, and it is mate.',
+    ],
+    diagram: '8/8/8/8/Q7/4k3/8/5K2 w - - 0 1',
+    diagramCaption: 'The queen draws a line across the board. The black king cannot step over it.',
+    drills: [
+      {
+        fen: '8/8/8/8/8/4k3/8/Q4K2 w - - 0 1',
+        prompt: 'Fence his king in: put your queen on the fourth rank.',
+        hint: 'four squares up the board from your queen',
+        why: 'From a4 the queen watches every square on the fourth rank. The black king cannot cross that line, so he is left with the smaller half of the board.',
+        best: 'a1a4',
+        // A queen and king against a bare king is won by many moves, so the
+        // engine's ranking is not the lesson; the drill asks for the move that
+        // fences the king in, rather than the fastest mate.
+        accepted: ['a1a4'],
+        note: 'the position is won by many moves, so the drill accepts only the move that fences the king off the fourth rank',
+      },
+      {
+        /* The queen can reach exactly one square a knight jump from the king in
+           this position, so the prompt has one answer: a knight jump away is the
+           safe distance, and every other knight jump is out of her reach here.
+           Measured: /usr/games/stockfish, depth 18, MultiPV 6 — g6d3 is the top
+           move, mate in 4, and no other move reaches a knight jump square. */
+        fen: '8/8/6Q1/8/8/8/8/2k1K3 w - - 0 1',
+        prompt: 'Keep her safe: a knight jump from his king.',
+        hint: 'his king can never reach a knight jump away',
+        why: 'The queen lands on d3, a knight jump from the king on c1. He cannot reach her there, so she is safe while your king walks up to help.',
+        best: 'g6d3',
+        // Same again: many moves win, and the lesson is the box, not the clock.
+        accepted: ['g6d3'],
+        note: 'the position is won by many moves, so the drill accepts only the queen move a knight jump from his king',
+      },
+      {
+        fen: 'k7/8/2K5/8/8/8/8/1Q6 w - - 0 1',
+        prompt: 'He has no room left. Mate him.',
+        hint: 'your king guards the square next to his king',
+        why: 'The queen comes to b7, beside the king on a8, and your king on c6 guards her. He cannot take her and has nowhere to run.',
+        best: 'b1b7',
+        accepted: ['b1b7'],
+      },
     ],
   },
 
@@ -389,6 +451,64 @@ export const LESSONS = [
         why: 'The knight takes the pawn on e4. Your bishop on b4 pins the white knight on c3 to the king, so it cannot take back, and Black wins a pawn.',
         best: 'f6e4',
         accepted: ['f6e4'],
+      },
+    ],
+  },
+
+  {
+    id: 'mate-in-one',
+    requires: ['italian'],
+    title: 'End it: mate in one',
+    goal: 'Deliver checkmate with a single move.',
+    body: [
+      'Checkmate ends the game. The king is attacked and nothing can save it: no free square to run to, nothing can block, and nothing can take the piece that attacks him.',
+      'A mate in one wins the game at once, so look for one every move. Before you play anything, ask what check you can give.',
+      'Most mates are one of three shapes. The first is a rook or a queen on the back rank, the row where the king started, with his own pawns in front of him.',
+      'The second is your queen beside the king, where your own king guards her. The third is a knight jumping into the corner, with the king smothered by his own pieces.',
+      'Before you play it, count the squares the king has left to run to. If one of them is free, or a piece can block, or a piece can take your attacker, it is only a check.',
+    ],
+    diagram: '6rk/5ppp/8/6N1/8/8/8/6K1 w - - 0 1',
+    diagramCaption: 'The black king is smothered: its own rook and pawns fill every square around it.',
+    drills: [
+      {
+        fen: '6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1',
+        prompt: 'His own pawns block the way out. Find the mate.',
+        hint: 'the far row of the board, where his king stands',
+        why: 'The rook reaches d8 and checks the king along the back rank. The pawns on f7, g7 and h7 block every square, so the king has nowhere to go.',
+        best: 'd1d8',
+        accepted: ['d1d8'],
+      },
+      {
+        fen: '6k1/8/7K/8/8/8/8/Q7 w - - 0 1',
+        prompt: 'Bring the queen across and end it.',
+        hint: 'stand her beside the king, where your king guards her',
+        why: 'The queen crosses the board to g7, right beside the black king. Your king on h6 guards her, so he cannot take her and has no square to run to.',
+        best: 'a1g7',
+        accepted: ['a1g7'],
+      },
+      {
+        fen: '6rk/5ppp/8/6N1/8/8/8/6K1 w - - 0 1',
+        prompt: 'Jump your knight in and end the game.',
+        hint: 'a knight jumps over the pieces that crowd the king',
+        why: 'The knight jumps to f7 and checks the king on h8. Its own rook and pawns fill every square, and nothing can take the knight.',
+        best: 'g5f7',
+        accepted: ['g5f7'],
+      },
+      {
+        fen: '6k1/5ppp/8/8/8/8/8/3QK3 w - - 0 1',
+        prompt: 'The same back rank, and the queen can reach it.',
+        hint: 'she slides up the file to the far row',
+        why: 'The queen slides to d8 and checks the king on g8. The pawns on f7, g7 and h7 are in the way of its own king, so it is mate.',
+        best: 'd1d8',
+        accepted: ['d1d8'],
+      },
+      {
+        fen: '8/8/8/8/8/8/Q7/5K1k w - - 0 1',
+        prompt: 'The black king is in the corner. Mate him.',
+        hint: 'your king guards the square beside his king',
+        why: 'The queen comes to g2, beside the king on h1, and your king on f1 guards her. He cannot take her and he has no square to run to.',
+        best: 'a2g2',
+        accepted: ['a2g2'],
       },
     ],
   },

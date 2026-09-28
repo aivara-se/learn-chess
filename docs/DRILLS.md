@@ -43,11 +43,22 @@ not fail a run.
 | `look-first#2` | white | `d4e5` | 511 | `d4e5` | 511 | 0 | `d4e5` |
 | `look-first#3` | white | `e1e2` | 2 | `e1e2` | 2 | 0 | `e1e2` |
 | `look-first#4` | white | `h5f7` | 99999 | `h5f7` | 99999 | 0 | `h5f7` |
+| `look-first#5` | white | `a1a8` | 99999 | `a1a8` | 99999 | 0 | `a1a8` |
+| `finish-it#1` | white | `a1a4` | 99992 | `a1a4` | 99992 | 0 | `a1a4` |
+| `finish-it#2` | white | `g6d3` | 99996 | `g6d3` | 99996 | 0 | `g6d3` |
+| `finish-it#3` | white | `b1b7` | 99999 | `b1b7` | 99999 | 0 | `b1b7` |
 | `italian#1` | white | `c2c3` | -6 | `c2c3` | -6 | 0 | `c2c3` |
 | `italian#2` | white | `d2d4` | 4 | `d2d4` | 4 | 0 | `d2d4` |
 | `italian#3` | black | `f6e4` | 48 | `f6e4` | 48 | 0 | `f6e4` |
+| `mate-in-one#1` | white | `d1d8` | 99999 | `d1d8` | 99999 | 0 | `d1d8` |
+| `mate-in-one#2` | white | `a1g7` | 99999 | `a1g7` | 99999 | 0 | `a1g7` |
+| `mate-in-one#3` | white | `g5f7` | 99999 | `g5f7` | 99999 | 0 | `g5f7` |
+| `mate-in-one#4` | white | `d1d8` | 99999 | `d1d8` | 99999 | 0 | `d1d8` |
+| `mate-in-one#5` | white | `a2g2` | 99999 | `a2g2` | 99999 | 0 | `a2g2` |
 
 ## Notes
 
 - `castle-early#1` — the position is level, so the drill accepts only the king-safety move
 - `castle-early#3` — the position is level, so the drill accepts only the king-safety move
+- `finish-it#1` — the position is won by many moves, so the drill accepts only the move that fences the king off the fourth rank
+- `finish-it#2` — the position is won by many moves, so the drill accepts only the queen move a knight jump from his king
