@@ -989,3 +989,34 @@ export function gameStatus(pos) {
   if (inCheck(pos, pos.turn)) return 'check';
   return 'play';
 }
+
+/* ------------------------------------------------------------------ *
+ * what the piece that just moved is now attacking
+ * ------------------------------------------------------------------ */
+
+/* Upper case, like `typeOf` — a lower-case key here would read `undefined` and
+   let the king be named as a victim. */
+const WORTH = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
+
+/* The biggest thing `attacker` can win with the piece standing on `from`, from
+   the position as it stands. Only worth saying out loud when something is
+   actually winnable: taking a piece worth more than the attacker, or taking
+   anything at all that nothing is defending. A defended rook attacked by a rook
+   is a trade, and a pawn is not news — an alarm that fires every move is not an
+   alarm. Returns null when there is nothing to say. */
+export function findThreat(pos, from, attacker, defender) {
+  const pc = pieceAt(pos, from);
+  if (!pc || pc.color !== attacker) return null;
+  let best = null;
+  for (const move of legalMovesFrom(pos, from)) {
+    const victim = pieceAt(pos, move.to);
+    if (!victim || victim.color !== defender || victim.type === 'K') continue;
+    const worth = WORTH[victim.type];
+    if (worth < 3) continue;                       // "it can take a pawn" is not coaching
+    const defended = isAttacked(pos.board, move.to, defender);
+    if (!(worth > WORTH[pc.type] || !defended)) continue;
+    const cand = { from, to: move.to, type: pc.type, victim: victim.type, defended, worth };
+    if (!best || cand.worth > best.worth) best = cand;
+  }
+  return best;
+}
