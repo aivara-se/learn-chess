@@ -434,11 +434,13 @@ function stopScene(context) {
 }
 
 export default {
-  /* The shell calls `size()` and then `mount()`, so a screen is built twice on every
-   * open unless `mount` clears what is already there: `size()` hands the new size to
-   * the *old* `resize` — which builds a scene, because a resize is a rebuild — and
-   * `mount` builds another. Two roots on the layer and a ticker on a node the shell
-   * is about to destroy is what that cost; one map is what it should cost. */
+  /* The shell starts a screen by calling `size()` and then `mount()`, so it is built
+   * twice on every open. The resize that runs first is the *new* screen's own, not the
+   * old one's: `src/main.js` assigns `scene = screen` (line 123) and only then calls
+   * `size()` (line 135), after the previous screen was unmounted. So `resize()` builds
+   * once and `mount()` builds again; clearing what `resize()` left is what makes the
+   * pair cost one root and one ticker rather than two. The double build itself belongs
+   * to the shell — `src/main.js:135-136` — not to this screen. */
   mount(context) {
     stopScene(context);
     start(context);
