@@ -31,9 +31,10 @@ there is no build step between them.
   deliberately no `scenes/index.js`.
 - **`src/engine/engine.js`** is the rules of chess, ported unchanged from `v1` (`js/engine.js`), tests
   included; `tests/engine.test.ts` is the perft and legality suite behind it.
-- **`scripts/verify-shell.ts`** is the shell's own machine check; `scripts/verify-site.ts` (the
-  course's data, its graph, its copy budgets) and the Stockfish drill verifier land with the port
-  cards, which is also when they rejoin `Checks`.
+- **`scripts/verify-shell.ts`** is the shell's own machine check; **`scripts/verify-site.ts`** checks
+  the course's data, its graph and its copy budgets, and **`scripts/verify-drills.ts`** measures every
+  puzzle's answer against Stockfish. All four checks — those three and `bun test` — run in `Checks` on
+  every pull request.
 
 A screen module default-exports any of `mount(context)`, `resize(context)`, `unmount(context)`, and
 `context` is `{ app, layer, params, width, height }` with the size in CSS pixels and always current.
@@ -81,6 +82,8 @@ curl -sI  https://aivara-se.github.io/learn-chess/manifest.webmanifest | head -1
 # the rules a machine can check with no browser
 bun test                                  # the engine: perft and legality
 bun run scripts/verify-shell.ts           # the shell: markup, offline list, vendor, .nojekyll
+bun run scripts/verify-site.ts            # the course: drills legal, path walkable, no written total
+bun run scripts/verify-drills.ts          # every puzzle's answer, against Stockfish
 ```
 
 Then what no script here can see, in a real browser — served over HTTP, never `file://`:

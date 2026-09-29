@@ -5,10 +5,12 @@ is gone from `main` and parked at the `v1` tag, and [`docs/PORT.md`](docs/PORT.m
 rebuild is held to: the course data, the coach's rules, the path, the maths and the two verifiers that
 have to survive the port.
 
-**What is on `main` today is the shell, not the course.** <https://aivara-se.github.io/learn-chess/>
-serves it: one PixiJS application that fills the viewport, one screen — a drawn board — and the offline
-worker and route convention the port cards build on. The lessons, the puzzles and the path arrive with
-them. Nothing has been lost: the old app is still there to read and run.
+**What is on `main` today is the shell and the course's own data, not the screens that play it.**
+<https://aivara-se.github.io/learn-chess/> serves the shell: one PixiJS application that fills the
+viewport, one screen — a drawn board — and the offline worker and route convention the port cards build
+on. The course itself — the lessons, the puzzles and the path — is in the tree as data
+(`src/data/lessons.js`), measured by the checks below; the screens that play it arrive with the port
+cards. Nothing has been lost: the old app is still there to read and run.
 
 ```sh
 git checkout v1                    # the whole old tree, frozen
@@ -47,9 +49,12 @@ how this tree is served, and what a deploy has to be checked for.
 bun test                           # the engine: perft and legality, ported from v1
 bun run scripts/verify-shell.ts    # the shell: one module, no third-party request, the offline list,
                                    # the vendored library's version and hash, .nojekyll
+bun run scripts/verify-site.ts     # the course: every drill legal and playable, the copy inside its
+                                   # budgets, the path a graph a learner can walk, no total written down
+bun run scripts/verify-drills.ts   # every puzzle's answer, against Stockfish
 ```
 
-Both run in `Checks` on every pull request. What they cannot see — a drawn frame, a crisp canvas at
-360px and at 1440px, the app opening with the network off, zero console errors — is listed in
-`docs/SYSTEM.md` and is done in a browser, with a look at the screenshot rather than only at the exit
-code.
+All four run in `Checks` on every pull request; the drill check installs Stockfish first. What they
+cannot see — a drawn frame, a crisp canvas at 360px and at 1440px, the app opening with the network
+off, zero console errors — is listed in `docs/SYSTEM.md` and is done in a browser, with a look at the
+screenshot rather than only at the exit code.
