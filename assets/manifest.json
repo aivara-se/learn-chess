@@ -42,19 +42,19 @@
       "path": "assets/audio/move.ogg",
       "bytes": 5859,
       "sha256": "692ee3a6f1821402ca649ff735bee9591dc4846c8098fc7d6a90fd15fa57c1af",
-      "source": "Kenney Interface Sounds \u2014 Interface Sounds/drop_001.ogg (unchanged)"
+      "source": "Kenney Interface Sounds \u2014 Audio/drop_001.ogg (unchanged)"
     },
     {
       "path": "assets/audio/star.ogg",
       "bytes": 14169,
       "sha256": "33b17a9a9a2397c62b285c52c33a907fdffb476909c99e42dde603f6a7a8b12c",
-      "source": "Kenney Interface Sounds \u2014 Interface Sounds/confirmation_002.ogg (unchanged)"
+      "source": "Kenney Interface Sounds \u2014 Audio/confirmation_002.ogg (unchanged)"
     },
     {
       "path": "assets/audio/swoosh.ogg",
       "bytes": 6901,
       "sha256": "9a612fd2f513d52a296906b41071c990f75defe56be3bee60d2d4e2423b51b8b",
-      "source": "Kenney Interface Sounds \u2014 Interface Sounds/select_003.ogg (unchanged)"
+      "source": "Kenney Interface Sounds \u2014 Audio/select_003.ogg (unchanged)"
     },
     {
       "path": "assets/board/dark.png",
@@ -174,43 +174,43 @@
       "path": "assets/ui/arrow-east.png",
       "bytes": 422,
       "sha256": "5517436e154ef58b64ae46ebac37ab1b8a8df8ef3e9220b4154e78acde0221da",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/arrow_basic_e.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Blue/Default/arrow_basic_e.png (unchanged)"
     },
     {
       "path": "assets/ui/arrow-west.png",
       "bytes": 402,
       "sha256": "576db7b4e55f6937306d0fa56ea4da000aeaf4f53891fa967d2bd7dc0a83950f",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/arrow_basic_w.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Blue/Default/arrow_basic_w.png (unchanged)"
     },
     {
       "path": "assets/ui/button-round.png",
       "bytes": 1571,
       "sha256": "7b92b2aaa29f01e961a981b7f6dae371b26b105fb3603eae69f8a6b9ccd10aa9",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/button_round_depth_gradient.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Blue/Default/button_round_depth_gradient.png (unchanged)"
     },
     {
       "path": "assets/ui/button-square.png",
       "bytes": 575,
       "sha256": "825f12d5c8559544dea56d2e4e873e8c7e52f6e814f690e40a28a37e4bcf2560",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/button_square_depth_gradient.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Blue/Default/button_square_depth_gradient.png (unchanged)"
     },
     {
       "path": "assets/ui/button.png",
       "bytes": 582,
       "sha256": "3fc1d9bedf07da0f1a49bed143311e6edf3bebd9a937e95a6ab4b812c8448ec0",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/button_rectangle_depth_gradient.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Blue/Default/button_rectangle_depth_gradient.png (unchanged)"
     },
     {
       "path": "assets/ui/check.png",
-      "bytes": 579,
-      "sha256": "8a6cb9afb994225bc9cfe75223802fec0d2cd3d71f8bf1eaf3eb497a3c84fba8",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/check_round_color.png (unchanged)"
+      "bytes": 377,
+      "sha256": "82a5c1c3dfe9a704e9f5f220c9510b622c77c2207c226b41728978c2335b1f3b",
+      "source": "Kenney UI Pack \u2014 PNG/Blue/Default/icon_checkmark.png (unchanged)"
     },
     {
       "path": "assets/ui/divider.png",
       "bytes": 89,
       "sha256": "234015ec6516217532d413751953d08482ee9ce0b95c0fc14d5ec55716f9feec",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Extra/Default/divider.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Extra/Default/divider.png (unchanged)"
     },
     {
       "path": "assets/ui/lock.png",
@@ -222,19 +222,19 @@
       "path": "assets/ui/panel.png",
       "bytes": 315,
       "sha256": "83084c953e57d7506f90600df77f36a8c6156abea0b8ea0e4b3885a596cee2c8",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/button_rectangle_flat.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Blue/Default/button_rectangle_flat.png (unchanged)"
     },
     {
       "path": "assets/ui/progress-fill.png",
       "bytes": 320,
       "sha256": "a36b633507dba798c35e0b642e457a4315a2887b9b3e8165c05bed3d560b6658",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/slide_horizontal_color_section.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Blue/Default/slide_horizontal_color_section.png (unchanged)"
     },
     {
       "path": "assets/ui/progress-track.png",
       "bytes": 321,
       "sha256": "3c81558440a149a467057e4932bedb3c541cb6ca67e222a2742cca04a7f1823a",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Grey/Default/slide_horizontal_grey_section.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Grey/Default/slide_horizontal_grey_section.png (unchanged)"
     },
     {
       "path": "assets/ui/rank-badge.png",
@@ -246,13 +246,13 @@
       "path": "assets/ui/star-outline.png",
       "bytes": 955,
       "sha256": "9267eda99fd68a28d036beca7a606e334edb2957f74c6531da28bc79e92bc4a1",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Grey/Default/star_outline.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Grey/Default/star_outline.png (unchanged)"
     },
     {
       "path": "assets/ui/star.png",
       "bytes": 1507,
       "sha256": "ba91a196117f8c324beac04ae426379d054e9497be901469eea5d333b369265c",
-      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/star.png (unchanged)"
+      "source": "Kenney UI Pack \u2014 PNG/Blue/Default/star.png (unchanged)"
     }
   ]
 }
