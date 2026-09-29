@@ -1,0 +1,258 @@
+{
+  "note": "Every shipped asset, path and size, and where it came from. sw.js precaches exactly this list, so a card that adds a sprite adds it here and never to sw.js. assets/source/** is deliberately not listed: those are the unmodified pack archives, kept as provenance, and the start screen must not wait on a 22MB download. Terms live in ATTRIBUTION.md.",
+  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the 2D Chess Pack's top-down render with a 3px contrasting rim added; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge.",
+  "assets": [
+    {
+      "path": "assets/favicon.svg",
+      "bytes": 1192,
+      "sha256": "3501b60b1bff3a3fbdeace4a89c5e3276c17948ede8d97211a10557668a38b38",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/icon-180.png",
+      "bytes": 7807,
+      "sha256": "3ae09fdc1287bb4dd63b85f269cfc8cbedbfc99c4ca8c8ef1e5d1efae98552a6",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/icon-192.png",
+      "bytes": 8383,
+      "sha256": "36e733b3d3af4ab413e75a106708dd9571bf890ffd4f86706adc47d4effe656a",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/icon-512.png",
+      "bytes": 22671,
+      "sha256": "fc1c6faccdffa37db8f9d663e5dc390e646ea36cfe67382eff3b657ce6241559",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/icon-maskable-512.png",
+      "bytes": 14879,
+      "sha256": "45ff7489eb752f0c5ebf8930e339850d1b16c8f96fe1cb062eaeda91d3ea3766",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/share-card.png",
+      "bytes": 92427,
+      "sha256": "c712d4cd62d498830a1e3ad3956445992615aed959eb3f8a53e4af4d53db1af3",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/audio/move.ogg",
+      "bytes": 5859,
+      "sha256": "692ee3a6f1821402ca649ff735bee9591dc4846c8098fc7d6a90fd15fa57c1af",
+      "source": "Kenney Interface Sounds \u2014 Interface Sounds/drop_001.ogg (unchanged)"
+    },
+    {
+      "path": "assets/audio/star.ogg",
+      "bytes": 14169,
+      "sha256": "33b17a9a9a2397c62b285c52c33a907fdffb476909c99e42dde603f6a7a8b12c",
+      "source": "Kenney Interface Sounds \u2014 Interface Sounds/confirmation_002.ogg (unchanged)"
+    },
+    {
+      "path": "assets/audio/swoosh.ogg",
+      "bytes": 6901,
+      "sha256": "9a612fd2f513d52a296906b41071c990f75defe56be3bee60d2d4e2423b51b8b",
+      "source": "Kenney Interface Sounds \u2014 Interface Sounds/select_003.ogg (unchanged)"
+    },
+    {
+      "path": "assets/board/dark.png",
+      "bytes": 2792,
+      "sha256": "3123e5c36d308f2355ea57674d4bbd088eb96df70b45bbfe2df369aef2204706",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/board/light.png",
+      "bytes": 3356,
+      "sha256": "5304e379febe575c6d96b4fb0dd9a45c46d4a8023d130df63417d872dbb21931",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/characters/pip.png",
+      "bytes": 13693,
+      "sha256": "6e53d2a9e014d55e0e64ca6153593fc70833cbbd4c5c882ac1b392fb809819f0",
+      "source": "generated for this project"
+    },
+    {
+      "path": "assets/fonts/OFL-Inter.txt",
+      "bytes": 4377,
+      "sha256": "5b9321a4298cfeb6b34354164a1c3afc3db114569984c502b9b35d988fd58c57",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/fonts/OFL-SpaceGrotesk.txt",
+      "bytes": 4495,
+      "sha256": "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/fonts/inter-latin.woff2",
+      "bytes": 48256,
+      "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/fonts/space-grotesk-latin.woff2",
+      "bytes": 22288,
+      "sha256": "0640890476fc1198ab4de571fb658de443c4d85b66466ec09534a8737ab1ce9d",
+      "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/pieces/bb.png",
+      "bytes": 1916,
+      "sha256": "4e83f1ce6be172f80d2e1b2c2ff47e0b74997f35c5d73b883d67813f5f800216",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/bk.png",
+      "bytes": 2212,
+      "sha256": "13f8aba9184f077e9c935597e8f01b5e1ddeb7fd130e7e798a88f9989c114e90",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/bn.png",
+      "bytes": 2054,
+      "sha256": "fb92d784f2bc677ee0340589d11324df720190a864356da0acc0cbc719db8d27",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/bp.png",
+      "bytes": 1563,
+      "sha256": "2e18400f689b82ae2cccdd6e27a14fe13be98fe1f52a8be27fbe6055ec55c358",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/bq.png",
+      "bytes": 1868,
+      "sha256": "26e7eeb881aa26f8722e5f00a7c422fdc535be9ede8ac7e9b51e674f7bd99de9",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/br.png",
+      "bytes": 1956,
+      "sha256": "5219b2ab56c93119978f351beada34b8d14b4daf52c35337dc4b5e0eb92e19db",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/wb.png",
+      "bytes": 1505,
+      "sha256": "77a63a1f8d0eba4091b665ba612bc9cedb80fedbe98bfb4ee0c488e2f1167804",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/wk.png",
+      "bytes": 1716,
+      "sha256": "2659b3d2f37e4b587131fad73c033ac8976a7fc50b7cdd9a6eb3d4ef4840e258",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/wn.png",
+      "bytes": 1588,
+      "sha256": "359fa0a2372ad624aa64f5c6e8d89f46ce3e4d60f5e9d6e0cec854812b452a60",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/wp.png",
+      "bytes": 1255,
+      "sha256": "2b926b3482cc8769b16aa74b6b4e2d0464330ca4bd32c9560f8ff7cd323db997",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/wq.png",
+      "bytes": 1486,
+      "sha256": "3779e8476dbca2778666d4a93cc75f547b56d2388454ee1dd80d1fd25315b6e5",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/pieces/wr.png",
+      "bytes": 1520,
+      "sha256": "b683656f7ebf2ba63383ba431af3fff26f6a47ac348483dc5e91b2abcd0a9bfd",
+      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+    },
+    {
+      "path": "assets/ui/arrow-east.png",
+      "bytes": 422,
+      "sha256": "5517436e154ef58b64ae46ebac37ab1b8a8df8ef3e9220b4154e78acde0221da",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/arrow_basic_e.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/arrow-west.png",
+      "bytes": 402,
+      "sha256": "576db7b4e55f6937306d0fa56ea4da000aeaf4f53891fa967d2bd7dc0a83950f",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/arrow_basic_w.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/button-round.png",
+      "bytes": 1571,
+      "sha256": "7b92b2aaa29f01e961a981b7f6dae371b26b105fb3603eae69f8a6b9ccd10aa9",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/button_round_depth_gradient.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/button-square.png",
+      "bytes": 575,
+      "sha256": "825f12d5c8559544dea56d2e4e873e8c7e52f6e814f690e40a28a37e4bcf2560",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/button_square_depth_gradient.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/button.png",
+      "bytes": 582,
+      "sha256": "3fc1d9bedf07da0f1a49bed143311e6edf3bebd9a937e95a6ab4b812c8448ec0",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/button_rectangle_depth_gradient.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/check.png",
+      "bytes": 579,
+      "sha256": "8a6cb9afb994225bc9cfe75223802fec0d2cd3d71f8bf1eaf3eb497a3c84fba8",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/check_round_color.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/divider.png",
+      "bytes": 89,
+      "sha256": "234015ec6516217532d413751953d08482ee9ce0b95c0fc14d5ec55716f9feec",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Extra/Default/divider.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/lock.png",
+      "bytes": 8264,
+      "sha256": "60fd597abfe970d3ddf21a68b369b9fafa7fef28b6f5c301a62ac2228e102259",
+      "source": "generated for this project"
+    },
+    {
+      "path": "assets/ui/panel.png",
+      "bytes": 315,
+      "sha256": "83084c953e57d7506f90600df77f36a8c6156abea0b8ea0e4b3885a596cee2c8",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/button_rectangle_flat.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/progress-fill.png",
+      "bytes": 320,
+      "sha256": "a36b633507dba798c35e0b642e457a4315a2887b9b3e8165c05bed3d560b6658",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/slide_horizontal_color_section.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/progress-track.png",
+      "bytes": 321,
+      "sha256": "3c81558440a149a467057e4932bedb3c541cb6ca67e222a2742cca04a7f1823a",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Grey/Default/slide_horizontal_grey_section.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/rank-badge.png",
+      "bytes": 14366,
+      "sha256": "731db3e693b3e5e1880683848357745271f9ae6999a6e73289a7e47b68e5ad4a",
+      "source": "generated for this project"
+    },
+    {
+      "path": "assets/ui/star-outline.png",
+      "bytes": 955,
+      "sha256": "9267eda99fd68a28d036beca7a606e334edb2957f74c6531da28bc79e92bc4a1",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Grey/Default/star_outline.png (unchanged)"
+    },
+    {
+      "path": "assets/ui/star.png",
+      "bytes": 1507,
+      "sha256": "ba91a196117f8c324beac04ae426379d054e9497be901469eea5d333b369265c",
+      "source": "Kenney UI Pack \u2014 kenney/PNG/Blue/Default/star.png (unchanged)"
+    }
+  ]
+}
