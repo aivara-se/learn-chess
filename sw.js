@@ -20,7 +20,13 @@
    at or below `v14` for that reason. */
 const CACHE = 'learn-chess-v16';
 
-/* The shell: the files the app needs to boot and to draw its first frame. */
+/* The shell: the files the app needs to boot and to draw its first frame. The
+ * list has to be closed under its own imports — a file here whose import is not
+ * here fails offline at the point it is loaded, and the router reports that as a
+ * screen that does not exist. A screen the router imports on demand is not one
+ * of these: `src/scenes/board-fixture.js` (`#/board-fixture/*`, like `#/kit`) is
+ * fetched when it is opened and kept then, and a start with no network does not
+ * need it. */
 const SHELL = [
   './',
   'index.html',
@@ -30,7 +36,6 @@ const SHELL = [
   'src/board/board.js',
   'src/board/geometry.js',
   'src/board/pieces.js',
-  'src/scenes/board-fixture.js',
   'src/scenes/placeholder.js',
   'src/engine/engine.js',
   'vendor/pixi/pixi.min.mjs',
