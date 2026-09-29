@@ -21,6 +21,11 @@ still hold — the tap floor, the board's room, the motion rule. `docs/PORT.md` 
 | `src/ui/progress.js` | the pack's track and fill, from a value the caller counted |
 | `src/ui/speech.js` | the coach — two voices, two elements |
 | `src/scenes/kit.js` | `#/kit`, `#/kit/phone`, `#/kit/desktop`: every component, at both sizes |
+| `src/scenes/path.js` | `#/path`: the map a child walks, and the screen the game opens on (§10) |
+| `src/path/layout.js` | where every stop stands, derived from the course's `requires` graph |
+| `src/path/progress.js` | the child's record, the stars, the states and the rank |
+| `src/path/stop.js` | one stop drawn: its state, its caption, its stars, Pip |
+| `src/path/sheet.js` | what a tap on a door answers with |
 
 A screen is still a file and a route (`docs/SYSTEM.md` §1). The kit is imported, not registered: there is
 no index, so a new component is a new file and nothing else.
@@ -210,3 +215,53 @@ what it fetches), so the route works offline after one online visit. **No file g
 bump is owed** — nothing already in `SHELL` changed. Two lines make it exact if a reviewer would rather
 have it: `'src/scenes/kit.js'` in `SHELL`, and `CACHE` to a name no branch holds. It is not a screen a
 learner reaches, so it is also the one route that could be dropped from the offline list on purpose.
+
+## 10. The path — the map a child walks
+
+`#/path` is `#42`'s screen and the one the game opens on, because it is where a learner starts: one open
+stop, the rest of the course locked behind it, and Pip standing on the one they are up to. The stops, the
+forks and the legs are the course's `requires` graph drawn. `src/path/layout.js` derives the layout and
+`src/path/progress.js` says what state each stop is in; the screen draws what those two return and decides
+nothing about the course itself.
+
+| | |
+|---|---|
+| the map's column | `min(window, 520)` — the width the old document capped the board's column at, so a wider window gets margins rather than a stretched phone |
+| a stop's circle | 64px, a detour's 48px — `docs/PORT.md`'s own two numbers, and 48 is the tap floor |
+| the type | the kit's ramp at scale 1 at every width — title 13.5px (a detour's 12), the line under it 12px. A finger does not get smaller on a laptop, and neither does a caption |
+| a caption's width | the space one column has between its neighbours — 105px at 360, 155px at 520 — so two captions can never touch |
+| a row | 152px; the first stop stands 66px down, which is Pip's room rather than a margin |
+| the map's height | the deepest stop plus its circle plus a 104px footing, or what was really drawn plus 16px, whichever is more — a caption can grow the map and none can be cut off by a constant |
+
+**The state of a stop is a shape and a word, and the trail's shape is what says walked.** Done wears the
+pack's tick on the white chip surface it is measured legible on (6.48:1, §2), open wears the pack's round
+face with its own number in ink (**5.24:1**), locked wears the kit's grey disabled face with the padlock —
+and the lesson that opens it is written underneath in every locked stop's caption, so nothing has to be
+told apart by a shade of grey. A leg not walked is a line of dots, a leg that is a solid line; the colours
+are the palette's (`mute` on the ground measures **1.94:1** and the walked `action` **2.7:1**, both
+decorative pairs — the dotted/solid shape carries the meaning and the colour only agrees), and a detour's
+thread is the same two at half the weight, from its lesson to the pack and nowhere else.
+
+**The map scrolls and the header does not.** The path is taller than a phone (about 1,270px of map against
+490px of window at 360×640), and the page must not scroll: the canvas is the whole viewport and the board
+screen that follows this one keeps a fixed frame. So the map is one Pixi container moved by the pointer,
+finger or wheel, clamped to what there is to scroll, and the header — the rank and the two counts — is
+drawn over it on an opaque curtain that is interactive, so a stop sliding underneath cannot be tapped
+through it. It is a drag and a wheel handler rather than a native scrollbar because a scrollbar means
+putting the map in the DOM beside the canvas, which is the second rendering system this port exists to
+avoid; a translated container is one system. The canvas already carries `touch-action: none`, so the
+browser does not scroll the page under a finger; the wheel is therefore taken natively with
+`{ passive: false }`, because the page must not scroll behind the game either.
+
+**A tap is not a drag.** Pixi fires `pointertap` on whatever the finger lifted over, however far it
+travelled, so the gesture sets a flag once the pointer has moved more than 6px and a stop that was scrolled
+under a finger never counts as pressed. Six is small enough that a scroll begins at once and large enough
+that a shaky finger still taps; `~/tmp/pw/path-check.ts` drags *over a stop* and asserts no sheet opened.
+
+**A locked stop is a door, not a wall.** It opens a sheet — the kit's card on a scrim, with the raised
+button in front and the flat one for "not now" — that names the lesson which opens it, and offers the
+button that walks there when that lesson is playable. The map's stops and the sheet's buttons both report
+where they are, so a browser check taps a control rather than its own guess at the pixels. Two things are
+deliberately not this card's: the route a stop hands over (`#/lesson/<n>` for a lesson, `#/pack/<id>` for a
+detour — `src/scenes/lesson.js` is `#41`'s, so the button lands on the shell's honest "no screen called
+lesson" until it exists), and a per-square name for the board, which is the board card's business.
