@@ -51,6 +51,11 @@ button's bottom edge.
 label at any size this kit draws — while ink on it measures 5.24:1 at the flat face and 6.30:1 in the
 middle of the raised one. The pack is a light blue, and the honest label on it is dark.
 
+**That is a change from `v1`, and it is the blue that changed, not the standard.** The old page's
+`--primary` was the dark `#2f5fe0` and a white label on it measured 5.48:1 — the right pair for *that*
+blue, and the old document said so. The port's faces are the pack's own light blue, where the same white
+label measures 3.00:1. The label follows the face; the pair is measured either way.
+
 **The two tones are surfaces, never signals.** A verdict's tone is a tinted face plus its own border, and
 the verdict is a *word* ("Nice move", "Oops") in the same breath — nothing in the kit is carried by a
 colour alone.
