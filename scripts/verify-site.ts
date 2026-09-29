@@ -178,13 +178,25 @@ if (!/property="og:image"/.test(html) || !/property="og:image:alt"/.test(html)) 
 }
 checks.push('shell markup: viewport, noscript fallback, module entry point, manifest, touch icon, share card');
 
-/* 7. the shell has no hard-coded progress totals: they are counted from the course */
-for (const file of ['js/app.js', 'index.html']) {
-  const text = await read(file);
-  const written = text.match(/\b(of|=)\s*24\b|\b24\s*(puzzles|drills|stars)\b/gi);
-  if (written) {
-    problems.push(`${file} writes a puzzle total down (${[...new Set(written)].join(', ')}): count it from js/lessons.js instead`);
+/* 7. the shell has no hard-coded progress totals: they are counted from the course.
+ * The numbers are read off the course data rather than named here, so the guard
+ * moves with the course: add a puzzle or a detour and a shell that still writes the
+ * old total down fails the same run. (`24` used to be in this line, which is how it
+ * went blind — the total is 44 now, and the guard never noticed.) */
+{
+  const course = [...LESSONS, ...PACKS] as any[];
+  const puzzles = course.reduce((n, s) => n + ((s.drills ?? []) as unknown[]).length, 0);
+  const totals = new Set([puzzles, LESSONS.length, PACKS.length]);
+  for (const file of ['js/app.js', 'index.html']) {
+    const text = await read(file);
+    const written = [...text.matchAll(/\b(of|=)\s*(\d+)\b|\b(\d+)\s*(puzzles|drills|stars|lessons|stops|detours)\b/gi)]
+      .filter((m) => totals.has(Number(m[2] ?? m[3])))
+      .map((m) => m[0].trim());
+    if (written.length) {
+      problems.push(`${file} writes a course total down (${[...new Set(written)].join(', ')}): count it from js/lessons.js instead, the way the chip and the path card do`);
+    }
   }
+  checks.push(`no course total is written into the shell: ${puzzles} puzzles, ${LESSONS.length} path stops and ${PACKS.length} detours are counted from the course`);
 }
 
 /* 8. the two things that must stay small on the smallest phone — measured in
