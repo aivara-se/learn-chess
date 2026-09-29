@@ -12,15 +12,17 @@
  * every file in it is really here; the bump is checked by reading it.
  */
 /* The cache name ladder, since several pull requests change cached files at once.
-   Read off the branches rather than guessed: `main` is `v10` (the boss stops
-   landed as `f18ca48`), `feat/boss-stops` and this branch's superseded
-   predecessors hold names below that, and this branch — the badges shelf,
-   re-applied on today's `main` — takes `v11`, the next name nobody else holds.
-   Two branches taking "the next number" is the same collision one round later;
-   the names are written down here so the next reader does not have to guess one.
-   A name that means two different sets of files is how a stale copy outlives the
-   change. */
-const CACHE = 'learn-chess-v11';
+   Read off the branches rather than guessed, and named by the pull request a reader
+   can still open — measured with `git show origin/<branch>:sw.js | grep 'CACHE ='`:
+   `main` is `v10` (the boss stops landed as `f18ca48`), #30 (`feat/detour-packs-2`)
+   holds `v12`, and this branch, #29, takes `v13` — the next name nobody holds. It
+   moved on from `v11` because the tree it names changed under review: a name that
+   means two different sets of files is how a stale copy outlives the change, and a
+   reviewer who loaded `v11` would keep the old `js/app.js` through a reload. Land
+   the lower name first when both are approved — #30's `v12` before this `v13` — and
+   the ladder stays monotonic, with the later branch paying only the rebase it
+   needed anyway. */
+const CACHE = 'learn-chess-v13';
 
 const FILES = [
   './',

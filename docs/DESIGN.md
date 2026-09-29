@@ -357,8 +357,11 @@ for what a child did, that stays. Nine of them, and their rules live in one modu
 - **The nine**: first game finished against Pip, first win, a win at each level (1, 2, 3), first castle
   in a game, first checkmate delivered, five first-try answers in a row, and every star in the course.
 - **A run is memory, not a record.** Five in a row counts consecutive first-try answers while the tab is
-  open; a wrong answer ends the row, and so does a reload. What is stored is the best row a child ever
-  had, so a run that starts again cannot hand the badge out twice.
+  open; a wrong answer ends the row **at the moment it is given**, not when the puzzle is put down — a
+  child who answers wrong and walks away with "Next puzzle" has not answered five in a row — and a reload
+  ends it too. The streak on the Puzzles tab already ends there, and the badge follows the same rule on
+  all three boards that can be wrong: a lesson's drill, the shuffle and today's puzzle. What is stored is
+  the best row a child ever had, so a run that starts again cannot hand the badge out twice.
 - **Where a badge is counted** — four moments that already existed, and no new screen: the sheet that
   ends a game (the first game, a win, the level, the mate), castling inside a game, a first-try answer
   in `record()`, and the card that finishes a lesson. A mate delivered by a puzzle is a checkmate

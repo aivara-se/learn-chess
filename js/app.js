@@ -187,6 +187,15 @@ function record(key, firstTry) {
   return earned.filter(Boolean);
 }
 
+/* A wrong answer ends the run of first-try answers, at the moment the answer is
+   given rather than at the moment the puzzle is put down. `record` already zeroes
+   the run for a puzzle that was solved after a miss, but a child who answers wrong
+   and then walks away with "Next puzzle" never reaches `record` at all — and a
+   badge that says "five in a row" has to mean five in a row. The visible streak
+   already ends on the wrong answer; this is the same rule for the badge behind it,
+   and all three boards that can be wrong call it in their not-accepted branch. */
+function wrongAnswer() { firstTryRun = 0; }
+
 /* ---------- badges ---------- */
 
 /* The book of firsts. It reads and writes the same record as the stars, so
@@ -922,6 +931,7 @@ function renderStep() {
     state.onSquare = tapHandler(state);
     state.onMove = (move) => {
       const ok = state.accepted.includes(toUci(move));
+      if (!ok) wrongAnswer();
       const key = `drill:${lesson.id}:${step.i}`;
       learn.tries += 1;
       state.flash = { square: move.to, ok };
@@ -1634,6 +1644,7 @@ function nextPuzzle() {
   state.onSquare = tapHandler(state);
   state.onMove = (move) => {
     const ok = state.accepted.includes(toUci(move));
+    if (!ok) wrongAnswer();
     train.tries += 1;
     state.flash = { square: move.to, ok };
     state.last = move;
@@ -1731,6 +1742,7 @@ function startDaily() {
   state.onSquare = tapHandler(state);
   state.onMove = (move) => {
     const ok = state.accepted.includes(toUci(move));
+    if (!ok) wrongAnswer();
     train.tries += 1;
     state.flash = { square: move.to, ok };
     state.last = move;
