@@ -104,8 +104,12 @@ export function createMarker(parent, { kind = 'lesson', state = 'locked', here =
     arrow = sprite(MAP.arrow, { width: ARROW.width, height: ARROW.height });
     arrow.anchor.set(0.5);
     /* Mirrored on the sprite's own centre: the tip points at the stop, which is the
-     * only thing the child reads off it. */
-    arrow.scale.y = -1;
+     * only thing the child reads off it. The sign is flipped rather than the scale
+     * written, because `sprite()` set this axis to `ARROW.height / texture height`
+     * (the art is exported at 2×) and `scale.y = -1` would throw that away — the
+     * arrow would draw at the texture's own height, twice the size `ARROW.height`
+     * names, and its tip would land inside the stop's crown. */
+    arrow.scale.y *= -1;
     arrow.position.set(0, -halfH - ARROW.gap - ARROW.height / 2);
     node.addChild(arrow);
   }
