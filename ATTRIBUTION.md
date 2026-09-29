@@ -22,7 +22,7 @@ pack are in [`assets/source/`](assets/source/), and the file-by-file list is
   reads against either square. Nothing else of the pack ships: the marble, wood, glass and
   isometric renders are not used.
 - **Kenney UI Pack** — Kenney — **CC0** — <https://kenney.nl/assets/ui-pack>. The archive
-  ships unmodified as `assets/source/kenney_ui-pack.zip`. Modified: none — thirteen of the
+  ships unmodified as `assets/source/kenney_ui-pack.zip`. Modified: none — twelve of the
   shipped UI images are byte-for-byte copies of pack members (the pack's *Blue* set for the
   interactive parts — including the tick, `PNG/Blue/Default/icon_checkmark.png` — *Grey*
   for the star outline and the progress track, and its one `Extra/Default/divider.png`).
