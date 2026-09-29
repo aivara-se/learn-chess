@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Learn chess">
+  <!-- The app's mark: four board squares with Pip the pawn in the middle. The
+       colours are this app's own — cream #f7e8c9, green #8fc177, ink #2c2f4a,
+       ground #eef3ff — and not the family's dark ground, because this is a tool
+       for children rather than a bot's identity page (docs/DESIGN.md). It is
+       also the source for the PNG icons the manifest asks for. -->
+  <rect width="32" height="32" rx="7" fill="#eef3ff"/>
+  <g>
+    <rect x="3" y="3" width="12.6" height="12.6" rx="3" fill="#f7e8c9"/>
+    <rect x="16.4" y="3" width="12.6" height="12.6" rx="3" fill="#8fc177"/>
+    <rect x="3" y="16.4" width="12.6" height="12.6" rx="3" fill="#8fc177"/>
+    <rect x="16.4" y="16.4" width="12.6" height="12.6" rx="3" fill="#f7e8c9"/>
+  </g>
+  <g fill="#ffffff" stroke="#2c2f4a" stroke-width="1.9" stroke-linejoin="round">
+    <circle cx="16" cy="13.4" r="4.6"/>
+    <path d="M11.6 25.6c0-3.4 2-5.6 4.4-5.6s4.4 2.2 4.4 5.6z"/>
+  </g>
+  <circle cx="14.3" cy="12.7" r="0.85" fill="#2c2f4a"/>
+  <circle cx="17.7" cy="12.7" r="0.85" fill="#2c2f4a"/>
+</svg>
