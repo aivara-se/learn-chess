@@ -1,7 +1,8 @@
 # DRILLS.md — what the course was measured against
 
-Every drill in `js/lessons.js` is checked against an engine, and this is the record
-of that run. It is generated, not written by hand:
+Every drill in `js/lessons.js` — the course's and the packs' alike — is checked
+against an engine, and this is the record of that run. It is generated, not
+written by hand:
 
 ```bash
 bun run scripts/verify-drills.ts --write
@@ -18,7 +19,7 @@ margin-derived set — a level position, or a lesson about a rule rather than a 
 Those notes are the last section of this file, and they are the only findings that do
 not fail a run.
 
-| drill | side to move | engine top | top | lesson `best` | best | behind | accepted |
+| drill | side to move | engine top | top | recorded `best` | best | behind | accepted |
 |---|---|---|---|---|---|---|---|
 | `board-and-pieces#1` | white | `d4e6` | 0 | `d4e6` | 0 | 0 | `d4e6` |
 | `board-and-pieces#2` | white | `e4d5` | 697 | `e4d5` | 697 | 0 | `e4d5` |
@@ -55,6 +56,15 @@ not fail a run.
 | `mate-in-one#3` | white | `g5f7` | 99999 | `g5f7` | 99999 | 0 | `g5f7` |
 | `mate-in-one#4` | white | `d1d8` | 99999 | `d1d8` | 99999 | 0 | `d1d8` |
 | `mate-in-one#5` | white | `a2g2` | 99999 | `a2g2` | 99999 | 0 | `a2g2` |
+| `fork#1` | white | `d5f6` | 518 | `d5f6` | 518 | 0 | `d5f6` |
+| `fork#2` | white | `c6e7` | 533 | `c6e7` | 533 | 0 | `c6e7` |
+| `fork#3` | white | `b4c6` | 37 | `b4c6` | 37 | 0 | `b4c6` |
+| `pin#1` | white | `d4d5` | 539 | `d4d5` | 539 | 0 | `d4d5` |
+| `pin#2` | white | `b5c6` | 454 | `b5c6` | 454 | 0 | `b5c6` |
+| `pin#3` | white | `b4c6` | 535 | `b4c6` | 535 | 0 | `b4c6` |
+| `back-rank#1` | white | `e1e8` | 99999 | `e1e8` | 99999 | 0 | `e1e8` |
+| `back-rank#2` | white | `e1e8` | 99999 | `e1e8` | 99999 | 0 | `e1e8` |
+| `back-rank#3` | white | `d1d8` | 99999 | `d1d8` | 99999 | 0 | `d1d8` |
 
 ## Notes
 
@@ -62,3 +72,4 @@ not fail a run.
 - `castle-early#3` — the position is level, so the drill accepts only the king-safety move
 - `finish-it#1` — the position is won by many moves, so the drill accepts only the move that fences the king off the fourth rank
 - `finish-it#2` — the position is won by many moves, so the drill accepts only the queen move a knight jump from his king
+- `pin#3` — White is already a piece up, so the engine's own margin also keeps quiet moves; the drill asks for the pin's consequence.

@@ -14,7 +14,7 @@
  * that, and docs/DRILLS.md is the record.
  */
 import { parseFen, legalMoves } from '../js/engine.js';
-import { LESSONS } from '../js/lessons.js';
+import { LESSONS, PACKS } from '../js/lessons.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const problems: string[] = [];
@@ -91,37 +91,55 @@ let drills = 0;
 const BUDGET = { title: 40, goal: 55, caption: 110, body: 170, prompt: 65, hint: 55, why: 150 };
 let longest = { prompt: 0, body: 0 };
 const ids = new Set<string>();
-for (const lesson of LESSONS) {
-  if (!lesson.id || !lesson.title || !lesson.goal) problems.push(`lesson without id/title/goal: ${lesson.title}`);
-  if (ids.has(lesson.id)) problems.push(`two lessons share the id ${lesson.id}`);
-  ids.add(lesson.id);
-  if (!Array.isArray(lesson.body) || lesson.body.length < 2) problems.push(`lesson ${lesson.id} has no body text`);
-  if ((lesson.title ?? '').length > BUDGET.title) problems.push(`lesson ${lesson.id}: title is ${lesson.title.length} chars (budget ${BUDGET.title})`);
-  if ((lesson.goal ?? '').length > BUDGET.goal) problems.push(`lesson ${lesson.id}: goal is ${lesson.goal.length} chars (budget ${BUDGET.goal})`);
-  if (lesson.diagramCaption && lesson.diagramCaption.length > BUDGET.caption) problems.push(`lesson ${lesson.id}: caption is ${lesson.diagramCaption.length} chars (budget ${BUDGET.caption})`);
-  (lesson.body ?? []).forEach((para: string, i: number) => {
-    longest.body = Math.max(longest.body, para.length);
-    if (para.length > BUDGET.body) problems.push(`lesson ${lesson.id}: paragraph ${i + 1} is ${para.length} chars (budget ${BUDGET.body})`);
-  });
-  /* A boss stop is a game, not a page of puzzles: it has no drills and no
-     diagram, and it names the level of the opponent it is won at. Everything
-     else about it is every stop's business — its title, its goal, its copy. */
-  const boss = (lesson as any).boss as { level?: number } | undefined;
-  if (boss) {
-    if (!Number.isInteger(boss.level) || (boss.level as number) < 1 || (boss.level as number) > 3) {
-      problems.push(`lesson ${lesson.id}: a boss stop names the level it is won at, and ${boss.level} is not one of 1, 2 or 3`);
+const packIds = new Set<string>(PACKS.map((p: any) => p.id));
+/* A stop is a stop: a lesson's drills and a pack's puzzles are checked by the same
+   rules, and a failure names the stop it came from. A lesson carries the copy a
+   pack does not (a goal, a body, a diagram); a pack carries the lesson that opens
+   it, its idea in one line, and exactly three puzzles. */
+for (const stop of [...LESSONS, ...PACKS] as any[]) {
+  const isPack = packIds.has(stop.id);
+  const kind = isPack ? 'pack' : 'lesson';
+  if (!stop.id || !stop.title) problems.push(`a stop without id/title: ${stop.title}`);
+  if (ids.has(stop.id)) problems.push(`two stops share the id ${stop.id}, so the map cannot tell them apart`);
+  ids.add(stop.id);
+  if ((stop.title ?? '').length > BUDGET.title) problems.push(`${kind} ${stop.id}: title is ${stop.title.length} chars (budget ${BUDGET.title})`);
+  if (isPack) {
+    /* A pack is offered by a lesson and by nothing else, so the lesson it names
+       has to exist — otherwise the stop could never open and would sit locked on
+       the map forever. */
+    if (!stop.idea) problems.push(`pack ${stop.id} has no idea line, and the map shows one`);
+    if (!LESSONS.some((l) => l.id === stop.opensWith)) {
+      problems.push(`pack ${stop.id} opens with "${stop.opensWith}", which is not a lesson, so nothing could ever open it`);
     }
+    if ((stop.drills ?? []).length !== 3) problems.push(`pack ${stop.id} has ${(stop.drills ?? []).length} puzzles: a pack is three`);
   } else {
-    if (!lesson.diagram) problems.push(`lesson ${lesson.id} has no diagram position`);
-    else {
-      try { parseFen(lesson.diagram); } catch { problems.push(`lesson ${lesson.id} has an unparseable diagram FEN`); }
+    if (!stop.goal) problems.push(`lesson without a goal: ${stop.title}`);
+    if (!Array.isArray(stop.body) || stop.body.length < 2) problems.push(`lesson ${stop.id} has no body text`);
+    if ((stop.goal ?? '').length > BUDGET.goal) problems.push(`lesson ${stop.id}: goal is ${stop.goal.length} chars (budget ${BUDGET.goal})`);
+    if (stop.diagramCaption && stop.diagramCaption.length > BUDGET.caption) problems.push(`lesson ${stop.id}: caption is ${stop.diagramCaption.length} chars (budget ${BUDGET.caption})`);
+    (stop.body ?? []).forEach((para: string, i: number) => {
+      longest.body = Math.max(longest.body, para.length);
+      if (para.length > BUDGET.body) problems.push(`lesson ${stop.id}: paragraph ${i + 1} is ${para.length} chars (budget ${BUDGET.body})`);
+    });
+    /* A boss stop is a game, not a page of puzzles: it has no drills and no
+       diagram, and it names the level of the opponent it is won at. Everything
+       else about it is every stop's business — its title, its goal, its copy. */
+    const boss = stop.boss as { level?: number } | undefined;
+    if (boss) {
+      if (!Number.isInteger(boss.level) || (boss.level as number) < 1 || (boss.level as number) > 3) {
+        problems.push(`lesson ${stop.id}: a boss stop names the level it is won at, and ${boss.level} is not one of 1, 2 or 3`);
+      }
+    } else if (!stop.diagram) {
+      problems.push(`lesson ${stop.id} has no diagram position`);
+    } else {
+      try { parseFen(stop.diagram); } catch { problems.push(`lesson ${stop.id} has an unparseable diagram FEN`); }
     }
   }
-  const list = lesson.drills ?? [];
-  if (!list.length && !boss) problems.push(`lesson ${lesson.id} has no drills and is not a boss stop`);
+  const list = stop.drills ?? [];
+  if (!list.length && !stop.boss) problems.push(`${kind} ${stop.id} has no puzzles and is not a boss stop`);
   list.forEach((drill: any, i: number) => {
     drills++;
-    const where = `${lesson.id} drill ${i + 1}`;
+    const where = `${stop.id} drill ${i + 1}`;
     let pos;
     try { pos = parseFen(drill.fen); } catch { problems.push(`${where}: unparseable FEN`); return; }
     const moves = legalMoves(pos);
@@ -146,7 +164,7 @@ for (const lesson of LESSONS) {
   });
 }
 const bossStops = LESSONS.filter((l) => (l as any).boss).length;
-checks.push(`${LESSONS.length} stops (${bossStops} of them boss games), ${drills} puzzles — every FEN legal and every answer a legal move`);
+checks.push(`${LESSONS.length} stops (${bossStops} of them boss games, ${PACKS.length} packs beside them), ${drills} puzzles — every FEN legal and every answer a legal move`);
 checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.prompt}, longest paragraph ${longest.body})`);
 
 /* 6. the shell carries what the app needs */
@@ -242,6 +260,23 @@ for (const file of ['js/app.js', 'index.html']) {
     return 1 + Math.max(...reqs.map((r) => depth(LESSONS.find((x) => x.id === r), guard)));
   };
   checks.push(`the path: ${LESSONS.length} stops, ${roots.length} open at the start, every stop reachable, ${Math.max(...LESSONS.map((l) => depth(l))) + 1} rows deep`);
+
+  /* The map has three columns, and a pack stands in the column its lesson's row
+     has left free (js/app.js, `mapLayout`). A fourth stop in a row would be
+     slipped out of the path — a shape rather than a place — so the course is what
+     fails, not the drawing. */
+  const rowLoad = new Map<number, number>();
+  const load = (d) => { rowLoad.set(d, (rowLoad.get(d) || 0) + 1); };
+  for (const l of LESSONS) load(depth(l));
+  for (const p of PACKS) {
+    const home = LESSONS.find((l) => l.id === p.opensWith);
+    if (home) load(depth(home));
+  }
+  const crowded = [...rowLoad].filter(([, n]) => n > 3);
+  for (const [d, n] of crowded) {
+    problems.push(`row ${d} of the map holds ${n} stops (the lessons there plus the packs hanging off them): a row has three columns, so a pack would be drawn off the path`);
+  }
+  checks.push(`the map's rows hold the packs: ${PACKS.length} packs, at most ${Math.max(...rowLoad.values())} stops in a row of three columns`);
 }
 
 for (const c of checks) console.log(`ok   ${c}`);

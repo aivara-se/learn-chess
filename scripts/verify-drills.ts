@@ -7,7 +7,8 @@
  * verify-site.ts can tell that an answer is legal; only an engine can tell that
  * it is good. This asks Stockfish (MultiPV=6, depth 18, one thread, hash 16, a
  * fresh process per position) for its top six moves in every drill position and
- * compares them with the `best` and `accepted` written into js/lessons.js.
+ * compares them with the `best` and `accepted` written into js/lessons.js — the
+ * course's drills and the detour packs are measured by the same rule.
  *
  * A finding is a drill whose `best` is more than 30 centipawns below the engine's
  * top move, or an `accepted` list holding a move that far behind, or a mate that
@@ -19,7 +20,7 @@
  * The engine is found at $STOCKFISH, at /usr/games/stockfish, or on the PATH.
  */
 import { existsSync } from 'node:fs';
-import { LESSONS } from '../js/lessons.js';
+import { LESSONS, PACKS } from '../js/lessons.js';
 
 const ENGINE = process.env.STOCKFISH
   || (existsSync('/usr/games/stockfish') ? '/usr/games/stockfish' : 'stockfish');
@@ -108,6 +109,18 @@ LESSONS.forEach((lesson) => (lesson.drills || []).forEach((drill, i) => drills.p
   accepted: drill.accepted,
   note: (drill as { note?: string }).note,
 })));
+/* A pack is content too, measured by exactly the same rule: a lesson's drill and
+   a pack's puzzle are the same kind of thing, and the record in docs/DRILLS.md
+   names the stop each row belongs to. Nothing about being optional softens the
+   margin — a pack's answer has to be the engine's answer just as a lesson's does. */
+PACKS.forEach((pack) => (pack.drills || []).forEach((drill, i) => drills.push({
+  id: `${pack.id}#${i + 1}`,
+  lesson: pack.title,
+  fen: drill.fen,
+  best: drill.best,
+  accepted: drill.accepted,
+  note: (drill as { note?: string }).note,
+})));
 
 /* Ask the engine its name, then let it go: reading its stdout to the end would
    wait for an exit that never comes, because it is waiting for `quit`. */
@@ -178,8 +191,9 @@ if (WRITE) {
   const doc = [
     '# DRILLS.md — what the course was measured against',
     '',
-    'Every drill in `js/lessons.js` is checked against an engine, and this is the record',
-    'of that run. It is generated, not written by hand:',
+    'Every drill in `js/lessons.js` — the course\'s and the packs\' alike — is checked',
+    'against an engine, and this is the record of that run. It is generated, not',
+    'written by hand:',
     '',
     '```bash',
     'bun run scripts/verify-drills.ts --write',
@@ -196,7 +210,7 @@ if (WRITE) {
     'Those notes are the last section of this file, and they are the only findings that do',
     'not fail a run.',
     '',
-    '| drill | side to move | engine top | top | lesson `best` | best | behind | accepted |',
+    '| drill | side to move | engine top | top | recorded `best` | best | behind | accepted |',
     '|---|---|---|---|---|---|---|---|',
     ...results.map((r) => `| \`${r.id}\` | ${r.turn} | \`${r.top}\` | ${r.topValue} | \`${r.bestMove}\` | ${r.bestValue ?? '-'} | ${r.delta ?? '-'} | ${cell(r)} |`),
     '',

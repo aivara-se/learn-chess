@@ -26,6 +26,11 @@ A beginner's chess course shaped like a small phone app: three tabs, a path of l
   played as White on the play screen. It is finished only by a checkmate the child delivers — a draw,
   a stalemate or a loss leaves it open — and the stop says so before the first move. Undo is off in a
   boss game, so the win is one the child played, and a boss win is not a star (`docs/DESIGN.md`).
+- **Optional detour packs**: three more puzzles on one idea, hung beside the lesson that teaches it.
+  A pack opens once its lesson is finished and nothing ever requires one, so a learner who keeps
+  missing knight forks can drill forks, and a learner who has had enough of an idea walks past the
+  stop and loses nothing. A pack's puzzles are the course's puzzles: the same engine check measures
+  them and their stars count in the same rank (`docs/DESIGN.md`).
 - A **rank** to grow into: stars are worth a piece's rank, from Pawn at nothing to King at every
   star in the course. The reward for finishing a lesson is the next part of the path opening; the
   reward for doing it well is the rank.
@@ -68,6 +73,6 @@ A beginner's chess course shaped like a small phone app: three tabs, a path of l
 
 ## How it changes
 
-The course grows by adding lessons and puzzles to `js/lessons.js` — new positions, verified the same way, written to the length budgets the site check enforces. Nothing counts them but the app: the number of lessons and puzzles never appears in the shell, so the course can grow without anyone having to remember a total. The engine changes rarely; if it does, `bun test` decides whether the change is sound. `bun run scripts/verify-site.ts` and `bun run scripts/verify-drills.ts` decide whether the course still holds together, and both run on every pull request.
+The course grows by adding lessons, puzzles and detours to `js/lessons.js` — new positions, verified the same way, written to the length budgets the site check enforces. Nothing counts them but the app: the number of lessons and puzzles never appears in the shell, so the course can grow without anyone having to remember a total. The engine changes rarely; if it does, `bun test` decides whether the change is sound. `bun run scripts/verify-site.ts` and `bun run scripts/verify-drills.ts` decide whether the course still holds together, and both run on every pull request.
 
 Anything that needs a server, an account, or a network call belongs in a different product.
