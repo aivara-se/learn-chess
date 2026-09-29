@@ -1,20 +1,29 @@
 /* One stop on the map, drawn — and the tap it answers.
  *
- * The states are the course's, and each one is a shape and a word rather than a
- * colour: **done** wears the pack's tick, **open** wears its number (a boss wears
- * the king, a detour a plus — "more of this", the one thing a pack asks), and
- * **locked** wears the padlock with the lesson that opens it written underneath.
- * The circle follows the state too — a locked stop leaves the pack's blue for the
- * drawn grey face the kit's disabled control wears, and a done stop is the white
- * chip surface the pack's tick is measured legible on (6.48:1, `docs/DESIGN.md`),
- * because the pack's own tick and lock are drawn for a light surface and vanish on
- * the pack's own blue.
+ * The illustration is the art's and lives in `src/map/marker.js`: the shield a
+ * lesson wears, the medallion a detour wears, the boss crest, the pole behind the
+ * shield, one overlay per state and the golden arrow on the stop the child is on.
+ * What is left here is what only this screen knows — the stop's own words, where
+ * its caption sits under its marker, the row of stars, Pip standing where the child
+ * is, and the two questions a tap asks: was this a drag, and is the stop open.
  *
- * The drawing is one node with its origin at the circle's centre, so a stop is
- * placed by its own coordinate and its caption hangs below without arithmetic at
- * the call site. `box` reports what the stop really occupies — caption included,
- * in the node's own coordinates — because the screen has to know whether the map
- * is tall enough for the last caption, and a constant would be a guess.
+ * Two things a reader should know.
+ *
+ * **The caption is written on the painting, so it wears a halo.** The map used to
+ * be drawn on the app's own pale ground, where ink was enough; it is a painted
+ * world now, and the dark end is dark. Every word under a stop is the ink the kit
+ * writes in with the art's own parchment `#efdfbb` around it — `ink` on that
+ * parchment is 11.9:1 and the parchment on the darkest ash is 13.9:1, so whichever
+ * ground a stop stands on, one of the pair carries the words. That is the same
+ * two-tone rule the art card measured its sprites on, applied to the app's text.
+ *
+ * **The caption hangs off what the marker really drew** (`box.bottom`), not off a
+ * number beside it, so a marker drawn a little taller than the circle it replaces
+ * cannot have its name written through it. The stars keep the place they already
+ * had, between the name and the line: the map's rows are 152px apart and a row
+ * under the *marker* would push every caption into the marker below it — measured,
+ * the deepest caption already reaches 132px below its stop at 360px wide while the
+ * next row's marker starts 116px below it.
  *
  * A tap is a tap, not a drag: the map moves under a finger, so the caller passes a
  * `panned()` test and a stop that was scrolled never counts as pressed. Pixi fires
@@ -22,122 +31,83 @@
  * guard belongs here rather than in the gesture.
  *
  * The words are the caller's: this file draws a stop, it does not decide what a
- * stop says. `line` is the sentence under the name, `glyph` is what an open stop
- * wears.
+ * stop says. `line` is the sentence under the name, `glyph` what an open stop wears.
  */
-import { Container, Graphics, Rectangle } from '../../vendor/pixi/pixi.min.mjs';
+import { Container } from '../../vendor/pixi/pixi.min.mjs';
 import { COLOUR, TYPE, scale as clamped, text } from '../ui/theme.js';
 import { SPRITE, sprite } from '../ui/assets.js';
+import { createMarker, createStars } from '../map/marker.js';
 
-const STAR = 12;        // one star in the row under a stop's name
-const STAR_GAP = 2;
 const PIP = 36;         // Pip, standing where the child is
 const PIP_LIFT = 14;    // how far above the circle he stands
+const HALO = 0xefdfbb;  // the art's parchment, around the words the app writes
 
-/* A ring drawn as twelve dots: a detour is not a stop on the path, and a dotted
- * edge says so before a child reads the word "optional" underneath. */
-function dotted(graphics, radius, colour, size) {
-  for (let step = 0; step < 12; step += 1) {
-    const angle = (step / 12) * Math.PI * 2;
-    graphics.circle(Math.cos(angle) * radius, Math.sin(angle) * radius, size).fill(colour);
-  }
-  return graphics;
+/* The app's text on the map, with the parchment behind its outline. `width` is the
+ * halo's own size: 2px of parchment around a 12px line keeps the letterforms, and
+ * 3px around a 13.5px name does the same — a halo that swallowed the counters would
+ * cost more legibility than it bought. */
+function captionText(string, { size, weight, colour, caption, halo = 3 }) {
+  const node = text(string, { size, weight, colour, align: 'center', wrap: caption });
+  node.style.stroke = { color: HALO, width: halo };
+  return node;
 }
 
 export function createStop(parent, { stop, state, glyph, line, puzzles, here, caption, room = 0, scale = 1, panned, onTap }) {
   const k = clamped(scale);
-  const pack = stop.kind === 'pack';
-  const r = Math.round((stop.size / 2) * k);
-  const rim = Math.max(1, Math.round(k));
-  const pip = Math.round(PIP * k);
-  /* Pip stands beside the stop, on the side the map has room for: in the last column
-   * his 36px would otherwise hang past the edge of the map and be cut in half. */
-  const pipRight = room >= r + Math.round(2 * k) + pip;
   const node = new Container();
   node.position.set(stop.x, stop.y);
 
-  if (state === 'open') {
-    /* The pack's own round face, drawn whole: a circle does not slice. */
-    const face = sprite(SPRITE.round, { width: r * 2, height: r * 2 });
-    face.position.set(-r, -r);
-    node.addChild(face);
-  } else {
-    const face = new Graphics()
-      .circle(0, 0, r)
-      .fill(state === 'done' ? COLOUR.card : COLOUR.muteSoft)
-      .stroke({ width: rim, color: state === 'done' ? COLOUR.line : COLOUR.mute, alignment: 0.5 });
-    node.addChild(face);
-  }
-  if (pack) {
-    node.addChild(dotted(new Graphics(), r + Math.round(6 * k), COLOUR.inkMute, Math.max(1, Math.round(1.4 * k))));
-  }
+  const marker = createMarker(node, { kind: stop.kind, state, here, glyph });
+  const halfW = marker.face.width / 2;
 
-  const mark = state === 'locked' ? SPRITE.lock : state === 'done' ? SPRITE.tick : null;
-  if (mark) {
-    const size = Math.round(r * 1.05);
-    const icon = sprite(mark, { width: size, height: size });
-    icon.position.set(-size / 2, -size / 2);
-    node.addChild(icon);
-  } else {
-    const label = text(glyph, { size: Math.round(r * 0.94), weight: '700', colour: COLOUR.ink });
-    label.anchor.set(0.5);
-    node.addChild(label);
-  }
-
-  /* Pip stands where the child is. The ring says the same thing in a shape and the
-   * caption says it in words, so nothing here is carried by a colour alone. */
+  /* Pip stands where the child is, on the side the map has room for: in the last
+   * column his 36px would otherwise hang past the edge of the map and be cut in
+   * half. The arrow above the marker says the same thing in the art's own voice. */
+  const pip = Math.round(PIP * k);
+  const pipRight = room >= halfW + Math.round(2 * k) + pip;
   if (here) {
-    node.addChild(new Graphics().circle(0, 0, r + Math.round(5 * k)).stroke({ width: Math.max(2, Math.round(3 * k)), color: COLOUR.ink, alignment: 1 }));
     const mark = sprite(SPRITE.pip, { width: pip, height: pip });
-    mark.position.set(pipRight ? r + Math.round(2 * k) : -(r + Math.round(2 * k) + pip), -Math.round(PIP_LIFT * k) - pip);
+    mark.position.set(pipRight ? halfW + Math.round(2 * k) : -(halfW + Math.round(2 * k) + pip), -Math.round(PIP_LIFT * k) - pip);
     node.addChild(mark);
   }
 
-  const title = text(stop.title, {
-    size: Math.round((pack ? TYPE.tiny : TYPE.small) * k),
+  const title = captionText(stop.title, {
+    size: Math.round((stop.kind === 'pack' ? TYPE.tiny : TYPE.small) * k),
     weight: '700',
     colour: COLOUR.ink,
-    align: 'center',
-    wrap: caption,
+    caption,
   });
   title.anchor.set(0.5, 0);
-  title.position.set(0, r + Math.round(6 * k));
+  title.position.set(0, marker.box.bottom + Math.round(6 * k));
   node.addChild(title);
   let low = title.position.y + title.height;
 
   if (puzzles.of) {
-    const width = puzzles.of * (Math.round(STAR * k) + Math.round(STAR_GAP * k)) - Math.round(STAR_GAP * k);
-    let x = -width / 2;
-    for (let i = 0; i < puzzles.of; i += 1) {
-      const size = Math.round(STAR * k);
-      const star = sprite(i < puzzles.stars ? SPRITE.star : SPRITE.starOutline, { width: size, height: size });
-      star.position.set(x, low + Math.round(4 * k));
-      node.addChild(star);
-      x += size + Math.round(STAR_GAP * k);
-    }
-    low += Math.round(4 * k) + Math.round(STAR * k);
+    const row = createStars(node, puzzles);
+    row.node.position.set(0, low + Math.round(4 * k));
+    low += Math.round(4 * k) + row.height;
   }
 
-  const sub = text(line, {
+  const sub = captionText(line, {
     size: Math.round(TYPE.tiny * k),
     weight: '500',
     colour: here ? COLOUR.ink : COLOUR.inkMute,
-    align: 'center',
-    wrap: caption,
+    caption,
+    halo: 2,
   });
   sub.anchor.set(0.5, 0);
   sub.position.set(0, low + Math.round(5 * k));
   node.addChild(sub);
 
   const box = {
-    left: Math.min(-r, -Math.round(caption / 2), here && !pipRight ? -(r + Math.round(2 * k) + pip) : 0),
-    right: Math.max(r, Math.round(caption / 2), here && pipRight ? r + Math.round(2 * k) + pip : 0),
-    top: here ? -Math.round(PIP_LIFT * k) - pip : -r,
+    left: Math.min(marker.box.left, -Math.round(caption / 2), here && !pipRight ? -(halfW + Math.round(2 * k) + pip) : 0),
+    right: Math.max(marker.box.right, Math.round(caption / 2), here && pipRight ? halfW + Math.round(2 * k) + pip : 0),
+    top: here ? Math.min(marker.box.top, -Math.round(PIP_LIFT * k) - pip) : marker.box.top,
     bottom: sub.position.y + sub.height,
   };
 
   node.eventMode = 'static';
-  node.hitArea = new Rectangle(-r, -r, r * 2, r * 2);
+  node.hitArea = marker.hit;
   node.cursor = 'pointer';
   node.on('pointertap', () => { if (!panned()) onTap(stop); });
 
@@ -150,12 +120,13 @@ export function createStop(parent, { stop, state, glyph, line, puzzles, here, ca
     title: stop.title,
     line,
     stars: puzzles,
+    arrow: marker.arrow,
     /* The name the shell's live region is handed when a stop is tapped: the canvas
      * is one node, so a stop has to say what it is out loud. */
     spoken: () => `${stop.title}: ${line}`,
     box,
-    /* The hit area is what a finger gets, and it is the circle: the caption belongs
-     * to the stop but is not something a child taps. */
-    measure: () => ({ id: stop.id, kind: stop.kind, state, title: stop.title, line, stars: puzzles, here, x: stop.x, y: stop.y, width: r * 2, height: r * 2, box }),
+    /* The hit area is what a finger gets, and it is the marker's own box: the
+     * caption belongs to the stop but is not something a child taps. */
+    measure: () => ({ id: stop.id, kind: stop.kind, state, title: stop.title, line, stars: puzzles, here, x: stop.x, y: stop.y, width: marker.hit.width, height: marker.hit.height, box }),
   };
 }
