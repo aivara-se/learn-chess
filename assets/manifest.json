@@ -1,6 +1,6 @@
 {
   "note": "Every shipped asset, path and size, and where it came from. sw.js precaches exactly this list, so a card that adds a sprite adds it here and never to sw.js. assets/source/** is deliberately not listed: those are the unmodified pack archives, kept as provenance, and the start screen must not wait on a 22MB download. Terms live in ATTRIBUTION.md.",
-  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the 2D Chess Pack's top-down render with a 3px contrasting rim added; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge.",
+  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the 2D Chess Pack's top-down render with a 3px contrasting rim added; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge. The map is the same rule at a bigger size: every assets/map/*.png is a 2x export of an SVG source beside the packs in assets/source/map/ (which is not precached), cut or drawn at the size the map draws it \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file and the terrain bands are 1040px wide for the map\u2019s 520px column. The three terrain bands are one painting sliced at fixed rows, so a stitched edge is the same pixels and cannot show a seam.",
   "assets": [
     {
       "path": "assets/favicon.svg",
@@ -97,6 +97,216 @@
       "bytes": 22288,
       "sha256": "0640890476fc1198ab4de571fb658de443c4d85b66466ec09534a8737ab1ce9d",
       "source": "this repository's previous release (v1)"
+    },
+    {
+      "path": "assets/map/terrain-meadow.png",
+      "bytes": 118551,
+      "sha256": "2c61f5a2dcb7cf3b98cd1232f76a143d7627326be49318cf935a5cf6e75fda13",
+      "source": "generated for this project \u2014 one painted world cut into three bands (assets/source/map/world.svg) \u2014 the meadow and its village; drawn 520\u00d7446, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/terrain-pass.png",
+      "bytes": 93503,
+      "sha256": "2ee8109eec8afb8aafb89b57f0f63289455770c81077dda5d99b70db5002fe97",
+      "source": "generated for this project \u2014 the same world \u2014 the rocky pass and its peaks; drawn 520\u00d7444, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/terrain-ash.png",
+      "bytes": 85931,
+      "sha256": "c3fc3bc42912824812a3998630c1b61a314f716ecfc86996c2b01af61100d5c7",
+      "source": "generated for this project \u2014 the same world \u2014 the ash and the lava; drawn 520\u00d7390, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-tree-oak.png",
+      "bytes": 1062,
+      "sha256": "cb5f95f92acf6ad5737b11b7b7adb5176690f1e9fbcf2b006edbf64b6816261f",
+      "source": "generated for this project \u2014 a map prop \u2014 a meadow oak; drawn 48\u00d758, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-tree-pine.png",
+      "bytes": 885,
+      "sha256": "ab3a044bbef87d330476b7078481ec52d2a6c0d301444fcf580d2bad5f4acf59",
+      "source": "generated for this project \u2014 a map prop \u2014 a pass pine; drawn 40\u00d756, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-tree-dead.png",
+      "bytes": 650,
+      "sha256": "0c4c5bb675d00c41e7bc3f214d743b5863e71efdc064270d9b11cf92637e5faa",
+      "source": "generated for this project \u2014 a map prop \u2014 a dead tree for the ash; drawn 44\u00d758, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-bush.png",
+      "bytes": 655,
+      "sha256": "9025e2921e8b95f5af221c8df4a9fd62508affb950e461b4023abadb35928994",
+      "source": "generated for this project \u2014 a map prop \u2014 a bush; drawn 34\u00d722, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-hedgerow.png",
+      "bytes": 835,
+      "sha256": "8b7dc4d549796101b49aa36e57bfa5c25bac6a25d45bfc9c56594021d2816336",
+      "source": "generated for this project \u2014 a map prop \u2014 a hedgerow run; drawn 96\u00d726, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-flowers.png",
+      "bytes": 913,
+      "sha256": "2b311a8dafb6cea9712fa5721681c7f1e05c45eed41afe09f6536ead6165e963",
+      "source": "generated for this project \u2014 a map prop \u2014 a flower clump; drawn 30\u00d720, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-cattails.png",
+      "bytes": 687,
+      "sha256": "d94f13f1fde5d3ef2d1871bfd74c062c24ba463b5cff6f2559f551b768205dbe",
+      "source": "generated for this project \u2014 a map prop \u2014 reeds for the bank; drawn 34\u00d744, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-rock-small.png",
+      "bytes": 641,
+      "sha256": "e23818f2b21622c9f233a418a48d3a684085fab612dd7aa99be42b32eb9ec71d",
+      "source": "generated for this project \u2014 a map prop \u2014 a loose stone; drawn 32\u00d724, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-rock-ridge.png",
+      "bytes": 2986,
+      "sha256": "1c44cba7c71b40667e25afefafc632d6211a73351e2256571c0c5282a3b643fe",
+      "source": "generated for this project \u2014 a map prop \u2014 a rocky outcrop; drawn 120\u00d764, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-mesa.png",
+      "bytes": 1965,
+      "sha256": "f586e609698aef5356c2e60e2a6a7b1b41e0779919eae0f6f1c44fddb646a0c4",
+      "source": "generated for this project \u2014 a map prop \u2014 a canyon mesa; drawn 116\u00d772, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-village.png",
+      "bytes": 2846,
+      "sha256": "4f826a912d2539adb3f862a97480765cd8d44d5ced0bc02317a02971e4b91bbf",
+      "source": "generated for this project \u2014 a map prop \u2014 the village cluster; drawn 124\u00d776, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-bridge.png",
+      "bytes": 1043,
+      "sha256": "fee2ca30c192e619173723817d283c2c08637785953c1a21a18825e5a225a3ad",
+      "source": "generated for this project \u2014 a map prop \u2014 a wooden bridge; drawn 88\u00d744, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-fence.png",
+      "bytes": 770,
+      "sha256": "3a15d7831824287005104692c2e8470bbf9eaa4adf4d23ac3e59659702ce6e1f",
+      "source": "generated for this project \u2014 a map prop \u2014 a field fence; drawn 76\u00d726, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-signpost.png",
+      "bytes": 543,
+      "sha256": "13c34576c96ea339711600414ef50148704e20df150e02a4f67ccb7a38c97efd",
+      "source": "generated for this project \u2014 a map prop \u2014 a signpost; drawn 34\u00d754, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-ruin.png",
+      "bytes": 1571,
+      "sha256": "106c29abedce6da6c5a1ced4b9e796f29fba446f765b93ddbc59ecce4b0dd506",
+      "source": "generated for this project \u2014 a map prop \u2014 a ruin; drawn 84\u00d760, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-temple.png",
+      "bytes": 1786,
+      "sha256": "b5d071fb11c4f8cd448292ca8e92a329efd1caa30e45a03fb72918a21783998b",
+      "source": "generated for this project \u2014 a map prop \u2014 the temple on the peak; drawn 76\u00d776, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-lava-fissure.png",
+      "bytes": 2338,
+      "sha256": "957d2be9265292e4359dc2fdecbdd29f7f7b79e94389e60eab43512e5a5ba9df",
+      "source": "generated for this project \u2014 a map prop \u2014 a lava fissure; drawn 116\u00d750, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-ash-mound.png",
+      "bytes": 1089,
+      "sha256": "a0c7fb442f01e6bf28501d5758021b4701ebb6a9ca6e86a25e8e7263ef9e7d7d",
+      "source": "generated for this project \u2014 a map prop \u2014 an ash mound; drawn 62\u00d726, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-smoke.png",
+      "bytes": 1094,
+      "sha256": "e663981502052fbeec10c57cbb8c1bd4fa809d1e4530d7cecfede6f7cc31ac9c",
+      "source": "generated for this project \u2014 a map prop \u2014 a smoke plume; drawn 64\u00d784, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/prop-compass.png",
+      "bytes": 1999,
+      "sha256": "6e37bfaf9c0fdd39017a7248de7eb42e7818a74481e0ea1331d909b8d73c5507",
+      "source": "generated for this project \u2014 a map prop \u2014 a compass rose; drawn 60\u00d760, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-shield.png",
+      "bytes": 2843,
+      "sha256": "4bd73184e1501fce9ff0d7912b02452603a68ba39784598eb8c18041eb1940fc",
+      "source": "generated for this project \u2014 the map's marker set \u2014 the shield base a lesson stop wears; drawn 64\u00d772, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-medallion.png",
+      "bytes": 1787,
+      "sha256": "61b269f9f678be0bbe0bc7a87dae0ec6fa4d24a4070f86f4906046896322f2b6",
+      "source": "generated for this project \u2014 the map's marker set \u2014 the round medallion a detour wears; drawn 48\u00d754, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-pole.png",
+      "bytes": 480,
+      "sha256": "2b4495de48d9b8597debb46be6a912a879934ae4f4bb4da0fc43b6f5a7842806",
+      "source": "generated for this project \u2014 the map's marker set \u2014 the pole and pennant under a shield; drawn 20\u00d752, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-state-done.png",
+      "bytes": 1494,
+      "sha256": "a001434c0061e395ba3c5bec1ba20af34d0d1f5ca04c2bd48e644b080da4d748",
+      "source": "generated for this project \u2014 the map's marker set \u2014 the done overlay \u2014 a gold ring and the chip the tick is measured on; drawn 64\u00d772, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-state-open.png",
+      "bytes": 2129,
+      "sha256": "87f106d617db10cea3a4f99542d2171cfb1fb679d223feff39a046fc96adeed6",
+      "source": "generated for this project \u2014 the map's marker set \u2014 the open overlay \u2014 the glow that says this one is playable; drawn 64\u00d772, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-state-locked.png",
+      "bytes": 1164,
+      "sha256": "bad5bbd6381df0a5f4cd8786f1eff678699623507e525ee5bc9ae4ad3f1fd559",
+      "source": "generated for this project \u2014 the map's marker set \u2014 the locked overlay \u2014 an iron band and its padlock, bright on any shield; drawn 64\u00d772, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-boss.png",
+      "bytes": 2946,
+      "sha256": "622ab80dc337a3d4cdc5a49117fd2f1796bf204023fab9dc46ebfaf3c34cd187",
+      "source": "generated for this project \u2014 the map's marker set \u2014 the boss crest \u2014 a red shield carrying a cracked piece; drawn 76\u00d784, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-star.png",
+      "bytes": 613,
+      "sha256": "640513bb911b069a2792d9a97e10777d40bb92e769f0006e78707775737225f2",
+      "source": "generated for this project \u2014 the map's marker set \u2014 a gold star, for an earned star under a stop; drawn 22\u00d722, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-arrow.png",
+      "bytes": 715,
+      "sha256": "326566a6a91e3a986020a1d1ac588c0a087b0450fdbf1758eb03a875b6640ee6",
+      "source": "generated for this project \u2014 the map's marker set \u2014 the golden arrow that hovers over the current stop; drawn 30\u00d736, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/route-bead.png",
+      "bytes": 433,
+      "sha256": "6f3926e97298433981d1af10212f7d23900aede430206ef24ccc6830721aa043",
+      "source": "generated for this project \u2014 the map's route \u2014 the route bead; drawn 16\u00d716, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/route-bead-glow.png",
+      "bytes": 574,
+      "sha256": "95fe873ef51f33c267365f4a11bb33b31e750b889a68a484704ae287b2c6246a",
+      "source": "generated for this project \u2014 the map's route \u2014 the glow under a bead; drawn 34\u00d734, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/banner-star-counter.png",
+      "bytes": 4753,
+      "sha256": "493ae33e33888c99df96f84f8dcfb9d9897604edba45bdcbe723eabb8255af67",
+      "source": "generated for this project \u2014 the map's banner \u2014 the plate the star count is written on; drawn 360\u00d778, exported at 2\u00d7"
     },
     {
       "path": "assets/pieces/bb.png",
