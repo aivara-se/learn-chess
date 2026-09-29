@@ -265,3 +265,19 @@ where they are, so a browser check taps a control rather than its own guess at t
 deliberately not this card's: the route a stop hands over (`#/lesson/<n>` for a lesson, `#/pack/<id>` for a
 detour — `src/scenes/lesson.js` is `#41`'s, so the button lands on the shell's honest "no screen called
 lesson" until it exists), and a per-square name for the board, which is the board card's business.
+
+**The one deviation this section carries, and the single line that pays it.** `src/main.js` is in `sw.js`'s
+`SHELL` list and this card changes it — the screen the game opens on becomes the path — so the rule at the
+top of `sw.js` ("to a file in it bumps `CACHE` in the same commit") is owed and **not paid, because `sw.js`
+is on this card's `Do not touch` list**. The consequence is measured from the fetch handler's own code
+rather than guessed: the handler is cache-first and only ever writes to the cache on a **miss**, and a
+browser only re-installs a worker when `sw.js`'s bytes change — so a visitor who already holds
+`learn-chess-v15` keeps the cached, older `main.js` and its old default screen until `sw.js` changes
+(`#/path` is still reachable by hash; the map just does not open by itself). `src/scenes/path.js`,
+`src/path/**` and `src/ui/**` are the same on-demand class as `kit.js` and `src/board/**` — fetched once,
+cached from then on — so they do not change that answer. The line that pays the debt is one, and the name
+is read off the branches rather than taken from this paragraph:
+
+```js
+const CACHE = 'learn-chess-v17';   // v16 is the highest name any branch holds — `feat/board-and-pieces`
+```
