@@ -12,14 +12,13 @@
  */
 /* The cache-name ladder. Read off the branches rather than guessed — measured
    with `git show origin/<branch>:sw.js | grep 'CACHE ='`:
-   the frozen `v1` tag, and so the last thing `main` served, is `learn-chess-v14`
-   (the detour packs), and the highest name any live branch holds is `v14` too.
-   The wipe left `main` with no worker at all, so this card takes `v15`, the next
-   name nobody holds — and it *has* to take a new one: a visitor returning to the
-   wiped site still runs the old worker, which holds an `index.html` and a
-   `js/app.js` that no longer exist. scripts/verify-shell.ts fails a name at or
-   below `v14` for that reason. */
-const CACHE = 'learn-chess-v15';
+   the frozen `v1` tag, and so the name the deleted app served, is
+   `learn-chess-v14`, and `main` stands at `learn-chess-v15` (the shell and the
+   assets). No open pull request holds a name, so the board takes `v16`, the next
+   one nobody holds. The wipe left the old worker in a returning visitor's
+   browser, so this *has* to be a new name: scripts/verify-shell.ts fails a name
+   at or below `v14` for that reason. */
+const CACHE = 'learn-chess-v16';
 
 /* The shell: the files the app needs to boot and to draw its first frame. */
 const SHELL = [
@@ -27,6 +26,11 @@ const SHELL = [
   'index.html',
   'manifest.webmanifest',
   'src/main.js',
+  'src/board/art.js',
+  'src/board/board.js',
+  'src/board/geometry.js',
+  'src/board/pieces.js',
+  'src/scenes/board-fixture.js',
   'src/scenes/placeholder.js',
   'src/engine/engine.js',
   'vendor/pixi/pixi.min.mjs',
