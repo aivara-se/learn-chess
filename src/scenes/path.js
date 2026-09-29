@@ -7,7 +7,14 @@
  * state a stop is in is read from `src/path/progress.js`, and the only two
  * questions this screen asks of it are "is this finished" and "is this open".
  *
- * Three things a reader should know before changing it:
+ * What is new since the port is the world around them: `src/map/**` draws the art
+ * card's painting under the map, its route as a trail of beads, the marker set, the
+ * star banner and the dark edges, and this file composes them in the one order that
+ * works — ground, then route, then the stops that stand on both, then the edges,
+ * then the header over everything. Nothing about the course, the unlock rules or
+ * the numbers is theirs; they draw what the layout and the record say.
+ *
+ * Four things a reader should know before changing it:
  *
  *   - **The map scrolls and the header does not.** The path is taller than a phone,
  *     and the page itself must not scroll — the canvas is the whole viewport, and
@@ -16,55 +23,70 @@
  *     is to scroll, and the header is drawn over it on an opaque curtain that also
  *     eats the taps of the stops sliding underneath. docs/DESIGN.md carries the
  *     decision and why it is a drag rather than a native scrollbar.
+ *   - **The world is 520 wide and the window may be narrower.** The column is
+ *     `min(window, 520)` and the painting is drawn at the column's width with the
+ *     rows left at the height the art was painted against, so a phone gets the whole
+ *     world a little narrower rather than a crop of it. Why, and what it costs, is
+ *     in `src/map/terrain.js` and on the card's pull request.
+ *   - **The star counter is on the map's own banner**, at the top-right where the
+ *     reference keeps it, and it counts both numbers from `src/path/progress.js`.
  *   - **A tap is not a drag.** Pixi fires `pointertap` on whatever the finger lifted
  *     over, however far it travelled, so the gesture sets a `moved` flag past a
- *     threshold and a stop scrolled under a finger never counts as pressed.
- *   - **A locked stop answers.** It opens a sheet naming the lesson that opens it,
- *     and offers the button that walks there when that lesson is playable. A stop
- *     that looks playable and does nothing is the wall the design document forbids.
+ *     threshold and a stop scrolled under a finger never counts as pressed — and a
+ *     locked stop still opens the sheet that names its opener and walks there.
  *
- * `window.learnChessPath` is the handle a browser check reads, beside the shell's own
- * `window.learnChess` and the kit's `window.learnChessKit`: every stop as it is
- * really drawn, the legs, the scroll, the sheet, and the centre of each stop in the
- * page's own pixels, so a check taps a stop rather than its own guess at the pixels.
+ * `window.learnChessPath` is the handle a browser check reads, beside the shell's
+ * own `window.learnChess` and the kit's `window.learnChessKit`: every stop as it is
+ * really drawn, the legs, the beads, the bands and the banner, the scroll, the
+ * sheet, and the centre of each stop in the page's own pixels, so a check taps a
+ * stop rather than its own guess at the pixels.
  */
 import { Container, Graphics, Rectangle } from '../../vendor/pixi/pixi.min.mjs';
-import { COLOUR, GAP, LIFT, PAD, TAP_FLOOR } from '../ui/theme.js';
+import { COLOUR, LIFT, PAD, TAP_FLOOR, animates } from '../ui/theme.js';
 import { createChip } from '../ui/chip.js';
 import { createPanel } from '../ui/panel.js';
-import { loadChrome } from '../ui/assets.js';
+import { loadChrome, loadMap } from '../ui/assets.js';
 import { LESSONS } from '../data/lessons.js';
 import * as progress from '../path/progress.js';
 import { captionWidth, layout, scrollFor } from '../path/layout.js';
 import { createStop } from '../path/stop.js';
 import { openSheet } from '../path/sheet.js';
+import { createTerrain } from '../map/terrain.js';
+import { drawRoute } from '../map/route.js';
+import { createBanner } from '../map/banner.js';
+import { createEdges } from '../map/edges.js';
 
 /* Loaded at the top of the module on purpose: the shell imports a scene inside its
  * own try/catch, so a sprite that is not there is a screen the shell knows how to
- * report rather than a promise nobody is holding. */
+ * report rather than a promise nobody is holding. The map's art is loaded here and
+ * not with the chrome because the chrome is fifteen small files every screen wants
+ * and the map is 336KB only this screen draws. */
 const SPRITES = await loadChrome();
+const MAP_SPRITES = await loadMap();
 
 /* The column the map lives in. Above it the columns and the captions keep their
  * proportions instead of stretching a phone's layout across a laptop, and 520 is the
- * width the old document already capped the board's column at. The stops and the type
- * stay at the sizes the port contract measured — 64 and 48 for a finger, the ramp for
- * the words — at every width: a finger does not get smaller on a laptop. */
+ * width the old document already capped the board's column at — and the width the
+ * art card painted its world at. The stops and the type stay at the sizes the port
+ * contract measured — 64 and 48 for a finger, the ramp for the words — at every
+ * width: a finger does not get smaller on a laptop. */
 const MAP_WIDTH = 520;
 const GUTTER = 6;          // between two neighbouring stops' captions
 const BELOW = 16;          // the screen's own margin, above and below its chrome
 const DRAG = 6;            // how far a finger travels before it is a drag, not a tap
-const LEG = 3;             // the route's own line
-const THREAD = 2;          // a detour's, which is not a leg of the route
+const BANNER_MAX = 360;    // the banner's own width, the size the art drew it for
 
 const status = document.getElementById('status');
 
 let view = null;
 let wheel = null;
+let bob = null;
 
 /* The line under a stop's name. A locked stop names the lesson that opens it by its
  * number — the same words for a detour as for a lesson, because a number is the
  * stop's place on the path and every other locked stop says it that way; the sheet a
- * tap opens names it in full. */
+ * tap opens names it in full, and the open stop wears its number on the map so the
+ * two agree. */
 function lineFor({ kind, state, puzzles, held, here }) {
   if (here) return 'you are here';
   if (state === 'locked') return `after lesson ${LESSONS.indexOf(progress.byId.get(held)) + 1}`;
@@ -83,21 +105,9 @@ function lineFor({ kind, state, puzzles, held, here }) {
   return puzzles.solved === 0 ? `${puzzles.of} puzzles` : `${puzzles.solved} of ${puzzles.of} puzzles`;
 }
 
-/* A trail. A leg whose stop has been finished is drawn solid, and a leg not yet
- * walked as a line of dots — the shape carries it and the colour only agrees, so
- * nothing on the map is said by a colour alone. */
-function trail(graphics, from, to, { colour, width = LEG, dots = false }) {
-  if (!dots) {
-    graphics.moveTo(from.x, from.y).lineTo(to.x, to.y).stroke({ width, color: colour, cap: 'round' });
-    return;
-  }
-  const span = Math.hypot(to.x - from.x, to.y - from.y);
-  const steps = Math.max(1, Math.round(span / 9));
-  for (let step = 0; step <= steps; step += 1) {
-    const at = step / steps;
-    graphics.circle(from.x + (to.x - from.x) * at, from.y + (to.y - from.y) * at, Math.max(1, width / 2)).fill(colour);
-  }
-}
+/* The glyph a stop's face wears: the lesson's number, and nothing for a boss or a
+ * detour, whose own art says what they are — the crest and the medallion. */
+const glyphFor = (spot, unit) => (spot.kind === 'lesson' ? String(LESSONS.indexOf(unit) + 1) : '');
 
 /* What a tap on a locked stop answers with: which lesson opens it, and the way there
  * when that lesson is playable. */
@@ -142,7 +152,9 @@ function build(context) {
 
   /* ---- the header: where the child is, and what they have ------------------
    * Drawn after the map so it covers it, on an opaque curtain that is interactive
-   * so a stop sliding underneath cannot be tapped through it. */
+   * so a stop sliding underneath cannot be tapped through it. The star counter is
+   * the art card's banner, at the top-right of the map where the reference keeps
+   * its own; the rank and the puzzles solved stay the kit's, under it. */
   const header = new Container();
   const curtain = new Graphics();
   curtain.eventMode = 'static';
@@ -150,28 +162,32 @@ function build(context) {
 
   const counts = progress.counts(record);
   const rank = progress.rank(counts.stars);
+  const banner = createBanner(header, {
+    x: left + column - PAD - Math.min(BANNER_MAX, column - 2 * PAD),
+    y: BELOW,
+    width: Math.min(BANNER_MAX, column - 2 * PAD),
+    stars: counts.stars,
+    of: counts.of,
+  });
   const strip = createPanel(header, {
     units: column - 2 * PAD,
     tone: 'action',
     title: `Rank: ${rank.name}`,
     body: rank.next ? `${rank.need} more ${rank.need === 1 ? 'star' : 'stars'} to ${rank.next}` : 'the whole course, every star',
   });
-  strip.node.position.set(left + PAD, BELOW);
+  strip.node.position.set(left + PAD, BELOW + banner.height + LIFT);
   const chips = new Container();
-  chips.position.set(left + PAD, BELOW + strip.measure().height + LIFT);
-  const stars = createChip(chips, { icon: 'star', value: `${counts.stars}`, label: 'first-try' });
+  chips.position.set(left + PAD, strip.node.position.y + strip.measure().height + LIFT);
   const solved = createChip(chips, { icon: 'tick', value: `${counts.solved}`, label: 'solved' });
-  solved.node.position.set(stars.measure().width + GAP, 0);
   header.addChild(chips);
-  const headerHeight = chips.position.y + stars.measure().height + BELOW;
+  const headerHeight = chips.position.y + solved.measure().height + BELOW;
   curtain.rect(0, 0, width, headerHeight).fill(COLOUR.ground);
   curtain.hitArea = new Rectangle(0, 0, width, headerHeight);
 
   /* ---- the map ------------------------------------------------------------- */
   const geometry = layout(column);
-  const legend = new Graphics();
   const map = new Container();
-  map.addChild(legend);
+  const terrain = createTerrain(map, { width: column });
 
   const here = progress.here(record);
   const stops = [];
@@ -185,7 +201,7 @@ function build(context) {
       stop: createStop(map, {
         stop: spot,
         state,
-        glyph: spot.kind === 'boss' ? '\u265A' : spot.kind === 'pack' ? '+' : String(LESSONS.indexOf(unit) + 1),
+        glyph: glyphFor(spot, unit),
         line: lineFor({ kind: spot.kind, state, puzzles, held: progress.heldBy(record, unit), here: isHere }),
         puzzles,
         here: isHere,
@@ -196,31 +212,33 @@ function build(context) {
       }),
     });
   }
-  /* The trails go under the stops: the legend is the first child of the map, so a
-   * stop always sits on top of the legs that point at it. */
-  for (const leg of geometry.legs) {
-    const from = geometry.byId.get(leg.from);
-    const to = geometry.byId.get(leg.to);
-    if (!from || !to) continue;
-    const walked = progress.finished(record, progress.byId.get(leg.from));
-    trail(legend, from, to, leg.kind === 'detour'
-      ? { colour: walked ? COLOUR.actionRim : COLOUR.mute, width: THREAD, dots: !walked }
-      : { colour: walked ? COLOUR.action : COLOUR.mute, dots: !walked });
-  }
+  /* The route goes over the ground and under the stops: a bead is never drawn on
+   * top of the marker it runs into. */
+  const route = drawRoute(map, {
+    legs: geometry.legs,
+    byId: geometry.byId,
+    walked: (id) => progress.finished(record, progress.byId.get(id)),
+  });
 
   root.addChild(map);
+  /* The edges are the last thing over the map and the first thing under the
+   * header: they belong to the screen the child is looking at, not to the map that
+   * scrolls beneath it. */
+  const edges = createEdges(root, { left, width: column, height });
   root.addChild(header);
 
-  /* The map's own height: what the layout asks for, or what was really drawn plus a
-   * margin — whichever is more, so a longer caption grows the map instead of being
-   * cut off by a constant. */
+  /* The map's own height: what the layout asks for, what was really drawn plus a
+   * margin, or the painting's own height — whichever is most, so a longer caption
+   * grows the map instead of being cut off by a constant, and the ground is never
+   * short of the last thing drawn on it. */
   const drawn = stops.reduce((low, entry) => Math.max(low, entry.spot.y + entry.stop.box.bottom), 0);
-  const contentHeight = Math.max(geometry.height, Math.round(drawn + BELOW));
+  const contentHeight = Math.max(geometry.height, Math.round(drawn + BELOW), terrain.height);
   const top = headerHeight;
   const viewport = Math.max(1, height - top);
   const maxScroll = Math.max(0, contentHeight - viewport);
 
-  return { root, map, stops, geometry, caption, left, column, top, viewport, contentHeight, maxScroll, here: here?.id ?? null, strip, chips: [stars, solved] };
+  const arrow = stops.find((entry) => entry.stop.arrow) ?? null;
+  return { root, map, stops, geometry, caption, left, column, top, viewport, contentHeight, maxScroll, here: here?.id ?? null, strip, chips: [solved], terrain, route, banner, edges, arrow };
 }
 
 function applyScroll(next) {
@@ -253,6 +271,7 @@ function handle() {
     stops: () => view.stops.map(({ spot, stop }) => ({
       id: spot.id,
       kind: spot.kind,
+      depth: spot.depth,
       state: stop.state,
       title: stop.title,
       line: stop.line,
@@ -276,7 +295,7 @@ function handle() {
       at: { from: view.geometry.byId.get(leg.from), to: view.geometry.byId.get(leg.to) },
     })),
     graph: () => ({ stops: progress.stops.map((stop) => stop.id), legs: view.geometry.legs.map((leg) => `${leg.from}->${leg.to}`) }),
-    /* The point of a stop a check should tap: the centre of the circle, in the page's
+    /* The point of a stop a check should tap: the centre of the marker, in the page's
      * own pixels, so the check taps the stop rather than a guess at the pixels. */
     points: () => view.stops.map(({ spot, stop }) => ({
       id: spot.id,
@@ -295,8 +314,8 @@ function handle() {
     rank: () => progress.rank(progress.counts(progress.read()).stars),
     counts: () => progress.counts(progress.read()),
     /* What the header really says, read off the nodes that were drawn: the rank line
-     * and the two chips' own words, so a check does not have to trust a second copy
-     * of the numbers the screen passed in. */
+     * and the chip's own words, so a check does not have to trust a second copy of
+     * the numbers the screen passed in. */
     header: () => ({
       rank: view.strip.titleNode?.text ?? '',
       line: view.strip.bodyNode?.text ?? '',
@@ -304,10 +323,31 @@ function handle() {
         .filter((child) => typeof child.text === 'string')
         .map((child) => child.text)),
     }),
+    /* The art, as it was really drawn: the bands and where each one landed, the
+     * beads and how many of them are on a walked leg, the marker a stop wears, the
+     * banner's own reading and where the arrow sits. Everything here is measured off
+     * the nodes, so a check can hold the screen to the card without reading it. */
+    art: () => ({
+      world: { width: view.column, height: view.terrain.height },
+      bands: view.terrain.bands.map((band) => ({ id: band.id, region: band.region, drawn: band.drawn })),
+      beads: view.route.beads.length,
+      beadsWalked: view.route.beads.filter((bead) => bead.walked).length,
+      drawnBeads: view.route.beads.map((bead) => ({ from: bead.from, to: bead.to, walked: bead.walked, x: bead.x, y: bead.y })),
+      markers: view.stops.map(({ spot, stop }) => ({ id: spot.id, kind: stop.kind, state: stop.state, glyph: glyphFor(spot, progress.byId.get(spot.id)) })),
+      banner: { read: view.banner.read(), x: view.banner.node.x, y: view.banner.node.y, width: view.banner.width, height: view.banner.height, stars: view.banner.stars, of: view.banner.of },
+      edges: { depth: view.edges.depth, peak: view.edges.peak },
+      arrow: view.arrow ? {
+        base: view.arrow.base,
+        y: Math.round(view.arrow.stop.arrow.position.y),
+        height: view.arrow.stop.arrow.height,
+        animates: !!bob,
+      } : null,
+      sprites: { chrome: SPRITES.length, map: MAP_SPRITES.length },
+    }),
     sheet: () => (view.sheet ? view.sheet.state() : null),
     closeSheet: () => { view.sheet?.close(); view.sheet = null; },
     spoken: () => ({ text: status.textContent, hidden: status.hidden }),
-    sprites: () => SPRITES.length,
+    sprites: () => SPRITES.length + MAP_SPRITES.length,
   };
 }
 
@@ -317,6 +357,32 @@ function start(context, { scroll = null } = {}) {
   context.layer.hitArea = new Rectangle(0, 0, context.width, context.height);
   context.layer.addChild(view.root);
   applyScroll(scroll ?? (view.here ? scrollFor({ stops: view.geometry.stops, viewport: view.viewport, scroll: view.maxScroll, id: view.here }) : 0));
+
+  /* The one thing on the map that moves: the arrow over the stop the child is on.
+   * It hovers, and it stops hovering the moment the device asks for less motion —
+   * the repository's standing rule, and the arrow is the only moving part the map
+   * has. */
+  if (view.arrow) {
+    const stop = view.arrow.stop;
+    view.arrow.base = stop.arrow.position.y;
+    if (animates()) {
+      let phase = 0;
+      bob = (ticker) => {
+        if (view && stop.arrow.destroyed) {
+          /* The scene went away under the ticker: a destroyed node has no position
+           * to write, and a callback left on the app's ticker would throw on every
+           * frame. Nothing outlives the screen, so it lets go of itself here as
+           * well as in `stopScene`. */
+          context.app.ticker.remove(bob);
+          bob = null;
+          return;
+        }
+        phase += ticker.deltaMS / 1000;
+        stop.arrow.position.y = view.arrow.base + Math.sin(phase * 3.4) * 3;
+      };
+      context.app.ticker.add(bob);
+    }
+  }
 
   /* One gesture, one owner: the pointer moves the map, and the stops read `dragged`
    * to tell a lift from a tap. */
@@ -352,6 +418,10 @@ function start(context, { scroll = null } = {}) {
 function stopScene(context) {
   window.learnChessPath = null;
   view?.sheet?.close();
+  if (bob) {
+    context.app.ticker.remove(bob);
+    bob = null;
+  }
   if (wheel) {
     context.app.canvas.removeEventListener('wheel', wheel);
     wheel = null;
@@ -364,7 +434,13 @@ function stopScene(context) {
 }
 
 export default {
+  /* The shell calls `size()` and then `mount()`, so a screen is built twice on every
+   * open unless `mount` clears what is already there: `size()` hands the new size to
+   * the *old* `resize` — which builds a scene, because a resize is a rebuild — and
+   * `mount` builds another. Two roots on the layer and a ticker on a node the shell
+   * is about to destroy is what that cost; one map is what it should cost. */
   mount(context) {
+    stopScene(context);
     start(context);
   },
 
