@@ -120,17 +120,23 @@ const reducedState = await read();
 report.frames.phone.reducedMotion = { animates: reducedState.animates, ...snapshot(reduced) };
 
 /* a frame name nobody has: the route falls back rather than failing, and a
- * screen that does not exist still says so — on a fresh page, so nothing here
- * lands in the buckets above. */
-const solo = await browser.newPage({ viewport: { width: 1400, height: 900 } });
-watch(solo, 'solo');
-await solo.goto(`${base}/#/kit/nonsense`, { waitUntil: 'domcontentloaded' });
-await solo.waitForFunction(() => !!window.learnChessKit, null, { timeout: 20000 });
-report.notes.push(`#/kit/nonsense fell back to ${JSON.stringify(await solo.evaluate(() => window.learnChessKit.frame().name))}`);
-await solo.goto(`${base}/#/lesson/1`, { waitUntil: 'domcontentloaded' });
-await solo.waitForTimeout(700);
-report.notes.push(`#/lesson/1 status text: ${JSON.stringify(await solo.evaluate(() => document.getElementById('status').textContent))}`);
-await solo.close();
+ * screen that does not exist still says so — each on its own page, because a
+ * same-document hash change never re-runs the shell's import and a note read
+ * that way says the shell is silent when it is not. */
+for (const route of ['#/kit/nonsense', '#/lesson/1']) {
+  const solo = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  const soloLog = watch(solo, route);
+  await solo.goto(`${base}/${route}`, { waitUntil: 'domcontentloaded' });
+  /* either the screen published its handle or the shell said why it did not —
+   * a fixed wait here reads a sprite that has not loaded yet as a missing
+   * screen, which is how this note lied the first time it was written */
+  await solo.waitForFunction(() => !!window.learnChessKit || !!(document.getElementById('status')?.textContent), null, { timeout: 20000 }).catch(() => {});
+  await solo.waitForTimeout(200);
+  const said = await solo.evaluate(() => document.getElementById('status')?.textContent ?? null);
+  const drew = await solo.evaluate(() => window.learnChessKit?.frame().name ?? null);
+  report.notes.push(`${route}: frame ${JSON.stringify(drew)}, status ${JSON.stringify(said)}, ${soloLog.bad.length} response(s) over 300`);
+  await solo.close();
+}
 
 for (const [name, frame] of Object.entries(report.frames)) {
   if (!frame.fits) report.problems.push(`${name}: the kit is ${frame.content.used}px tall in a ${frame.frame.height}px frame`);
