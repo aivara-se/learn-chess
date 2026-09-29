@@ -227,23 +227,44 @@ nothing about the course itself.
 | | |
 |---|---|
 | the map's column | `min(window, 520)` — the width the old document capped the board's column at, so a wider window gets margins rather than a stretched phone |
-| a stop's circle | 64px, a detour's 48px — `docs/PORT.md`'s own two numbers, and 48 is the tap floor |
+| a stop's marker | the art's (§10 below): a lesson's shield 64×72, a detour's medallion 48×54, a boss's crest 76×84 — 64 and 48 are the port's own two widths and 48 is the tap floor; the heights are the art's |
 | the type | the kit's ramp at scale 1 at every width — title 13.5px (a detour's 12), the line under it 12px. A finger does not get smaller on a laptop, and neither does a caption |
 | a caption's width | the space one column has between its neighbours — 105px at 360, 155px at 520 — so two captions can never touch |
 | a row | 152px; the first stop stands 66px down, which is Pip's room rather than a margin |
-| the map's height | the deepest stop plus its circle plus a 104px footing, or what was really drawn plus 16px, whichever is more — a caption can grow the map and none can be cut off by a constant |
+| the map's height | the deepest stop plus its marker plus a 104px footing, what was really drawn plus 16px, or the painting's own 1280px, whichever is more — a caption can grow the map and none can be cut off by a constant, and the ground is never short of the last thing drawn on it |
 
-**The state of a stop is a shape and a word, and the trail's shape is what says walked.** Done wears the
-pack's tick on the white chip surface it is measured legible on (6.48:1, §2), open wears the pack's round
-face with its own number in ink (**5.24:1**), locked wears the kit's grey disabled face with the padlock —
-and the lesson that opens it is written underneath in every locked stop's caption, so nothing has to be
-told apart by a shade of grey. A leg not walked is a line of dots, a leg that is a solid line; the colours
-are the palette's (`mute` on the ground measures **1.94:1** and the walked `action` **2.7:1**, both
-decorative pairs — the dotted/solid shape carries the meaning and the colour only agrees), and a detour's
-thread is the same two at half the weight, from its lesson to the pack and nowhere else.
+**The state of a stop is a shape and a word, and the trail's shape is what says walked.** The marker set is
+the art's (§ below): a lesson wears a heraldic shield on a pole, a detour a medallion with the dotted ring
+around it, a boss stop the crest, and each carries one overlay per state — the white chip and its tick for
+done, the glow for open, the iron band and its padlock for locked. A locked stop still writes the lesson
+that opens it underneath, so nothing has to be told apart by a shade of grey; the open stop still wears its
+own number, in ink on the glow the art draws (**12.12:1**). A leg is a run of the art's beads: a leg not
+walked is a sparse run, a leg walked is a close-set one whose beads touch, and the bead carries its own dark
+outline — measured by the art card at 15.3:1 on the brightest ground and 11.9:1 on the darkest — so the
+shape says the state and the brightness agrees with it. A detour's thread is the same bead at half the
+weight. The words under a stop are the app's ink with the art's parchment `#efdfbb` drawn as a halo behind
+every glyph (**11.95:1**), which is what keeps them legible on grass, snow and ash alike; the halo's own
+edge against the painting runs from 12.94:1 against the ash's median ground up to 4.58:1 at its 95th
+percentile, and it is softest where the ground is mid-tone (3.47:1 at the pass's median grey, where the ink
+alone measures the same 3.47:1) — the words are the app's text on the app's parchment, not a shape read off
+the ground. The measurements this paragraph quotes, and the two pairs that are new with the art, are the
+pull request's and #54's to carry into §2.
 
-**The map scrolls and the header does not.** The path is taller than a phone (about 1,270px of map against
-490px of window at 360×640), and the page must not scroll: the canvas is the whole viewport and the board
+**The map's own art, as the numbers stand since #52.** Each band is the painting's own slice, placed where
+it was cut: 520×446, 520×444, 520×390, drawn at the column's width and left at the height it was painted
+against, so the seams are the painting's and no band is stretched to a row. The route is the art's bead at
+16px (a detour's thread at 10), spaced 12px walked and 22px not (8 and 15 for a thread), with the glow under
+each walked bead at 34px. The star counter is the art's banner at the top-right of the map's column, 360×78
+at its own size, carrying the two numbers `src/path/progress.js` derives. The star row under a stop is the
+art's gold star at 22px, one per drill, unearned ones ghosted rather than drawn in a second colour. The
+edges are a dark vignette in the art's outline ink (`#1d222b`, 0.5 at the edge, over the last 72px), drawn
+at the map's own sides and the window's own top and bottom; nothing there animates, and the only thing on
+this map that moves is the arrow on the stop the child is on, which stops moving under
+`prefers-reduced-motion: reduce`.
+
+**The map scrolls and the header does not.** The path is taller than a phone (the painting is 1,280px
+against 409px of window at 360×640 — measured in the browser, and the header grew when the star counter
+moved onto the map's own banner), and the page must not scroll: the canvas is the whole viewport and the board
 screen that follows this one keeps a fixed frame. So the map is one Pixi container moved by the pointer,
 finger or wheel, clamped to what there is to scroll, and the header — the rank and the two counts — is
 drawn over it on an opaque curtain that is interactive, so a stop sliding underneath cannot be tapped
