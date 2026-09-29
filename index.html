@@ -1,0 +1,82 @@
+<!doctype html>
+<!--
+  Learn chess — the shell.
+
+  One module script, and the pinned library it imports from vendor/ beside it:
+  the committed files are the published files, with no build step between them.
+  Everything the game draws goes on the canvas in #app — this document is the
+  frame around it and nothing else. docs/SYSTEM.md is how it is served.
+
+  .nojekyll at the root is load-bearing. GitHub Pages runs Jekyll unless that
+  file exists, and Jekyll drops any folder called vendor/ — without it the
+  published site would 404 this app's own library while the local copy works.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#eef3ff">
+  <title>Learn chess</title>
+  <meta name="description" content="A beginner's chess course as a small game: short lessons, puzzles you play yourself, and a coach for your moves.">
+  <!-- The favicon, the rendered icons and the apple-touch-icon are assets/**, the
+       assets card's files, and they are not in the tree yet: they were deleted
+       with the old app and come back with it. The page names them anyway,
+       because a browser that is told nothing invents /favicon.ico and 404s on
+       that instead, and because index.html is not that card's file to edit — the
+       files land at these addresses and the requests resolve with no second
+       change. Until they do, each one is a 404 in the console and a `todo` line
+       in `scripts/verify-shell.ts`, which reports them rather than failing on
+       another card's in-flight work. og:image is different: a string a sharing
+       service reads, not a request this page makes. -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Learn chess">
+  <meta property="og:description" content="Short lessons, puzzles you play yourself, and Pip coaching your moves.">
+  <meta property="og:image" content="https://aivara-se.github.io/learn-chess/assets/share-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A chess board, and Pip the pawn: short lessons and puzzles for beginners.">
+  <meta name="twitter:card" content="summary_large_image">
+  <style>
+    /* The app is a canvas, so the page carries no layout of its own: the game
+       fills the viewport, and the one element that is not the game is the line
+       saying why it is not on screen. */
+    :root { --bg: #eef3ff; --ink: #182046; --ink-soft: #454f72; --line: #dce4f7; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    html { background: var(--bg); }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+    /* The canvas is the app. The page must not scroll behind it, and a drag on
+       a board must not scroll the page or select the chrome around it. */
+    #app { position: fixed; inset: 0; overflow: hidden; }
+    #app canvas { display: block; touch-action: none; }
+    #status, noscript p {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+      background: #ffffff; border-top: 1px solid var(--line);
+      color: var(--ink-soft); font-size: 14px; line-height: 1.45;
+    }
+    /* `hidden` on its own is not enough — the rule below would beat the
+       browser's own, which is exactly how the old app left a screen open
+       underneath the one that had just opened. */
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <p id="status" role="status" hidden></p>
+  <noscript>
+    <p>The game is drawn on a canvas, so it needs JavaScript. Everything it
+      shows is drawn in your browser; nothing is sent anywhere.</p>
+  </noscript>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
