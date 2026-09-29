@@ -88,11 +88,14 @@ for (const icon of icons) if (!(await exists(icon))) pending.push(icon);
 checks.push(`the manifest parses, stays on this site, and names ${icons.length} icons`);
 
 /* 3. no third-party request, anywhere in the shell's own sources */
-const sources = ['index.html', 'sw.js', 'manifest.webmanifest', 'src/main.js'];
-for (const file of await Array.fromAsync(new Bun.Glob('src/scenes/*.js').scan(ROOT))) {
+/* Every source file under `src/`, not a list of the ones that exist today: a
+ * fixed list stops covering exactly the file added next, and the promise this
+ * check exists to keep — the app reaches nothing off its own origin — would stop
+ * being checked where the code is newest. The list did miss `src/board/**`. */
+const sources = ['index.html', 'sw.js', 'manifest.webmanifest'];
+for (const file of await Array.fromAsync(new Bun.Glob('src/**/*.js').scan(ROOT))) {
   sources.push(file);
 }
-sources.push('src/engine/engine.js');
 for (const file of sources) {
   const text = await read(file);
   const offenders = [...text.matchAll(/(?:https?:)?\/\/[a-z0-9.-]+\.[a-z]{2,}/gi)].map((m) => m[0]);
