@@ -25,7 +25,7 @@
  * browser check can ask the screen what it drew and make one piece walk without
  * a lesson around it:
  *
- *     await window.learnChessBoard.walk('d5', 'f6')   // resolves when it lands
+ *     await window.learnChessBoard.walk('d5', 'f6')   // one move; resolves when it lands
  */
 import { Text } from '../../vendor/pixi/pixi.min.mjs';
 import {
@@ -217,7 +217,10 @@ export default {
 
     /* The handle a browser check reads, in the shape the shell already uses for
      * its own. `walk` makes the move in the position the screen is showing and
-     * resolves when the piece has landed, so the check can time it. */
+     * resolves when the piece has landed, so the check can time it. One walk per
+     * page: the move has been made afterwards and the other side is to move, so a
+     * second call for that piece finds no legal move and resolves `false` —
+     * reload the pose to walk again. */
     window.learnChessBoard = {
       pose: () => route.name,
       fen: () => toFen(scene.position),
