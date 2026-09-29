@@ -202,6 +202,7 @@ checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.pro
     'index.html',
     'src/data/lessons.js',
     ...(await glob('src/board/**/*.js')),
+    ...(await glob('src/path/**/*.js')),
     ...(await glob('src/ui/**/*.js')),
     ...(await glob('src/scenes/**/*.js')),
   ])];

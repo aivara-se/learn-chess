@@ -27,8 +27,9 @@ import { Application, Container } from '../vendor/pixi/pixi.min.mjs';
  * `autoDensity` is what maps them onto the buffer. */
 const DPR_CAP = 2;
 
-/* The screen the app opens on. It is the only screen in this change. */
-const DEFAULT_SCENE = 'placeholder';
+/* The screen the game opens on: the path, because that is where a learner starts
+ * — one open stop, the rest of the course locked behind it. */
+const DEFAULT_SCENE = 'path';
 
 /* What a route segment may be before it becomes a file name: lowercase, no
  * dots and no slashes, so `#/../../secrets` is a message and not an import. */
