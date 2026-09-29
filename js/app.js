@@ -827,9 +827,14 @@ function renderLessonList() {
        takes a learner there when that lesson is playable. */
     const notOpen = () => {
       const canGo = lessonOpen(missing);
+      /* `pack` is undefined for a lesson, so the pack's own sentence is asked for
+         only when there is one: `packFinished` reads `pack.drills`, and a locked
+         lesson that reached for it threw before the sheet was drawn, so a tap on
+         eleven of the stops answered nothing at all. */
+      const solvedAhead = !!pack && packFinished(pack);
       showSheet({
         title: 'Not open yet',
-        text: packFinished(pack)
+        text: solvedAhead
           ? `All ${s.of} puzzles are solved — this detour opens on the path once you finish “${missing.title}”.`
           : `Finish “${missing.title}” first — then “${unit.title}” opens.`,
         icon: 'lock',
