@@ -823,23 +823,34 @@ function renderLessonList() {
         : boss
           ? `${unit.title}: a game against Pip, ${state === 'done' ? 'won' : 'not won yet. Win it to finish the branch'}.`
           : `${unit.title}: ${s.solved} of ${s.of} puzzles solved, ${s.got} of ${s.of} stars${state === 'done' ? ', finished' : ''}.`);
-    btn.addEventListener('click', () => {
-      if (state !== 'locked') {
-        if (pack) openPack(pack.id);
-        else openLesson(LESSONS.indexOf(unit));
-        return;
-      }
-      /* A locked stop still answers: it names the lesson that opens it, and takes
-         a learner there when that lesson is playable. */
+    /* A stop that is not open still answers: it names the lesson that opens it, and
+       takes a learner there when that lesson is playable. */
+    const notOpen = () => {
       const canGo = lessonOpen(missing);
       showSheet({
         title: 'Not open yet',
-        text: `Finish “${missing.title}” first — then “${unit.title}” opens.`,
+        text: packFinished(pack)
+          ? `All ${s.of} puzzles are solved — this detour opens on the path once you finish “${missing.title}”.`
+          : `Finish “${missing.title}” first — then “${unit.title}” opens.`,
         icon: 'lock',
         action: canGo ? `Go to ${missing.title}` : 'Got it',
         cancel: 'Not now',
         onAction: canGo ? () => openLesson(LESSONS.indexOf(missing)) : undefined,
       });
+    };
+    btn.addEventListener('click', () => {
+      /* A pack is not offered until its lesson is finished, and its puzzles are in
+         the one pool — the Puzzles tab shuffles them and one can be today's puzzle —
+         so a child can solve all three before the stop opens. The stop keeps the tick
+         it earned, and a tap on it has to answer: a stop that looks playable and does
+         nothing is the wall `docs/DESIGN.md` forbids. */
+      if (pack && !packOpen(pack)) { notOpen(); return; }
+      if (state !== 'locked') {
+        if (pack) openPack(pack);
+        else openLesson(LESSONS.indexOf(unit));
+        return;
+      }
+      notOpen();
     });
     map.appendChild(btn);
   }
@@ -922,10 +933,9 @@ function openLesson(i) {
 /* A pack opens into the same board, the same sheets, the same Hint and the same
    star rule as a lesson's puzzles — it is the same three-puzzle walk, off the
    path. Nothing here touches `learn.lesson`, so walking back out of a pack puts a
-   learner exactly where they were on the path. */
-function openPack(id) {
-  const pack = packById.get(id);
-  if (!pack || !packOpen(pack)) { backToList(); return; }
+   learner exactly where they were on the path. The caller has already asked
+   `packOpen`: a stop that is not offered answers with a sheet instead. */
+function openPack(pack) {
   learn.pack = pack;
   learn.step = 0;
   learn.tries = 0;

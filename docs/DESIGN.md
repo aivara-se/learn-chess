@@ -151,8 +151,12 @@ drawn from the course itself:
   "optional · 2 of 3 stars"). It stands in the column its lesson's row has left free — the map has
   three columns, and `scripts/verify-site.ts` fails a course whose rows are too full to hold their
   packs. A pack that is finished keeps the tick every finished stop wears, so "done" reads the same
-  everywhere. Nothing on the path reads a pack: `lessonOpen`, `openedBy` and `nextLesson` only ever
-  look at lessons, and a `requires` naming a pack is failed by the site check.
+  everywhere — and a tap on it still answers. A pack is not offered until its lesson is finished, and
+  its puzzles sit in the one pool, so a child can solve all three from the Puzzles tab (or as today's
+  puzzle) before the stop opens; that stop opens the very sheet a locked one opens, and says the
+  puzzles are already solved. A stop drawn playable that does nothing is the same wall. Nothing on the
+  path reads a pack: `lessonOpen`, `openedBy` and `nextLesson` only ever look at lessons, and a
+  `requires` naming a pack is failed by the site check.
 - **The route** is a dotted trail for a leg not walked and a solid line for a leg whose lesson is
   finished, so a learner sees how far they have come without counting ticks. Stops are anchored at
   the centre of their dot, which is the coordinate the lines and Pip are placed at.
@@ -160,7 +164,8 @@ drawn from the course itself:
   He is a clone of the app bar's own pawn: one drawing of the character in the repository.
 - The whole path is 1278px tall at 360px wide — eight rows of stops, now that each end of it is closed
   by a boss game — and scrolls inside `main`, which is what the brief meant by a scrollable map: on a
-  fresh device the tab holds 1620px of content in a 664px window at 360×800, and scrolled to its end
+  fresh device the tab holds 1978px of content in a 664px window at 360×800 — the shelf included, and
+  it grows with what a child has earned — and scrolled to its end
   every stop — packs included — clears the tab bar (measured, at 360 and at 390). Every lesson still
   clears 48px to tap (64px) and a pack's circle is 48px exactly, the floor; every stop is a real
   button, in the tab order, in course order, with each pack after the lessons and placed beside the
