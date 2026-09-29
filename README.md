@@ -7,7 +7,7 @@ Live at <https://aivara-se.github.io/learn-chess/> (a custom subdomain can be po
 - **App shell** — `index.html`: the tab bar, the screens and the stylesheet.
 - **Offline and installing** — `sw.js` and `manifest.webmanifest`: the app's own files, kept for a reload with no network.
 - **Rules and opponent** — `js/engine.js`: move generation, search and evaluation.
-- **Lessons and puzzles** — `js/lessons.js`: the course; `docs/DRILLS.md` is what its answers were measured against.
+- **Lessons and puzzles** — `js/lessons.js`: the course and its optional detour packs; `docs/DRILLS.md` is what their answers were measured against.
 - **Today's puzzle** — `js/daily.js`: the one puzzle a day, chosen from the date rather than stored.
 - **Interface** — `js/app.js`: the board, the coach, the stars and progress in `localStorage`.
 - **Sound** — `js/sound.js`: a clack when a piece lands and a chime for a star, made with Web Audio oscillators, so there is no audio file to load.
@@ -16,7 +16,7 @@ Live at <https://aivara-se.github.io/learn-chess/> (a custom subdomain can be po
 - **Checks** — `scripts/verify-site.ts` (files, offline list, markup, the course's own budgets) and `scripts/verify-drills.ts` (every puzzle's answer, against Stockfish).
 - **Mark** — `assets/favicon.svg`, with the rendered icons and the 1200×630 share card beside it.
 
-Three tabs: **Lessons** (a path of lessons, each stepping through one idea and the puzzles that go with it, and each branch of the path ending in a boss game against Pip), **Play** (a game with the coach), **Puzzles** (today's puzzle first, then the same positions shuffled, with a streak). A star is earned by solving a puzzle first time, so the app counts two things: puzzles solved, and stars won — a boss game is finished by a checkmate instead, and it earns no star.
+Three tabs: **Lessons** (a path of lessons, each stepping through one idea and the puzzles that go with it, each branch of the path ending in a boss game against Pip, and some stops carrying an optional **detour pack** of three more puzzles on the same idea), **Play** (a game with the coach), **Puzzles** (today's puzzle first, then the same positions shuffled, with a streak). A star is earned by solving a puzzle first time, so the app counts two things: puzzles solved, and stars won — a boss game is finished by a checkmate instead, and it earns no star. Nothing on the path needs a pack: a pack opens once its lesson is finished, and finishing one — or never opening it — changes nothing about which lesson is open.
 
 ```bash
 bun test                              # the rules of chess
