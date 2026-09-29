@@ -13,7 +13,7 @@ import {
   START_FEN, parseFen, legalMoves, makeMove, isCheckmate, isStalemate,
   isDraw, inCheck, san, findBestMove, searchEval, findThreat,
 } from './engine.js';
-import { LESSONS } from './lessons.js';
+import { LESSONS, PACKS } from './lessons.js';
 import { sound } from './sound.js';
 import { dayStamp, dailyDrill } from './daily.js';
 
@@ -21,9 +21,14 @@ const GLYPH = { k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E',
 const NAMES = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
 const FILES = 'abcdefgh';
 const STORE = 'aivara-learn-chess-v2';
-const TOTAL_DRILLS = LESSONS.reduce((n, l) => n + (l.drills || []).length, 0);
+/* Every puzzle there is, in one pool: the lessons' drills and the packs'. A star is
+   won for either, so the chip in the app bar, the card at the top of the path, the
+   rank ladder and the Puzzles tab all count the same total — and none of them
+   writes it down. */
+const TOTAL_DRILLS = [...LESSONS, ...PACKS].reduce((n, u) => n + (u.drills || []).length, 0);
 const BOSS_STOPS = LESSONS.filter((l) => l.boss);
 const LESSON_STOPS = LESSONS.filter((l) => !l.boss);
+const packById = new Map(PACKS.map((p) => [p.id, p]));
 
 /* ---------- tiny helpers ---------- */
 
@@ -478,6 +483,9 @@ const ICONS = {
   happy: '<circle cx="12" cy="12" r="10" fill="#e3f7ec"/><circle cx="9" cy="10" r="1.6" fill="#0f7b46"/><circle cx="15" cy="10" r="1.6" fill="#0f7b46"/><path d="M8 14q4 3.6 8 0" fill="none" stroke="#0f7b46" stroke-width="2" stroke-linecap="round"/>',
   hmm: '<circle cx="12" cy="12" r="10" fill="#ffe9ea"/><circle cx="9" cy="10" r="1.6" fill="#b8232b"/><circle cx="15" cy="10" r="1.6" fill="#b8232b"/><path d="M8 16q4-3.6 8 0" fill="none" stroke="#b8232b" stroke-width="2" stroke-linecap="round"/>',
   trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0zM5 5h2v3H5zM17 5h2v3h-2zM10 14h4l1 6H9z" fill="#ffb01f" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/>',
+  /* A pack's mark: "more of this". It is not a number, because a detour is not a
+     step of the course and counting it as one would say otherwise. */
+  more: '<path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>',
 };
 const iconSvg = (name, size = 24) => {
   const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -505,12 +513,18 @@ function confetti() {
 
 /* ---------- Lessons ---------- */
 
-const learn = { lesson: 0, step: 0, state: null, tries: 0, celebrated: false };
+/* `pack` is the detour being played, or null when the view holds a lesson: a pack
+   has no lesson number and is never `LESSONS[learn.lesson]`. */
+const learn = { lesson: 0, pack: null, step: 0, state: null, tries: 0, celebrated: false };
 
-function starsFor(lesson) {
-  const drills = lesson.drills || [];
-  const firsts = drills.filter((_, i) => isFirstTry(`drill:${lesson.id}:${i}`)).length;
-  const solved = drills.filter((_, i) => isSolved(`drill:${lesson.id}:${i}`)).length;
+/* A stop's stars, counted from the keys its own puzzles are recorded under. A pack
+   is a stop with more of the same, so the same function counts it: ids are unique
+   across lessons and packs — scripts/verify-site.ts fails one that is not — so a
+   pack can never share a star with a lesson. */
+function starsFor(unit) {
+  const drills = unit.drills || [];
+  const firsts = drills.filter((_, i) => isFirstTry(`drill:${unit.id}:${i}`)).length;
+  const solved = drills.filter((_, i) => isSolved(`drill:${unit.id}:${i}`)).length;
   return { got: firsts, of: drills.length, solved };
 }
 
@@ -560,6 +574,13 @@ const lessonFinished = (lesson) => (lesson.boss
 const lessonOpen = (lesson) => (lesson.requires || []).every((id) => lessonFinished(lessonById.get(id)));
 const firstMissing = (lesson) => (lesson.requires || []).find((id) => !lessonFinished(lessonById.get(id)));
 
+/* A pack is offered once the lesson that teaches its idea is finished, and is
+   finished when its three puzzles are solved. Nothing else reads a pack: no
+   lesson requires one, so a pack can neither open a step of the path nor hold one
+   shut. That is what "optional" means here, and it is the whole of it. */
+const packOpen = (pack) => lessonFinished(lessonById.get(pack.opensWith));
+const packFinished = (pack) => (pack.drills || []).every((_, i) => isSolved(`drill:${pack.id}:${i}`));
+
 /* How far down the path a lesson is: the longest chain of lessons behind it, so
    nothing is ever drawn above the lesson it needs. `seen` stops a cycle from
    hanging the renderer — scripts/verify-site.ts is what fails one. */
@@ -577,6 +598,10 @@ function depthOf(lesson, seen = new Set()) {
 const MAP_ROW = 152;
 const MAP_TOP = 46;
 const MAP_COL = [0.19, 0.5, 0.81];
+/* Where a pack goes when the row it belongs to has no column left: slipped down
+   between two rows. `scripts/verify-site.ts` fails a course whose rows are that
+   full, so this is a shape rather than a stop that never gets drawn. */
+const DETOUR_SLIP = 84;
 function mapLayout() {
   const rows = new Map();
   for (const lesson of LESSONS) {
@@ -590,9 +615,25 @@ function mapLayout() {
     group.forEach((lesson, i) => {
       placed.set(lesson.id, { lesson, depth: d, x: MAP_COL[cols[Math.min(i, cols.length - 1)]], y: MAP_TOP + d * MAP_ROW });
     });
+    /* A pack stands in the same row as the lesson it opens with, in the column
+       that row has left free, and nearest to that lesson — a detour beside the
+       path, never a stop on it. */
+    const taken = new Set(cols);
+    for (const pack of PACKS.filter((p) => group.some((l) => l.id === p.opensWith))) {
+      const home = placed.get(pack.opensWith);
+      const free = [0, 1, 2].filter((c) => !taken.has(c))
+        .sort((a, b) => Math.abs(MAP_COL[a] - home.x) - Math.abs(MAP_COL[b] - home.x) || a - b);
+      if (free.length) taken.add(free[0]);
+      placed.set(pack.id, {
+        pack,
+        depth: d,
+        x: free.length ? MAP_COL[free[0]] : home.x,
+        y: home.y + (free.length ? 0 : DETOUR_SLIP),
+      });
+    }
   }
-  const deepest = Math.max(...rows.keys());
-  return { placed, height: MAP_TOP + deepest * MAP_ROW + 168 };
+  const deepest = Math.max(...[...placed.values()].map((p) => p.y));
+  return { placed, height: deepest + 168 };
 }
 
 /* Where to send a learner: the first stop that is open and not finished. */
@@ -606,8 +647,11 @@ const openedBy = (id) => LESSONS.filter((l) => (l.requires || []).includes(id)
   && (l.requires || []).every((r) => lessonFinished(lessonById.get(r))));
 
 /* Stars become a rank, and the rank is a piece whose reach they have earned: a
-   child who has won five stars is a knight, not "level 2". */
-const RANKS = [['Pawn', 0], ['Knight', 5], ['Bishop', 10], ['Rook', 14], ['Queen', 18], ['King', 23]];
+   child who has won five stars is a knight, not "level 2". The rungs were set
+   against a course of 35 puzzles; the packs add nine more, so they are the same
+   rungs scaled to the pool — a rung every six or seven stars, King still short of
+   the last one, and `docs/DESIGN.md` carries the numbers and the reasoning. */
+const RANKS = [['Pawn', 0], ['Knight', 6], ['Bishop', 13], ['Rook', 18], ['Queen', 23], ['King', 29]];
 function rankFor(stars) {
   let at = 0;
   while (at + 1 < RANKS.length && stars >= RANKS[at + 1][1]) at += 1;
@@ -629,7 +673,7 @@ function renderLessonList() {
 
   const intro = el('div', 'card intro');
   intro.appendChild(el('h2', null, 'Hi, I am Pip'));
-  intro.appendChild(el('p', null, `${LESSON_STOPS.length} lessons, ${TOTAL_DRILLS} puzzles and ${BOSS_STOPS.length} boss games. Finish a lesson and the path opens up — you choose which way to go.`));
+  intro.appendChild(el('p', null, `${LESSON_STOPS.length} lessons, ${TOTAL_DRILLS} puzzles, ${PACKS.length} detours and ${BOSS_STOPS.length} boss games. Finish a lesson and the path opens up — you choose which way to go.`));
   const done = solvedCount();
   /* The course is its stops, not only its puzzles: an unbeaten boss stop means
      there is still something on the path to do. */
@@ -694,6 +738,7 @@ function renderLessonList() {
   route.setAttribute('class', 'route');
   route.setAttribute('aria-hidden', 'true');
   for (const { lesson } of placed.values()) {
+    if (!lesson) continue;
     for (const id of lesson.requires || []) {
       const from = placed.get(id);
       const to = placed.get(lesson.id);
@@ -706,14 +751,36 @@ function renderLessonList() {
       route.appendChild(l);
     }
   }
+  /* A pack is joined to its lesson and to nothing else: a thin dashed thread for
+     a detour, which never grows into a leg of the route — no leg runs through it
+     and none depends on it. */
+  for (const spot of placed.values()) {
+    if (!spot.pack) continue;
+    const home = placed.get(spot.pack.opensWith);
+    const l = document.createElementNS(NS, 'line');
+    l.setAttribute('x1', `${home.x * 100}%`);
+    l.setAttribute('y1', String(home.y));
+    l.setAttribute('x2', `${spot.x * 100}%`);
+    l.setAttribute('y2', String(spot.y));
+    l.setAttribute('class', `detour${lessonFinished(lessonById.get(spot.pack.opensWith)) ? ' open' : ''}`);
+    route.appendChild(l);
+  }
   map.appendChild(route);
 
-  LESSONS.forEach((lesson, i) => {
-    const s = starsFor(lesson);
-    const spot = placed.get(lesson.id);
-    const boss = !!lesson.boss;
-    const state = lessonFinished(lesson) ? 'done' : lessonOpen(lesson) ? 'open' : 'locked';
-    const btn = el('button', `node ${state}${here && here.id === lesson.id ? ' here' : ''}`);
+  /* A lesson and a pack are drawn by the same code, because on the screen they are
+     the same thing: a stop with a name, a state and stars. Being optional is the
+     one difference that shows — a dashed circle, a smaller word, and the word
+     itself, so a child can see that this stop is extra and that passing it by
+     costs nothing. */
+  for (const unit of [...LESSONS, ...PACKS]) {
+    const pack = packById.get(unit.id);
+    const s = starsFor(unit);
+    const spot = placed.get(unit.id);
+    const boss = !!unit.boss;
+    const state = pack
+      ? (packFinished(pack) ? 'done' : packOpen(pack) ? 'open' : 'locked')
+      : lessonFinished(unit) ? 'done' : lessonOpen(unit) ? 'open' : 'locked';
+    const btn = el('button', `node ${state}${pack ? ' pack' : ''}${!pack && here && here.id === unit.id ? ' here' : ''}`);
     btn.type = 'button';
     btn.style.left = `${spot.x * 100}%`;
     btn.style.top = `${spot.y}px`;
@@ -721,35 +788,53 @@ function renderLessonList() {
     if (state === 'done') dot.appendChild(iconSvg('tick', 25));
     else if (state === 'locked') dot.appendChild(iconSvg('lock', 25));
     /* A boss stop wears a king instead of a number: it is not the next lesson,
-       it is the game at the end of the branch. */
+       it is the game at the end of the branch. A pack wears a plus — "more of
+       this", the one thing it asks. */
     else if (boss) dot.appendChild(document.createTextNode('\u265A'));
-    else dot.appendChild(document.createTextNode(String(i + 1)));
+    else if (pack) dot.appendChild(iconSvg('more', 25));
+    else dot.appendChild(document.createTextNode(String(LESSONS.indexOf(unit) + 1)));
     btn.appendChild(dot);
-    btn.appendChild(el('span', 'cap', lesson.title));
+    btn.appendChild(el('span', 'cap', unit.title));
+    /* The lesson a stop waits on, in the same words for a pack as for a lesson: a
+       number, because that is the stop's place on the path and every other locked
+       stop says it that way. The sheet a tap opens names it in full. */
+    const missing = pack ? lessonById.get(pack.opensWith) : lessonById.get(firstMissing(unit));
     if (state === 'locked') {
-      btn.appendChild(el('span', 'sub', `after lesson ${LESSONS.indexOf(lessonById.get(firstMissing(lesson))) + 1}`));
+      btn.appendChild(el('span', 'sub', `after lesson ${LESSONS.indexOf(missing) + 1}`));
     } else if (boss) {
       btn.appendChild(el('span', 'sub', state === 'done' ? 'beaten' : 'beat Pip'));
+    } else if (pack) {
+      btn.appendChild(starRow(s.got, s.of));
+      btn.appendChild(el('span', 'sub', state === 'done'
+        ? (s.got === s.of ? 'optional · all first time' : `optional · ${s.got} of ${s.of} stars`)
+        : `optional · ${s.of} puzzles`));
     } else {
       btn.appendChild(starRow(s.got, s.of));
       btn.appendChild(el('span', 'sub', state === 'done'
         ? (s.got === s.of ? 'all first time' : `${s.got} of ${s.of} stars`)
         : (s.solved === 0 ? `${s.of} puzzles` : `${s.solved} of ${s.of} puzzles`)));
     }
-    btn.setAttribute('aria-label', state === 'locked'
-      ? `${lesson.title}: locked. Finish ${lessonById.get(firstMissing(lesson)).title} first.`
-      : boss
-        ? `${lesson.title}: a game against Pip, ${state === 'done' ? 'won' : 'not won yet. Win it to finish the branch'}.`
-        : `${lesson.title}: ${s.solved} of ${s.of} puzzles solved, ${s.got} of ${s.of} stars${state === 'done' ? ', finished' : ''}.`);
+    btn.setAttribute('aria-label', pack
+      ? (state === 'locked'
+        ? `${unit.title}: a detour of ${s.of} puzzles, optional. Finish ${missing.title} first.`
+        : `${unit.title}: a detour of ${s.of} puzzles, optional — nothing on the path needs it. ${s.solved} of ${s.of} solved, ${s.got} of ${s.of} stars.`)
+      : state === 'locked'
+        ? `${unit.title}: locked. Finish ${missing.title} first.`
+        : boss
+          ? `${unit.title}: a game against Pip, ${state === 'done' ? 'won' : 'not won yet. Win it to finish the branch'}.`
+          : `${unit.title}: ${s.solved} of ${s.of} puzzles solved, ${s.got} of ${s.of} stars${state === 'done' ? ', finished' : ''}.`);
     btn.addEventListener('click', () => {
-      if (state !== 'locked') { openLesson(i); return; }
+      if (state !== 'locked') {
+        if (pack) openPack(pack.id);
+        else openLesson(LESSONS.indexOf(unit));
+        return;
+      }
       /* A locked stop still answers: it names the lesson that opens it, and takes
          a learner there when that lesson is playable. */
-      const missing = lessonById.get(firstMissing(lesson));
       const canGo = lessonOpen(missing);
       showSheet({
         title: 'Not open yet',
-        text: `Finish “${missing.title}” first — then “${lesson.title}” opens.`,
+        text: `Finish “${missing.title}” first — then “${unit.title}” opens.`,
         icon: 'lock',
         action: canGo ? `Go to ${missing.title}` : 'Got it',
         cancel: 'Not now',
@@ -757,7 +842,7 @@ function renderLessonList() {
       });
     });
     map.appendChild(btn);
-  });
+  }
 
   /* Pip stands where the learner is. The pawn is a clone of the app bar's own, so
      there is one drawing of him in the repository. */
@@ -809,7 +894,10 @@ function renderLessonList() {
 
 function lessonSteps(lesson) {
   const steps = (lesson.body || []).map((text, i) => ({ kind: 'read', text, i }));
-  steps.push({ kind: 'look' });
+  /* A pack carries puzzles and nothing else: no page to read, no diagram to look
+     at, so it opens on its first puzzle. A stop without a diagram gets no "Look
+     at this" step either — there would be nothing in it. */
+  if (lesson.diagram) steps.push({ kind: 'look' });
   (lesson.drills || []).forEach((drill, i) => steps.push({ kind: 'drill', drill, i }));
   steps.push({ kind: 'done' });
   return steps;
@@ -823,7 +911,24 @@ function openLesson(i) {
   /* A boss stop is not a lesson to read: it opens the game it is won by. */
   if (lesson.boss) { bossSheet(lesson); return; }
   learn.lesson = i;
+  learn.pack = null;
   learn.step = 0;
+  learn.celebrated = false;
+  $('lesson-list').hidden = true;
+  $('lesson-view').hidden = false;
+  renderStep();
+}
+
+/* A pack opens into the same board, the same sheets, the same Hint and the same
+   star rule as a lesson's puzzles — it is the same three-puzzle walk, off the
+   path. Nothing here touches `learn.lesson`, so walking back out of a pack puts a
+   learner exactly where they were on the path. */
+function openPack(id) {
+  const pack = packById.get(id);
+  if (!pack || !packOpen(pack)) { backToList(); return; }
+  learn.pack = pack;
+  learn.step = 0;
+  learn.tries = 0;
   learn.celebrated = false;
   $('lesson-list').hidden = true;
   $('lesson-view').hidden = false;
@@ -838,7 +943,9 @@ function backToList() {
 }
 
 function renderStep() {
-  const lesson = LESSONS[learn.lesson];
+  /* The view holds a lesson or a pack — never both. Everything below reads the
+     stop, not the course, which is what lets one walk serve both. */
+  const lesson = learn.pack || LESSONS[learn.lesson];
   const steps = lessonSteps(lesson);
   learn.step = Math.max(0, Math.min(learn.step, steps.length - 1));
   const step = steps[learn.step];
@@ -997,19 +1104,28 @@ function renderStep() {
 
   /* done */
   const s = starsFor(lesson);
+  const pack = learn.pack;
   const courseDone = LESSONS.every(lessonFinished);
   const card = el('div', 'card');
   const head = el('div', 'between');
-  head.appendChild(el('h2', null, courseDone ? 'The whole course!' : s.got === s.of ? 'All the stars!' : 'Lesson finished!'));
+  head.appendChild(el('h2', null, pack
+    ? (s.got === s.of ? 'Every puzzle, first time!' : 'Detour done!')
+    : courseDone ? 'The whole course!' : s.got === s.of ? 'All the stars!' : 'Lesson finished!'));
   head.appendChild(starRow(s.got, s.of));
   card.appendChild(head);
-  card.appendChild(el('p', null, courseDone
-    ? 'Every lesson, every puzzle, and Pip thinks you are ready for a real game. Play him whenever you like — he is on the Play tab.'
-    : s.got === s.of
-      ? 'Every puzzle first time. Brilliant — that is a lesson done and a rank closer.'
-      : 'Nice work, that is the lesson done. Play any puzzle again to try for the stars you missed.'));
-  /* The path answers the only question a child has at this point: what now? */
-  const opened = openedBy(lesson.id);
+  card.appendChild(el('p', null, pack
+    ? (s.got === s.of
+      ? 'Three out of three, no help. Nothing on the path has moved — this was practice, and it stays open whenever you want it again.'
+      : 'That is the detour done. Nothing on the path has moved: a pack is practice, and you can play these three again for the stars.')
+    : courseDone
+      ? 'Every lesson, every puzzle, and Pip thinks you are ready for a real game. Play him whenever you like — he is on the Play tab.'
+      : s.got === s.of
+        ? 'Every puzzle first time. Brilliant — that is a lesson done and a rank closer.'
+        : 'Nice work, that is the lesson done. Play any puzzle again to try for the stars you missed.'));
+  /* The path answers the only question a child has at this point: what now? A pack
+     answers a different one — what next on the path — so it says the path is where
+     it was, and points back at it rather than at a step it did not open. */
+  const opened = pack ? [] : openedBy(lesson.id);
   if (opened.length) {
     const p = el('p', 'tiny');
     p.style.marginTop = '10px';
@@ -1030,15 +1146,19 @@ function renderStep() {
   }
   const row = el('div', 'row');
   row.style.marginTop = '12px';
-  const onward = opened[0] || (courseDone ? null : nextLesson());
+  const onward = pack ? null : (opened[0] || (courseDone ? null : nextLesson()));
   const next = el('button', 'btn primary', onward ? `Next: ${onward.title}` : 'Back to the path');
   next.type = 'button';
   next.addEventListener('click', () => (onward ? openLesson(LESSONS.indexOf(onward)) : backToList()));
-  const all = el('button', 'btn', 'The path');
-  all.type = 'button';
-  all.addEventListener('click', backToList);
   row.appendChild(next);
-  row.appendChild(all);
+  /* A pack has one way out — the path it never left — so it gets one button. A
+     lesson keeps both, because finishing one can open two things at once. */
+  if (!pack) {
+    const all = el('button', 'btn', 'The path');
+    all.type = 'button';
+    all.addEventListener('click', backToList);
+    row.appendChild(all);
+  }
   card.appendChild(row);
   view.appendChild(card);
   /* Celebrated once per visit: reaching the end again by walking back through the
@@ -1563,9 +1683,16 @@ const train = { current: null, streak: 0, tries: 0, state: null, mode: 'shuffled
 let todayBtn = null;
 let dailyChip = null;
 
+/* Every puzzle the app can serve, in one list: the course's drills and the
+   packs'. Today's puzzle, the shuffle and the count under the board all read this
+   one list, so a puzzle in a pack is a puzzle like any other — it can be today's,
+   and it counts towards the same total in the app bar. `stop` is whichever stop —
+   a lesson or a pack — that the puzzle belongs to. */
 function allDrills() {
   const out = [];
-  LESSONS.forEach((l) => (l.drills || []).forEach((d, j) => out.push({ lesson: l, drill: d, key: `drill:${l.id}:${j}` })));
+  for (const stop of [...LESSONS, ...PACKS]) {
+    (stop.drills || []).forEach((d, j) => out.push({ stop, drill: d, key: `drill:${stop.id}:${j}` }));
+  }
   return out;
 }
 
@@ -1625,7 +1752,7 @@ function nextPuzzle() {
   train.tries = 0;
   const pos = parseFen(pick.drill.fen);
   $('train-prompt').textContent = pick.drill.prompt;
-  $('train-where').textContent = `${pick.lesson.title} · ${pos.turn === 'w' ? 'White' : 'Black'} to move`;
+  $('train-where').textContent = `${pick.stop.title} · ${pos.turn === 'w' ? 'White' : 'Black'} to move`;
   $('train-hint').disabled = false;
 
   const b = $('train-board');
@@ -1653,7 +1780,7 @@ function nextPuzzle() {
     if (ok) {
       state.locked = true;
       train.streak += 1;
-      $('train-where').textContent = `${pick.lesson.title} · solved`;
+      $('train-where').textContent = `${pick.stop.title} · solved`;
       const fresh = record(pick.key, train.tries === 1);
       if (isCheckmate(state.pos)) {
         const badge = book.note('checkmate', 1);
@@ -1721,7 +1848,7 @@ function startDaily() {
   $('train-prompt').textContent = pick.drill.prompt;
   $('train-where').textContent = finished
     ? 'Done for today — a new one tomorrow'
-    : `${pick.lesson.title} · ${pos.turn === 'w' ? 'White' : 'Black'} to move`;
+    : `${pick.stop.title} · ${pos.turn === 'w' ? 'White' : 'Black'} to move`;
   /* Nothing to solve once the day's puzzle is done, so the board is a record of
      it: the position, the move that finishes it, and no piece to pick up. */
   $('train-hint').disabled = finished;
@@ -1865,8 +1992,8 @@ function main() {
   $('scrim').addEventListener('click', closeSheet);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
-  /* Offline for real: the app's own seven files, cached by a service worker, so
-     the footer's promise survives a reload with no network. */
+  /* Offline for real: the app's own files, cached by a service worker, so the
+     footer's promise survives a reload with no network. */
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').catch(() => { /* offline is a bonus, never a blocker */ });

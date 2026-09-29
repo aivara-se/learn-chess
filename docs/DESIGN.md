@@ -11,7 +11,7 @@ index.html                 the app shell: markup and the stylesheet (one <style>
 sw.js                      the offline cache: the app's own files, nothing else
 manifest.webmanifest       what a home screen needs to install it
 js/engine.js               rules, legal move generation, search, evaluation
-js/lessons.js              the course: lesson text, diagram positions, drills
+js/lessons.js              the course: lesson text, diagram positions, drills, and the packs
 js/sound.js                the two sounds: a clack for a move, a chime for a star
 js/daily.js                today's puzzle, picked from the date and nothing else
 js/app.js                  the interface: screens, board, coach, stars
@@ -143,25 +143,43 @@ drawn from the course itself:
   button's own label for a screen reader. A locked stop is still a button: it opens a sheet saying
   what has to be finished first, and, when that lesson is playable, a button that walks you there.
   A wall with no door is what makes a child stop playing.
+- **A detour stop** — a pack — is drawn by the same code as a lesson, because on the screen it is the
+  same thing: a name, a state, stars. Being optional is the one difference that shows. Its circle is
+  48px and **dashed** and it wears a **plus** rather than a number (a number would say it is a step of
+  the course, and it is not), its line to the lesson it hangs off is a thin dashed thread rather than a
+  leg of the route, and its subtitle begins with the word **optional** ("optional · 3 puzzles",
+  "optional · 2 of 3 stars"). It stands in the column its lesson's row has left free — the map has
+  three columns, and `scripts/verify-site.ts` fails a course whose rows are too full to hold their
+  packs. A pack that is finished keeps the tick every finished stop wears, so "done" reads the same
+  everywhere. Nothing on the path reads a pack: `lessonOpen`, `openedBy` and `nextLesson` only ever
+  look at lessons, and a `requires` naming a pack is failed by the site check.
 - **The route** is a dotted trail for a leg not walked and a solid line for a leg whose lesson is
   finished, so a learner sees how far they have come without counting ticks. Stops are anchored at
   the centre of their dot, which is the coordinate the lines and Pip are placed at.
 - **Pip stands where the learner is** — the next stop that is open and unfinished, breathing gently.
   He is a clone of the app bar's own pawn: one drawing of the character in the repository.
-- The whole path is 1126px tall at 360px wide and scrolls inside `main`, which is what the brief
-  meant by a scrollable map; at 360×640 that is 941px of scroll. Every stop still clears 48px to
-  tap (64px), and every stop is a real button, in the tab order, in course order.
-- **Stars become a rank**: Pawn (0), Knight (5), Bishop (10), Rook (14), Queen (18), King (23), shown
-  with the stars still to win for the next one. A child watching a number becomes a child watching
-  which piece they are — the same idea as the course, in one line.
+- The whole path is 1278px tall at 360px wide — eight rows of stops, now that each end of it is closed
+  by a boss game — and scrolls inside `main`, which is what the brief meant by a scrollable map: on a
+  fresh device the tab holds 1620px of content in a 664px window at 360×800, and scrolled to its end
+  every stop — packs included — clears the tab bar (measured, at 360 and at 390). Every lesson still
+  clears 48px to tap (64px) and a pack's circle is 48px exactly, the floor; every stop is a real
+  button, in the tab order, in course order, with each pack after the lessons and placed beside the
+  lesson it hangs off.
+- **Stars become a rank**: Pawn (0), Knight (6), Bishop (13), Rook (18), Queen (23), King (29) — the
+  rungs that were set against a course of 35 puzzles, scaled to the 44 stars a course with a pack in
+  it now holds, so a rung still arrives every six or seven stars and King still arrives before the
+  last one, which keeps the last stretch of the course the rank to finish. Shown with the stars still
+  to win for the next one. A child watching a number becomes a child watching which piece they are —
+  the same idea as the course, in one line.
 - Between the rank and the map sits the **shelf of badges** — what a child has to show for what they
   actually did; *Badges* below has the whole of it.
 
 ## The daily
 
 A child who has finished the course has nothing waiting for them the next day, so the Puzzles tab opens on
-**today's puzzle**: one of the course's own positions, the same one for everyone, chosen from the date and
-from nothing else. It is played on the same board, with the same sheets, the same Hint and the same star rule
+**today's puzzle**: one of the course's own positions — a lesson's or a pack's, because both are in the
+one list of puzzles — the same one for everyone, chosen from the date and from nothing else. It is played
+on the same board, with the same sheets, the same Hint and the same star rule
 as everything else — the only thing that is the daily's own is that it stops for the day once it is finished.
 
 - **The pick is derived, not stored.** `js/daily.js` turns a date into a place in the course's list of
@@ -329,7 +347,7 @@ call sites above — `record` plays the chime because both ways of earning a sta
 
 ## Stars
 
-A puzzle gives a **star** when it is solved on the first try, which is why the card at the top of the path says both numbers in words — "12 of 35 puzzles solved · 7 stars won. A star is a puzzle you solved first time." — while each stop carries its own stars, and the chip in the app bar carries the total alone. On a fresh install that line is not shown at all: "0 of 35 puzzles solved · 0 stars won" is four lines of nothing to read on the first screen a child sees, and there is nothing to explain until there is a number. Neither total is written down anywhere: both are counted from `js/lessons.js`, and `scripts/verify-site.ts` fails a shell that hard-codes one. Progress lives in `localStorage`, on the visitor's own device, and is never sent anywhere.
+A puzzle gives a **star** when it is solved on the first try, which is why the card at the top of the path says both numbers in words — "20 of 44 puzzles solved · 11 stars won. A star is a puzzle you solved first time." — while each stop carries its own stars, and the chip in the app bar carries the total alone. On a fresh install that line is not shown at all: "0 of 44 puzzles solved · 0 stars won" is four lines of nothing to read on the first screen a child sees, and there is nothing to explain until there is a number. Neither total is written down anywhere: both are counted over the course and the packs together — both live in `js/lessons.js` — because a pack's puzzle is a puzzle — it can be today's puzzle, it is shuffled into the Puzzles tab, and its star counts in the same total — and `scripts/verify-site.ts` fails a shell that hard-codes one. Progress lives in `localStorage`, on the visitor's own device, and is never sent anywhere.
 
 Showing a learner the move after two wrong answers marks the puzzle **solved**, never a star: the
 sheet says "Here is the move", not "Correct!", and the child did not find it. The keys in
