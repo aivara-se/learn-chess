@@ -126,8 +126,17 @@ async function open(hash) {
   context.layer = new Container();
   app.stage.addChild(context.layer);
   message('');
-  size();
-  scene.mount(context);
+  /* Starting the screen is both calls: `size` hands the new scene its size, and
+   * `mount` builds it. They are in the same failure path as the load above,
+   * because a screen that mounts and then throws has not started either — and
+   * without this the only sign of it was a blank canvas, the status line hidden
+   * and an uncaught error in the console. */
+  try {
+    size();
+    scene.mount(context);
+  } catch (error) {
+    fail(`The screen “${name}” did not start.`, error);
+  }
 }
 
 async function boot() {
