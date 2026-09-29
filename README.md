@@ -1,33 +1,24 @@
 # learn-chess
 
-A beginner's chess course that behaves like a small phone app: short lessons with puzzles you play yourself, a game against an honest little opponent, and Pip the pawn coaching your moves — with stars to collect as you go.
+A beginner's chess course for children, being rebuilt as a PixiJS game. The browser app that taught it is gone from `main` and parked at the `v1` tag, and [`docs/PORT.md`](docs/PORT.md) is the contract the rebuild is held to: the course data, the coach's rules, the path, the maths and the two verifiers that have to survive the port.
 
-Live at <https://aivara-se.github.io/learn-chess/> (a custom subdomain can be pointed at it later — `docs/SYSTEM.md`).
+**The live site is dark on purpose.** <https://aivara-se.github.io/learn-chess/> returns 404 until the game ships, and the URL comes back with it. Nothing has died — the course moved, and the old app is still there to read and run:
 
-- **App shell** — `index.html`: the tab bar, the screens and the stylesheet.
-- **Offline and installing** — `sw.js` and `manifest.webmanifest`: the app's own files, kept for a reload with no network.
-- **Rules and opponent** — `js/engine.js`: move generation, search and evaluation.
-- **Lessons and puzzles** — `js/lessons.js`: the course and its optional detour packs; `docs/DRILLS.md` is what their answers were measured against.
-- **Today's puzzle** — `js/daily.js`: the one puzzle a day, chosen from the date rather than stored.
-- **Interface** — `js/app.js`: the board, the coach, the stars and progress in `localStorage`.
-- **Sound** — `js/sound.js`: a clack when a piece lands and a chime for a star, made with Web Audio oscillators, so there is no audio file to load.
-- **Badges** — `js/badges.js`: the things a child earned once — a game finished, a first win, a castle, a run of first-try answers — and the shelf on the path where they show up.
-- **Tests** — `tests/engine.test.ts` and `tests/badges.test.ts`, run with `bun test`; perft counts prove the move generator, and the badge rules are checked without a browser.
-- **Checks** — `scripts/verify-site.ts` (files, offline list, markup, the course's own budgets) and `scripts/verify-drills.ts` (every puzzle's answer, against Stockfish).
-- **Mark** — `assets/favicon.svg`, with the rendered icons and the 1200×630 share card beside it.
-
-Three tabs: **Lessons** (a path of lessons, each stepping through one idea and the puzzles that go with it, each branch of the path ending in a boss game against Pip, and some stops carrying an optional **detour pack** of three more puzzles on the same idea), **Play** (a game with the coach), **Puzzles** (today's puzzle first, then the same positions shuffled, with a streak). A star is earned by solving a puzzle first time, so the app counts two things: puzzles solved, and stars won — a boss game is finished by a checkmate instead, and it earns no star. Nothing on the path needs a pack: a pack opens once its lesson is finished, and finishing one — or never opening it — changes nothing about which lesson is open.
-
-```bash
-bun test                              # the rules of chess
-bun run scripts/verify-site.ts        # the files, the cache list, the markup, the course budgets
-bun run scripts/verify-drills.ts      # every puzzle's answer, against Stockfish
-bun run scripts/verify-drills.ts --write   # ...and write the record to docs/DRILLS.md
+```sh
+git checkout v1                    # the whole old tree, frozen
+bun test                           # the old engine's rules
+bun run scripts/verify-drills.ts   # every puzzle's answer, against Stockfish
+git show v1:js/lessons.js          # or read one file out of the tag
 ```
 
-- Design and structure: [`docs/DESIGN.md`](docs/DESIGN.md)
-- Purpose and scope: [`docs/PRODUCT.md`](docs/PRODUCT.md)
-- Deployment: [`docs/SYSTEM.md`](docs/SYSTEM.md)
-- What the puzzles were measured against: [`docs/DRILLS.md`](docs/DRILLS.md)
+What the old course was: a path of twelve stops that opens as a child walks it, each lesson one idea with puzzles that are played rather than read, three optional detour packs, a boss game closing each end of the path, stars for the puzzles solved first time, and Pip the pawn saying what he thought of the move just played. The new game keeps that course; what it does not keep is written down plainly at the end of `docs/PORT.md`.
 
-No build step, no dependencies, no third-party request, no accounts: the page loads its own files and nothing else, and progress never leaves the device.
+**Licence.** The code is MIT — [`LICENSE`](LICENSE). The art the old course used is CC0, and the engine is this project's own.
+
+## Run it locally
+
+There is nothing to run in this tree yet: `main` holds this README, the licence and the port contract, and nothing else. What lands next is a PixiJS shell that boots as plain static files — one module script, one pinned copy of the library, no build step — so it is served over HTTP rather than opened from the filesystem, and the old course is the thing that works today, from the `v1` tag above.
+
+## Checks
+
+Nothing gates this tree yet. `docs/PORT.md` names the two verifiers the old course ran and what each one covered, so the rebuild starts from a check that already existed rather than one invented later.
