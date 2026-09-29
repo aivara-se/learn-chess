@@ -248,8 +248,11 @@ function placeBoard(band, { width, room, flipped, interactive }) {
  * is told not to touch `src/board/**`).
  *
  * What this screen can do is never be the caller that trips it: nothing is
- * repainted while a piece is walking, so every step change waits for the board to
- * come to rest first. */
+ * repainted while a piece is walking — the walk a wrong move is taken back with
+ * included, which is the window this screen used to leave open: it kept `busy`
+ * only while the child's own move walked out, and a Hint or a tap during the
+ * walk back is the same repaint in the same walk. So every step change waits for
+ * the board to come to rest first, and so does every tap and every hint. */
 let walking = Promise.resolve(false);
 
 /* ---- the drill loop ---- */
@@ -394,6 +397,9 @@ function play(move) {
     view.coach.verdict(said.line, said.tone);
     view.coach.reply(reply);
     drawStep();
+    /* the reply is the one thing this screen exists to hand over, so it is put
+     * above the row the moment he says it */
+    showReply();
     /* …and then the piece goes back where it came from, so the puzzle is the
      * puzzle again. Graded from `pos`, never from the move that was taken back. */
     if (!ok && !revealed) {
@@ -401,8 +407,18 @@ function play(move) {
         if (view?.drill !== drill) return;
         drill.pos = pos;
         drill.last = null;
-        drill.busy = false;
-        paintDrill({ walk: { from: move.to, to: move.from } });
+        /* The walk back is a walk this screen started, so the guard holds for it
+         * too: `paintDrill()` is a `show()`, `show()` destroys every sprite, and
+         * a walk in flight is a promise over one of them. A tap or a hint in
+         * this window is what the board's ticker throws on
+         * (`src/board/pieces.js`, #8) — so the screen is busy for the whole
+         * walk, not just the half of it that is the move. */
+        drill.busy = true;
+        const back = paintDrill({ walk: { from: move.to, to: move.from } });
+        back.finally(() => {
+          if (view?.drill !== drill) return;
+          drill.busy = false;
+        });
       });
     }
   }, 0);
@@ -410,10 +426,13 @@ function play(move) {
 
 /* The hint: the drill's own sentence in the coach's second voice, and the piece
  * and the square the answer moves between ringed on the board. It costs the
- * star — "a star means first try", and a hint is not a first try. */
+ * star — "a star means first try", and a hint is not a first try.
+ *
+ * The guard is the same one a tap takes: while a piece is walking, a repaint is
+ * a destroyed sprite under a live walk, and the board's ticker throws on it. */
 function hint() {
   const drill = view?.drill;
-  if (!drill || drill.locked) return;
+  if (!drill || drill.locked || drill.busy) return;
   const best = answerMove(drill.pos, drill.drill);
   drill.hinted = true;
   drill.selected = null;
@@ -423,6 +442,7 @@ function hint() {
   view.coach.verdict('Here is the idea.', 'plain');
   view.coach.reply(drill.drill.hint);
   drawStep();
+  showReply();
   announce(drill.drill.hint);
 }
 
@@ -489,11 +509,12 @@ function applyScroll(next) {
  * step is built; the blocks below it move instead.
  *
  * The controls are the one exception, and they are pinned on purpose: they sit
- * just above the shell's own bar rather than in the flow, because a control that
- * has scrolled out of the window is a control a child cannot reach — and one
- * that has scrolled *under* the bar is worse than hidden, since the tap lands on
- * the bar and nothing happens. What scrolls is the reading; the way on stays
- * where it is. */
+ * just above the shell's own bar, **in their own layer outside this page**, and
+ * `room` is what the flow may still use — so a scroll moves the reading and
+ * never the way on. A row *inside* the page scrolls with the reply, and then the
+ * row covers the reply at every position the child can reach: re-measuring the
+ * coach grows the page without ever growing the window. What scrolls is the
+ * reading; the row the child taps stays where it is. */
 function place() {
   const pinned = view.controlsBlock;
   let y = 0;
@@ -506,7 +527,7 @@ function place() {
   const room = Math.max(0, view.viewport - pinned.height - ROW);
   view.contentHeight = Math.round(y);
   view.maxScroll = Math.max(0, view.contentHeight - room);
-  pinned.node.position.set(pinned.x ?? PAD, Math.round(view.viewport - pinned.height));
+  pinned.node.position.set(pinned.x ?? PAD, Math.round(view.header.height + view.viewport - pinned.height));
   applyScroll(Math.min(view.scroll, view.maxScroll));
 }
 
@@ -528,12 +549,13 @@ function labelFor(title, width) {
 
 /* The controls of a step, which is the one block that changes between two moves:
  * a puzzle that is solved or shown offers the way on, and before that it offers
- * the hint. */
+ * the hint. They are built into `view.pinned` — the layer outside the scrolling
+ * page — so the way on never moves with the reading. */
 function controlsFor(step) {
   const width = view.column - 2 * PAD;
   if (step.kind === 'done') {
     const onward = onwardFrom(progress.read());
-    return rowOf(view.page, onward
+    return rowOf(view.pinned, onward
       ? [
         { label: labelFor(onward.title, width), onPress: () => { location.hash = `#/lesson/${numberOf(onward)}`; } },
         { label: 'The path', kind: 'quiet', onPress: () => { location.hash = '#/path'; } },
@@ -549,7 +571,7 @@ function controlsFor(step) {
   } else {
     specs.push({ label: 'Next', onPress: () => go(view.step + 1) });
   }
-  return rowOf(view.page, specs, width);
+  return rowOf(view.pinned, specs, width);
 }
 
 /* Everything that changes between two moves: the caption under the board, the
@@ -557,6 +579,11 @@ function controlsFor(step) {
 function drawStep() {
   const step = view.steps[view.step];
   if (step?.kind === 'drill' && view.drill?.at === view.step) view.turnCap.text = turnName(view.drill);
+  /* The coach is re-measured rather than remembered: he opens with one sentence
+   * and answers with three, and a block that keeps the height it was built at is
+   * a reply the page never grows to hold — the room below the fold stays exactly
+   * what the opening sentence left. */
+  if (view.coachBlock && view.coach) view.coachBlock.height = view.coach.measure().height;
   /* The row is rebuilt rather than patched: a disabled button carries its reason
    * in its own label, so a control that changes state is a control that changes
    * size, and the old one has to go or the page draws both. */
@@ -567,6 +594,16 @@ function drawStep() {
   view.controlsBlock.height = controls.height;
   drawHeader();
   place();
+}
+
+/* What the coach just said is put where it can be read: the reply is the last
+ * block above the controls and it is longer than the sentence he opens with, so
+ * when he speaks the page comes to rest with it above the row. A reply a child
+ * has to find is a reply half of them never read — and `docs/DESIGN.md` §6 says
+ * the board is the only thing that may give way, which is exactly what has
+ * scrolled off the top here. */
+function showReply() {
+  if (view.maxScroll > 0) applyScroll(view.maxScroll);
 }
 
 /* A step of the lesson. The blocks list is what `place()` walks; the board is
@@ -584,6 +621,7 @@ function buildStep() {
   view.blocks = [];
   view.drill = null;
   view.turnCap = null;
+  view.coachBlock = null;
 
   if (step.kind === 'read' || step.kind === 'look') {
     const lines = [];
@@ -672,7 +710,10 @@ function buildStep() {
 
     view.blocks.push({ node: view.band.node, height: side, gap: ROW, x: 0 });
     view.blocks.push({ node: turnCap, height: turnCap.height, gap: ROW, x: Math.round(column / 2) });
-    view.blocks.push({ node: coach.node, height: coach.measure().height, gap: ROW });
+    /* The coach's block is kept, not just pushed: `drawStep()` re-measures it
+     * every time his reply is rewritten, and `place()` reads this height. */
+    view.coachBlock = { node: coach.node, height: coach.measure().height, gap: ROW };
+    view.blocks.push(view.coachBlock);
     view.blocks.push(view.controlsBlock);
     paintDrill();
     return;
@@ -820,8 +861,10 @@ function start(context, { step = 0 } = {}) {
     steps: stepsFor(lesson),
     header: null,
     page: null,
+    pinned: null,
     band: null,
     coach: null,
+    coachBlock: null,
     controls: null,
     controlsBlock: null,
     turnCap: null,
@@ -840,6 +883,12 @@ function start(context, { step = 0 } = {}) {
   view.page = new Container();
   view.page.position.set(view.left, TOP);
   view.root.addChild(view.page);
+  /* The layer the controls are drawn in: outside `view.page`, so scrolling the
+   * reading never moves the row — the reply and the way on cannot be in the same
+   * scrolling box without one covering the other. */
+  view.pinned = new Container();
+  view.pinned.position.set(view.left, 0);
+  view.root.addChild(view.pinned);
 
   buildHeader(context);
   view.viewport = Math.max(1, context.height - view.header.height - STATUS - CLEAR);
@@ -958,6 +1007,23 @@ function handle() {
       if (view.steps[view.step]?.kind !== 'drill' || !view.coach) return null;
       const voices = view.coach.voices();
       return { verdict: voices.verdict.text, reply: voices.reply.text, separate: voices.verdict !== voices.reply };
+    },
+    /* Where the coach's two voices are really drawn, in the page's own pixels.
+     * The reply is the sentence this screen exists to hand over, so a check can
+     * say whether the pinned row is sitting on top of it. */
+    coachBox: () => {
+      if (view.steps[view.step]?.kind !== 'drill' || !view.coach) return null;
+      const voices = view.coach.voices();
+      const box = (node) => {
+        const at = node.getGlobalPosition();
+        return {
+          left: Math.round(at.x),
+          top: Math.round(at.y),
+          right: Math.round(at.x + node.width),
+          bottom: Math.round(at.y + node.height),
+        };
+      };
+      return { verdict: box(voices.verdict), reply: box(voices.reply) };
     },
     turn: () => (view.turnCap ? view.turnCap.text : ''),
     stars: () => {
