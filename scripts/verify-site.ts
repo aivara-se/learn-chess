@@ -8,8 +8,8 @@
  *   1. does the course hold together — every position a real one, every answer a
  *      move the board takes, one idea per drill, the copy inside its budgets;
  *   2. is `requires` a path a learner can walk — a name that is a stop, no
- *      circle, no stop that no route reaches, and a shape a row of the map can
- *      draw without dropping a stop;
+ *      circle, no stop that no route reaches, and a shape the map can draw
+ *      without dropping a stop;
  *   3. is every course total counted from the course rather than written down;
  *   4. is the map's art what `assets/manifest.json` says it is, is every file the
  *      map draws in that record, and does the whole list stay inside its budget.
@@ -184,21 +184,18 @@ checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.pro
   };
   checks.push(`the path: ${LESSONS.length} stops, ${roots.length} open at the start, every stop reachable, ${Math.max(...LESSONS.map((l) => depth(l))) + 1} rows deep`);
 
-  /* The map has three columns, and a pack stands in the column its lesson's row
-     has left free. A fourth stop in a row would be slipped out of the path — a
-     shape rather than a place — so the course is what fails, not the drawing. */
-  const rowLoad = new Map<number, number>();
-  const load = (d: number) => { rowLoad.set(d, (rowLoad.get(d) || 0) + 1); };
-  for (const l of LESSONS) load(depth(l));
-  for (const p of PACKS) {
-    const home = LESSONS.find((l) => l.id === p.opensWith);
-    if (home) load(depth(home));
-  }
-  const crowded = [...rowLoad].filter(([, n]) => n > 3);
+  /* A depth of the path is a place across the painting, and a fork is two branches —
+     one above the road the painting draws and one below it. A third lesson at one
+     depth has nowhere to stand that is not drawn over another stop, and a detour is
+     not a branch: it hangs off the lesson that teaches it, half a step further along.
+     So the course is what fails here, not the drawing. */
+  const perDepth = new Map<number, number>();
+  for (const l of LESSONS) perDepth.set(depth(l), (perDepth.get(depth(l)) || 0) + 1);
+  const crowded = [...perDepth].filter(([, n]) => n > 2);
   for (const [d, n] of crowded) {
-    problems.push(`row ${d} of the map holds ${n} stops (the lessons there plus the packs hanging off them): a row has three columns, so a pack would be drawn off the path`);
+    problems.push(`${n} lessons stand at depth ${d} of the path, and a depth of the map is two branches — one above the road and one below it: a third could only be drawn over another stop`);
   }
-  checks.push(`the map's rows hold the packs: ${PACKS.length} packs, at most ${Math.max(...rowLoad.values())} stops in a row of three columns`);
+  checks.push(`the map's depths hold the forks: ${LESSONS.length} lessons, at most ${Math.max(...perDepth.values())} at one depth of the two a fork has, and ${PACKS.length} detours hanging off the road between them`);
 }
 
 /* 3. no course total is written into a file: they are counted from the course.
