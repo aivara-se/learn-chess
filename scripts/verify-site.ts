@@ -3,27 +3,42 @@
  *
  *   bun run scripts/verify-site.ts
  *
- * It answers three questions about `src/data/lessons.js`, and nothing else:
+ * It answers four questions about this tree, and nothing else:
  *
  *   1. does the course hold together — every position a real one, every answer a
  *      move the board takes, one idea per drill, the copy inside its budgets;
  *   2. is `requires` a path a learner can walk — a name that is a stop, no
  *      circle, no stop that no route reaches, and a shape a row of the map can
  *      draw without dropping a stop;
- *   3. is every course total counted from the course rather than written down.
+ *   3. is every course total counted from the course rather than written down;
+ *   4. is the map's art what `assets/manifest.json` says it is, is every file the
+ *      map draws in that record, and does the whole list stay inside its budget.
+ *
+ * **Rule 4 is new with the card that asked for it, and it had to be written rather
+ * than pointed at.** That card said the check "already does this for the old
+ * assets"; no file in this tree had ever read the manifest's `bytes` or `sha256`.
+ * `scripts/verify-shell.ts` asserts that `sw.js` *names* `assets/manifest.json`, and
+ * `tests/board.test.ts` checks the paths `src/board/art.js` uses — neither reads the
+ * record itself. So the record is checked here for every entry, in both directions,
+ * and the map's own files are held to it on top of that. Rule 4 is also where the
+ * "no third-party request" rule reaches the art: `verify-shell.ts` keeps it for the
+ * shell's own sources, because an `<img>` of an SVG in this repository is this
+ * origin's request and only a reference outside it is somebody else's.
  *
  * The shell's own rules — one module, no third-party request, the offline list,
  * the vendored library, `.nojekyll` — are `scripts/verify-shell.ts`. That file is
- * about the frame; this one is about the course inside it, and the split is what
- * lets the shell's check stay useful while the course is ported into it. The
- * markup rules v1's copy of this file carried (the app bar's lines, the row of
- * buttons under the board) were rules about `js/app.js`, which no longer exists:
+ * about the frame; this one is about the course inside it and the art under it, and
+ * the split is what lets the shell's check stay useful while the course is ported
+ * into it. The markup rules v1's copy of this file carried (the app bar's lines,
+ * the row of buttons under the board) were rules about `js/app.js`, which no longer
+ * exists:
  * they belong to whatever screen draws that chrome, and that card's check.
  *
  * It cannot tell you whether a drill's answer is the best move, or whether an
  * `accepted` list is the right width — scripts/verify-drills.ts asks Stockfish
  * that, and docs/DRILLS.md is the record.
  */
+import { createHash } from 'node:crypto';
 import { parseFen, legalMoves } from '../src/engine/engine.js';
 import { LESSONS, PACKS } from '../src/data/lessons.js';
 
@@ -217,6 +232,89 @@ checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.pro
     }
   }
   checks.push(`no course total is written into a file: ${puzzles} puzzles, ${LESSONS.length} stops and ${PACKS.length} packs are counted from the course`);
+}
+
+/* 4. the map's art: the manifest is the record, and the art has a budget. The map is
+ * the only screen that draws `assets/map/**`, and `sw.js` precaches exactly what
+ * `assets/manifest.json` lists — so the record has to match the bytes on disk, every
+ * file the map asks for has to be in it, and the whole list has to stay small enough
+ * for a child on a phone to pay for before the map opens. What is new here, and why,
+ * is written at the top of this file. */
+{
+  const MANIFEST = 'assets/manifest.json';
+  const ART = 'assets/map/';
+  /* The card's budget for the map's art. It is a budget rather than a number because
+     every file under it is fetched and cached before the map can draw anything. */
+  const ART_BUDGET_KB = 500;
+  /* A host named in a file is a third-party request unless it is a namespace: the SVG
+     namespace is a name, and a browser does not fetch a name. */
+  const NAMESPACES = ['w3.org'];
+  const digest = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+
+  let record: { assets?: { path?: string; bytes?: number; sha256?: string }[] } = {};
+  try {
+    record = JSON.parse(await read(MANIFEST));
+  } catch (error) {
+    problems.push(`${MANIFEST} does not parse, so nothing it records can be checked: ${(error as Error).message}`);
+  }
+  const listed = Array.isArray(record.assets) ? record.assets : [];
+  if (!listed.length) problems.push(`${MANIFEST} lists no assets at all, so the worker precaches nothing but the shell`);
+  const named = new Set<string>();
+  for (const entry of listed) {
+    const path = entry?.path;
+    if (!path) { problems.push(`${MANIFEST} has an entry with no path`); continue; }
+    if (named.has(path)) problems.push(`${MANIFEST} lists ${path} twice, so one file's size and hash are recorded as two`);
+    named.add(path);
+    const file = Bun.file(`${ROOT}${path}`);
+    if (!(await file.exists())) { problems.push(`${MANIFEST} lists ${path}, which is not in the tree`); continue; }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (bytes.byteLength !== entry.bytes) {
+      problems.push(`${MANIFEST} records ${path} as ${entry.bytes} bytes; it is ${bytes.byteLength}`);
+    }
+    const hash = digest(bytes);
+    if (hash !== entry.sha256) {
+      problems.push(`${MANIFEST} records ${path} as hashing ${entry.sha256}; it hashes ${hash}`);
+    }
+  }
+
+  /* The map's files, measured off the tree rather than off the record the runs above
+     just checked: the record says what should be there, this says what is. */
+  const files = await glob(`${ART}**/*`);
+  const sizes = await Promise.all(files.map(async (file) => (await Bun.file(`${ROOT}${file}`).arrayBuffer()).byteLength));
+  const total = sizes.reduce((sum, size) => sum + size, 0);
+  for (const file of files) {
+    if (!named.has(file)) {
+      problems.push(`${file} is under ${ART} and not in ${MANIFEST}: the worker precaches the manifest's list, so the map would ask for a file it does not have`);
+    }
+  }
+  if (total > ART_BUDGET_KB * 1024) {
+    problems.push(`the map's art is ${Math.round(total / 1024)} KB over ${files.length} files, past the ${ART_BUDGET_KB} KB budget: all of it is precached before the map can open`);
+  }
+
+  /* No third-party request and no `<script>` from the art — the shipped files and the
+     SVG sources beside the packs, because they are the same pictures in the form that
+     could carry a reference at all. */
+  const art = [...files, ...(await glob('assets/source/map/*.svg'))];
+  for (const file of art) {
+    const text = await read(file);
+    if (/<script\b/i.test(text)) problems.push(`${file} carries a <script>: the art is pictures, and nothing in it runs`);
+    const hosts = [...text.matchAll(/(?:https?:)?\/\/[a-z0-9.-]+\.[a-z]{2,}/gi)].map((m) => m[0]);
+    const real = hosts.filter((url) => !NAMESPACES.some((host) => url.includes(host)));
+    if (real.length) problems.push(`${file} reaches off this origin (${[...new Set(real)].join(', ')}): an SVG drawn as an <img> is this origin's request unless it names another`);
+  }
+
+  /* What the map really asks for, read off `src/ui/assets.js` — the one place the
+     map's sprite paths live. A file the manifest lists and no module names is a file
+     every visitor downloads and nothing draws, and the count is worth printing. */
+  const module = await read('src/ui/assets.js');
+  const drawn = new Set([...module.matchAll(/'assets\/map\/[^']+'/g)].map((match) => match[0].slice(1, -1)));
+  for (const path of drawn) {
+    if (!named.has(path)) problems.push(`src/ui/assets.js names ${path}, which ${MANIFEST} does not list, so the worker would not have it offline`);
+  }
+  const largest = files.map((file, i) => ({ file, size: sizes[i] })).sort((a, b) => b.size - a.size)[0];
+  checks.push(`the map's art: ${files.length} files, ${Math.round(total / 1024)} KB of a ${ART_BUDGET_KB} KB budget, ${drawn.size} of them named by src/ui/assets.js, largest ${largest.file} at ${largest.size} bytes`);
+  checks.push(`the manifest matches the tree: ${listed.length} entries, every one a file that is here, at the size and hash it records`);
+  checks.push(`the art makes no third-party request and carries no <script> (${art.length} shipped files and SVG sources read)`);
 }
 
 for (const c of checks) console.log(`ok   ${c}`);
