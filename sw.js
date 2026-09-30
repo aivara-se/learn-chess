@@ -13,22 +13,20 @@
 /* The cache-name ladder. Read off the branches rather than guessed — measured
    with `git show origin/<branch>:sw.js | grep '^const CACHE'` on the rebase this
    name was kept through: the frozen `v1` tag, and so the name the deleted app
-   served, is `learn-chess-v14`, and `main` now stands at `learn-chess-v18`,
-   because #62's pack screen landed first and the live site serves it. This
-   branch keeps `v19`: nobody holds it — read off every branch, local and remote
-   — and nothing on any branch is above it. The one branch beside `main` at
-   `v18` is `evidence/59-pack`, the pack card's own evidence branch, which holds
-   the name `main` itself serves.
+   served, is `learn-chess-v14`, and `main` stands at `learn-chess-v19`, because
+   #63's placed rows landed and the live site serves them. This branch keeps
+   `v20`: nobody holds it — read off every branch, local and remote — and nothing
+   on any branch is above it.
    The name has to be its own because the shell is served cache-first: the fetch
    handler answers every same-origin GET from the cache and keeps what it
-   fetches, so a device that has played before holds the five modules this branch
+   fetches, so a device that has played before holds the modules this branch
    changes — `src/scenes/path.js`, `src/path/layout.js`, `src/path/stop.js`,
-   `src/map/terrain.js`, `src/map/marker.js` — and re-fetches none of them
-   without a new worker, so it keeps drawing the old rows over a locked stop's
-   caption. `scripts/verify-shell.ts` fails a name at or below `v14` for the same
+   `src/map/terrain.js`, `src/ui/assets.js` — and re-fetches none of them without
+   a new worker, so it keeps drawing three terrain bands under a map that has
+   none. `scripts/verify-shell.ts` fails a name at or below `v14` for the same
    reason: reusing a name a device already holds leaves the old app in its
    browser. */
-const CACHE = 'learn-chess-v19';
+const CACHE = 'learn-chess-v20';
 
 /* The shell: the files the app needs to boot and to draw its first frame. Two
  * rules, and scripts/verify-shell.ts now holds the list to both of them, because
@@ -55,10 +53,10 @@ const SHELL = [
   'src/map/banner.js',
   'src/map/edges.js',
   'src/map/marker.js',
+  'src/map/road.js',
   'src/map/route.js',
   'src/map/terrain.js',
   'src/path/layout.js',
-  'src/path/place.js',
   'src/path/progress.js',
   'src/path/sheet.js',
   'src/path/stop.js',
