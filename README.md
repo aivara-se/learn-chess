@@ -1,60 +1,64 @@
 # learn-chess
 
-A beginner's chess course for children, being rebuilt as a PixiJS game. The browser app that taught it
-is gone from `main` and parked at the `v1` tag, and [`docs/PORT.md`](docs/PORT.md) is the contract the
-rebuild is held to: the course data, the coach's rules, the path, the maths and the two verifiers that
-have to survive the port.
+A beginner's chess course for children, as a small game: twelve stops that open as a child walks the
+path — ten lessons and two boss games, with three optional detour packs beside them — where the puzzles
+are played on a board rather than answered on paper, and Pip the pawn says what he thinks of the move
+just played. It is a static site with no build step and no dependency: the committed files are the
+published files.
 
-**What is on `main` today is the shell and the course's own data, not the screens that play it.**
-<https://aivara-se.github.io/learn-chess/> serves the shell: one PixiJS application that fills the
-viewport, one screen — a drawn board — and the offline worker and route convention the port cards build
-on. The course itself — the lessons, the puzzles and the path — is in the tree as data
-(`src/data/lessons.js`), measured by the checks below; the screens that play it arrive with the port
-cards. Nothing has been lost: the old app is still there to read and run.
+**What it deliberately is not.** The older version had a free-play tab and a daily-puzzle tab. Both are
+gone and neither is coming back — an unfinished game to wander into and a puzzle picked from the date
+taught less than one more lesson on the path. [`docs/PORT.md`](docs/PORT.md) says what else was dropped
+and why; the puzzles that live *inside* a lesson are part of the lesson and stayed.
+
+**Where the old course went.** The browser app this replaces is frozen at the `v1` tag, and `main` is
+the game that took its place. The contract between them is [`docs/PORT.md`](docs/PORT.md) — what had to
+survive the port, counted from the tagged tree — and its closing section says whether it did:
 
 ```sh
 git checkout v1                    # the whole old tree, frozen
-bun test                           # the old engine's rules
-bun run scripts/verify-drills.ts   # every puzzle's answer, against Stockfish
-git show v1:js/lessons.js          # or read one file out of the tag
+git show v1:js/lessons.js          # the course the old app taught, for comparison
 ```
 
-What the old course was: a path of twelve stops that opens as a child walks it, each lesson one idea
-with puzzles that are played rather than read, three optional detour packs, a boss game closing each
-end of the path, stars for the puzzles solved first time, and Pip the pawn saying what he thought of
-the move just played. The new game keeps that course; what it does not keep is written down plainly at
-the end of `docs/PORT.md`.
-
-**Licence.** The code is MIT — [`LICENSE`](LICENSE). The art is CC0, and the engine is this project's
-own. The one third-party file is PixiJS, vendored with its licence and its provenance in
-[`vendor/README.md`](vendor/README.md).
+The live game is <https://aivara-se.github.io/learn-chess/>.
 
 ## Run it locally
-
-The game is static files with no build step, so it is served rather than opened — a module loaded over
-`file://` is refused by the browser, and the service worker needs an origin:
 
 ```sh
 python3 -m http.server 8000        # any static server; this one needs nothing installed
 open http://localhost:8000/
 ```
 
-`#/lesson/1` is the route convention's example: the shell imports `src/scenes/lesson.js` when it is
-asked for, and says so plainly while that screen does not exist yet. `docs/SYSTEM.md` is the rest of
-how this tree is served, and what a deploy has to be checked for.
+It is served rather than opened, because a module loaded over `file://` is refused by the browser and
+the service worker needs an origin. Nothing else is needed: no install, no build, no checkout step.
+
+A route is a screen, and the file name is the route. `#/path` is the map the game opens on,
+`#/lesson/1` is the first lesson, and two screens are there for whoever is changing the game rather
+than playing it: `#/kit` (and `#/kit/phone`, `#/kit/desktop`) draws every component and `measure()`s
+it, and `#/board-fixture/start` (also `fork`, `mate`, `promotion`, `empty`) draws one board position.
+[`docs/SYSTEM.md`](docs/SYSTEM.md) is how the tree is served and how a change to it is verified;
+[`docs/DESIGN.md`](docs/DESIGN.md) is every colour, size and shape the game draws with, and what was
+measured to fix it.
 
 ## Checks
 
 ```sh
-bun test                           # the engine: perft and legality, ported from v1
-bun run scripts/verify-shell.ts    # the shell: one module, no third-party request, the offline list,
-                                   # the vendored library's version and hash, .nojekyll
-bun run scripts/verify-site.ts     # the course: every drill legal and playable, the copy inside its
-                                   # budgets, the path a graph a learner can walk, no total written down
-bun run scripts/verify-drills.ts   # every puzzle's answer, against Stockfish
+bun test                           # the rules: the engine, the board's geometry, the drill loop, the graph
+bun run scripts/verify-shell.ts    # the tree as served: one module, the offline list, the vendor hash
+bun run scripts/verify-site.ts     # the course: every position legal, the path walkable, the art record
+bun run scripts/verify-drills.ts   # every puzzle's answer, measured against Stockfish
 ```
 
-All four run in `Checks` on every pull request; the drill check installs Stockfish first. What they
-cannot see — a drawn frame, a crisp canvas at 360px and at 1440px, the app opening with the network
-off, zero console errors — is listed in `docs/SYSTEM.md` and is done in a browser, with a look at the
-screenshot rather than only at the exit code.
+The first three need nothing but Bun. The fourth needs Stockfish — `$STOCKFISH`, or
+`/usr/games/stockfish` — and it is the only one that asks a question a legal-move check cannot: whether
+an answer is *good*. All four run in `Checks` on every pull request.
+
+What they cannot see — what a frame looks like, whether a board is legible, whether the game opens with
+the network off — is the browser check in [`docs/SYSTEM.md`](docs/SYSTEM.md) §3: a real render at 360×640
+and 1280×800, the path, one lesson end to end, the reduced-motion rule, zero console errors, and the
+screenshots looked at rather than only the exit code.
+
+**Licence.** The code is MIT ([`LICENSE`](LICENSE)). The art is CC0, the engine is this project's own,
+and the one third-party file is PixiJS — vendored with its licence and its provenance in
+[`vendor/README.md`](vendor/README.md). Every asset's terms, and where it came from, are in
+[`ATTRIBUTION.md`](ATTRIBUTION.md) and in the record `assets/manifest.json` keeps of it.

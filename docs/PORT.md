@@ -170,6 +170,41 @@ This contract names what must survive. Things it does not name — the badge boo
 daily puzzle (`js/daily.js`), the sound module, the offline cache list — are not thereby promised; a
 port card that wants one says so in its pull request and is answered there.
 
+## What the port delivered
+
+Written after the screens landed, and counted from this tree rather than from the plan — a number carried
+over from a plan is a number that is wrong, which is the second rule above.
+
+- **The course data, unchanged.** 12 stops — ten lessons and two boss games — plus 3 detour packs, and
+  **44 positions** in all: 35 lesson drills and 9 pack puzzles. Every FEN and every accepted answer is the
+  tagged tree's own, and every answer is re-measured against Stockfish: `bun run scripts/verify-drills.ts`
+  reports 44 drills measured and the five deliberate exceptions the copied `note`s name, no unexplained
+  finding.
+- **The coach, whole.** A verdict for every move in the ported six bands, the stronger move named, the
+  threat named, the score in words, a check announced first and mate announced as the end — and the
+  verdict is not overwritten by his own move, which is the bug this contract carried. Playing `#/lesson/1`
+  end to end in a browser shows a verdict and a reply in two separate elements after every puzzle.
+- **The path, as data.** Three forks, two merges, every end of the path finishing in a boss game, and the
+  drawn map derived from `requires` rather than from a coordinate table — `bun run scripts/verify-site.ts`
+  counts 12 stops, one open at the start, every stop reachable, eight rows deep. The pictures are not the
+  port's: the map was re-arted afterwards, and "The path" above says so.
+- **The maths.** A star is a first-try solve, puzzles solved and stars are two numbers, the rank ladder is
+  `v1`'s verbatim, and every total is derived rather than written down.
+- **The two verifiers and the test suite**, ported one file each and running in `Checks` on every pull
+  request. A third script came with the shell — `scripts/verify-shell.ts` — and answers eight questions
+  about how the tree is served, including that the offline copy is the first frame's closure.
+
+**One thing the contract did not name, and did not survive: the detour packs have no screen.** The map
+draws all three, the sheet answers for them, and the nine puzzles are in the data and measured by the
+checks — but tapping an open pack hands the child `#/pack/<id>`, and there is no `src/scenes/pack.js`, so
+the shell answers *"There is no screen called `pack`"*. That is a screen rather than a sentence, so it is a
+card of its own and it is filed as one: **#59**. It is written here instead of being left out, because a
+contract that counts the packs' puzzles and then cannot say where they are played is the kind of silence
+this document exists to prevent.
+
+[`docs/SYSTEM.md`](SYSTEM.md) §3 is the verification story — what each layer covers and what each one
+cannot see.
+
 ## Licence
 
 The code is MIT (`LICENSE` at the root). The art the old course used is CC0, and the engine in
