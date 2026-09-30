@@ -29,6 +29,11 @@ export const KEY = 'aivara-learn-chess-v2';
  * the ones nothing requires. */
 export const stops = [...LESSONS, ...PACKS];
 export const byId = new Map(stops.map((stop) => [stop.id, stop]));
+/* A pack is a stop the map offers beside a lesson rather than on it — the ones
+ * nothing requires. The screens that play a stop ask this rather than inferring
+ * it from the shape, because the difference is where the stop's own words come
+ * from: a pack has an `idea` where a lesson has a goal and a body. */
+export const isPack = (unit) => PACKS.includes(unit);
 /* The size of the course, counted from the course. A total written into a file is
  * a lie waiting to happen; `scripts/verify-site.ts` fails one. */
 export const totalDrills = stops.reduce((n, stop) => n + (stop.drills ?? []).length, 0);

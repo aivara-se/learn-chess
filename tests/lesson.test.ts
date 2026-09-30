@@ -31,12 +31,18 @@
  * keys.** `src/lesson/record.js` is the only writer and `src/path/progress.js` is
  * the only reader; this file solves a lesson's puzzles through the writer and asks
  * the reader what the map makes of it.
+ *
+ * **A detour pack is played by the same screen**, so its rules are here beside
+ * the lesson's: `#/pack/<id>` names its stop or refuses in words a child can
+ * read, a pack is walked as its idea and its puzzles, and solving those is what
+ * finishes it on the map — without opening or closing anything else on the path.
  */
 import { describe, expect, test } from 'bun:test';
-import { LESSONS } from '../src/data/lessons.js';
+import { LESSONS, PACKS } from '../src/data/lessons.js';
 import { boardLayout, cornerOf } from '../src/board/geometry.js';
 import { inCheck, isCheckmate, legalMoves, makeMove, parseFen, pieceAt, squareName } from '../src/engine/engine.js';
 import { squareAt } from '../src/lesson/board-input.js';
+import { lessonAddress, packAddress } from '../src/lesson/address.js';
 import { describeMove, grade, verdict } from '../src/lesson/coach.js';
 import { answerMove, answered, moveFor, targetsFor, toUci, uciToMove } from '../src/lesson/drill.js';
 import { solve } from '../src/lesson/record.js';
@@ -351,6 +357,76 @@ describe('progress is written once and read everywhere', () => {
       const played = moveFor(pos, move.from, move.to, drill);
       expect(answered(drill, played)).toBe(true);
       expect(pieceAt(pos, move.from)).toBeTruthy();
+    }
+  });
+});
+
+describe('a detour pack is played by the lesson screen', () => {
+  const pack = PACKS.find((entry) => entry.id === 'pin');
+
+  test('each route names its own stop, and a pack is named by its id', () => {
+    for (const entry of PACKS) expect(packAddress([entry.id]).unit).toBe(entry);
+    expect(lessonAddress(['1']).unit).toBe(LESSONS[0]);
+    /* A pack is not on the path, so the lesson route cannot name it — the lesson
+     * that opens it is named by its number, and that is a different stop. */
+    expect(lessonAddress([String(LESSONS.findIndex((entry) => entry.id === pack.opensWith) + 1)]).unit.id).toBe(pack.opensWith);
+  });
+
+  test('an address that names nothing says so rather than opening an empty screen', () => {
+    /* Every one of these is a wrong address a child can reach by editing the hash,
+     * or a shape the router can hand over. None of them may throw, and none of
+     * them may draw a screen with nothing on it. */
+    for (const params of [[], [undefined], ['0'], ['99'], ['x'], ['1.5'], ['../secrets']]) {
+      expect(packAddress(params).refuse, `#/pack/${params.join('/')}`).toBeTruthy();
+      expect(lessonAddress(params).refuse, `#/lesson/${params.join('/')}`).toBeTruthy();
+    }
+    expect(packAddress(['pin']).refuse).toBe(undefined);
+    expect(lessonAddress(['1']).refuse).toBe(undefined);
+  });
+
+  test('the boss stops are refused in words, because their screen is another card’s', () => {
+    const boss = LESSONS.find((entry) => entry.boss);
+    expect(boss).toBeTruthy();
+    const refused = lessonAddress([String(LESSONS.indexOf(boss) + 1)]);
+    expect(refused.unit).toBe(undefined);
+    expect(refused.refuse.title).toBe(boss.title);
+  });
+
+  test('a pack is walked as its idea and its puzzles, and nothing else', () => {
+    const steps = stepsFor(pack);
+    expect(steps.filter((step) => step.kind === 'read').map((step) => step.text)).toEqual([pack.idea]);
+    expect(steps.some((step) => step.kind === 'look')).toBe(false);
+    expect(puzzlesIn(steps).map((step) => step.i)).toEqual(pack.drills.map((_, i) => i));
+    expect(puzzlesIn(steps).map((step) => step.drill.prompt)).toEqual(pack.drills.map((drill) => drill.prompt));
+    expect(steps.at(-1).kind).toBe('done');
+    /* The lesson screen's own walk is untouched: a lesson still reads its body,
+     * one paragraph a step. */
+    for (const lesson of LESSONS) {
+      expect(stepsFor(lesson).filter((step) => step.kind === 'read').length).toBe((lesson.body ?? []).length);
+    }
+  });
+
+  test('solving a pack’s puzzles is what finishes it, and a star is still a first try', () => {
+    const storage = store();
+    for (let i = 0; i < pack.drills.length; i += 1) solve(pack, i, { firstTry: i === 0, store: storage });
+    const record = read(storage);
+    expect(state(record, pack)).toBe('done');
+    expect(finished(record, pack)).toBe(true);
+    expect(puzzles(record, pack)).toEqual({ of: pack.drills.length, solved: pack.drills.length, stars: 1 });
+    /* A detour changes nothing about the path: nothing requires it, so no lesson
+     * is finished by it, and it is still held by the lesson that teaches its idea. */
+    expect(LESSONS.filter((entry) => finished(record, entry))).toEqual([]);
+    expect(open(record, pack)).toBe(false);
+  });
+
+  test('the pack’s own answer is what a tap plays, for every pack in the course', () => {
+    for (const entry of PACKS) {
+      for (const [index, drill] of entry.drills.entries()) {
+        const pos = parseFen(drill.fen);
+        const move = answerMove(pos, drill);
+        expect(move, `${entry.id} puzzle ${index + 1} has no playable answer`).toBeTruthy();
+        expect(answered(drill, moveFor(pos, move.from, move.to, drill))).toBe(true);
+      }
     }
   });
 });

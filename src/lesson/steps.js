@@ -21,22 +21,28 @@ import { LESSONS } from '../data/lessons.js';
 import { byId, finished, open } from '../path/progress.js';
 
 /**
- * The steps a lesson is walked in, in order:
+ * The steps a stop is walked in, in order:
  *
  *   read   one paragraph of `body`, in the course's own words
  *   look   the diagram, when the lesson has one
  *   drill  one puzzle of `drills`, played on the board
- *   done   the completion panel, which is where the lesson ends
+ *   done   the completion panel, which is where the stop ends
  *
  * A boss stop is a lesson without puzzles and without a diagram — it is finished
  * by a game — so its steps are its paragraphs and the panel. That shape is not
  * something this screen plays; the screen says so rather than drawing a lesson
  * with nothing to do in it.
+ *
+ * A pack is walked by the same screen and nearly the same list: it has no
+ * paragraphs, so the one page it carries is the `idea` its puzzles practise —
+ * what the three positions are for, in the course's own words, before the child
+ * is asked the first one.
  */
-export function stepsFor(lesson) {
-  const steps = (lesson.body ?? []).map((text, i) => ({ kind: 'read', text, i }));
-  if (lesson.diagram) steps.push({ kind: 'look' });
-  (lesson.drills ?? []).forEach((drill, i) => steps.push({ kind: 'drill', drill, i }));
+export function stepsFor(unit) {
+  const steps = (unit.body ?? []).map((text, i) => ({ kind: 'read', text, i }));
+  if (!steps.length && unit.idea) steps.push({ kind: 'read', text: unit.idea, i: 0 });
+  if (unit.diagram) steps.push({ kind: 'look' });
+  (unit.drills ?? []).forEach((drill, i) => steps.push({ kind: 'drill', drill, i }));
   steps.push({ kind: 'done' });
   return steps;
 }
