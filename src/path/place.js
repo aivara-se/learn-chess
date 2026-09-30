@@ -4,21 +4,25 @@
  * painted the world against — and a stop's row *is* its depth in the `requires`
  * graph, so the region a stop stands in is the course and not a coordinate. What
  * the grid cannot know is how tall the words under a stop are: a caption is a name,
- * a row of stars and a line, and at 360px wide the deepest of them reaches 132px
- * below its marker while the next row's marker begins 116px below it. Drawn as the
- * grid says, six pairs of stops in this course overlap and the marker below is drawn
- * over the words above it — the `pin` marker lands in the middle of the line under
- * `piece-values`, so "after lesson 1" reads "afte", marker, "n 1". That is
- * `learn-chess#60`.
+ * a row of stars and a line; at 360px wide the deepest caption bottoms 134px below its
+ * stop's own point (`tests/fixtures/map-boxes.ts` records the drawn boxes), and the
+ * next row's marker begins 116px below that same point. Drawn as the grid says, six
+ * pairs of stops in this course overlap and the marker below is drawn over the words
+ * above it — the `pin` marker lands in the middle of the line under `piece-values`, so
+ * "after lesson 1" reads "afte", marker, "n 1". That is `learn-chess#60`.
  *
  * So a row is *placed*, not fixed: it starts where the grid puts it and moves later
- * only as far as the boxes really drawn in the rows above demand. Three bounds hold
- * the picture to the course:
+ * only as far as the boxes really drawn in the rows above demand. One bound holds the
+ * picture to the course:
  *
  *   - a row never leaves the band its nominal y stands in (`src/map/terrain.js`),
- *     so the walk from the meadow to the dark end is still the difficulty curve;
- *   - a caption never runs past the ground, so no stop is drawn on the void the
- *     painting does not cover.
+ *     so the walk from the meadow to the dark end is still the difficulty curve.
+ *
+ * The `ground` is a report and not a bound: it is the painting's own height plus the
+ * footing the layout keeps below the last row, so the words under the last stop are
+ * allowed past the painting — the map grows to hold them, and what shows below the
+ * painting is the screen's own ground colour under the vignette, not the ash. A row
+ * that draws past even that is named in `problems`.
  *
  * The boxes are the ones `src/path/stop.js` really drew: its `box` is the marker,
  * the caption and Pip as one rectangle, so the constraint is between what a child

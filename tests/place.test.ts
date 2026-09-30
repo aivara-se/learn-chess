@@ -18,7 +18,9 @@ import { ROW, TOP } from '../src/path/layout.js';
 import { place } from '../src/path/place.js';
 import { MAP_BOXES } from './fixtures/map-boxes.ts';
 
-const region = (row) => (row <= 2 ? 'meadow' : row <= 5 ? 'pass' : 'ash');
+/* The band a row's nominal y stands in, from the tree's own reader rather than a second
+   copy of the mapping; the mapping itself is held by `tests/map.test.ts`. */
+const region = (depth) => bandAt(TOP + ROW * depth).id;
 
 describe('the map places its rows so that no stop is drawn over another', () => {
   for (const [label, boxes] of Object.entries(MAP_BOXES)) {

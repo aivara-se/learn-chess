@@ -31,8 +31,9 @@
  * wears, which is what lets the three rows of the pass fit the two bands they stand
  * in. Measured, at 12px the longest name in the course — "Bring out one new piece
  * every move" — wraps to three lines at the narrowest caption and to two in the wider
- * rows, so the caption's height is what the words really took: 132px at 360, down to
- * 88px for a boss. The star row is 16px on the map for the same reason.
+ * rows, so what the words really took is what the caption's own bottom says: 134px
+ * below the stop's own point at 360, down to 88px under a boss. The star row is 16px
+ * on the map for the same reason.
  *
  * A tap is a tap, not a drag: the map moves under a finger, so the caller passes a
  * `panned()` test and a stop that was scrolled never counts as pressed. Pixi fires

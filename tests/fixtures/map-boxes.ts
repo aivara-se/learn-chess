@@ -4,6 +4,12 @@
  *
  *   NODE_PATH=$HOME/.bun/install/global/node_modules bun ~/tmp/pw/pairs.ts <checkout> <port> --fixture
  *
+ * That harness is a scratch script and not a file in this repository, so this is a
+ * shape rather than a command: serve the checkout, read `window.learnChessPath.stops()`
+ * for the nine cases, and write the boxes down. Whoever moves a caption or touches the
+ * placement re-takes it, and the screen's own warning about a row that does not fit its
+ * band is the other signal that a course change has left it stale.
+ *
  * Each entry is one stop: its row (its depth in the course), its column's x, and the
  * box its marker and its words cover relative to that x and the row's own y. A unit
  * test cannot measure wrapped text, so this is the geometry measured once in a browser
