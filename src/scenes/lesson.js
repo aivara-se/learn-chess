@@ -671,6 +671,16 @@ function buildStep() {
    * outlives one — it is taken out first so it is not destroyed with the rest. */
   view.band.node.parent?.removeChild(view.band.node);
   view.page.removeChildren().forEach((node) => node.destroy({ children: true }));
+  /* The controls' own layer with it. A row of controls is added to `view.pinned`
+   * by `rowOf`, and this function hands `view.controlsBlock` to a *new* object
+   * rather than emptying the old one — so the row drawn for the step before this
+   * is parented nowhere the screen still owns, and `drawStep`'s destroy cannot
+   * reach it. It went on being drawn, and being tappable, over the step that came
+   * after: measured on `#/lesson/1`'s completion panel, whose previous step's
+   * `Next` sat over its “The path” button. Clearing the layer here is what that
+   * comment in `drawStep` — “the old one has to go or the page draws both” — was
+   * already promising. */
+  view.pinned.removeChildren().forEach((node) => node.destroy({ children: true }));
   view.blocks = [];
   view.drill = null;
   view.turnCap = null;
