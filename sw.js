@@ -13,31 +13,50 @@
 /* The cache-name ladder. Read off the branches rather than guessed — measured
    with `git show origin/<branch>:sw.js | grep 'CACHE ='`:
    the frozen `v1` tag, and so the name the deleted app served, is
-   `learn-chess-v14`, and `main` stands at `learn-chess-v15` (the shell and the
-   assets). No open pull request holds a name, so the board takes `v16`, the next
-   one nobody holds. The wipe left the old worker in a returning visitor's
-   browser, so this *has* to be a new name: scripts/verify-shell.ts fails a name
-   at or below `v14` for that reason. */
-const CACHE = 'learn-chess-v16';
+   `learn-chess-v14`, and `main` stood at `learn-chess-v16` (the shell, the assets
+   and the board) when this name was taken. Every branch, local and remote, was
+   read for it and none holds `v17`, so this takes the next one nobody holds. The
+   wipe left the old worker in a returning visitor's browser, so this *has* to be
+   a name of its own: scripts/verify-shell.ts fails a name at or below `v14`. */
+const CACHE = 'learn-chess-v17';
 
-/* The shell: the files the app needs to boot and to draw its first frame. The
- * list has to be closed under its own imports — a file here whose import is not
- * here fails offline at the point it is loaded, and the router reports that as a
- * screen that does not exist. A screen the router imports on demand is not one
- * of these: `src/scenes/board-fixture.js` (`#/board-fixture/*`, like `#/kit`) is
- * fetched when it is opened and kept then, and a start with no network does not
- * need it. */
+/* The shell: the files the app needs to boot and to draw its first frame. Two
+ * rules, and scripts/verify-shell.ts now holds the list to both of them, because
+ * this list went stale once and the cost was a broken offline game:
+ *
+ *   - **It names the screen the game opens on** (`src/main.js`'s `DEFAULT_SCENE`,
+ *     `src/scenes/path.js` today), and
+ *   - **it is closed under that screen's own imports** — a file here whose import
+ *     is not here fails offline at the point it is loaded, and the router reports
+ *     that as "there is no screen called …", which is the wrong bug named
+ *     confidently.
+ *
+ * A screen the router imports on demand, and that the game does not open on, is
+ * not one of these: `src/scenes/lesson.js`, `src/scenes/kit.js` and
+ * `src/scenes/board-fixture.js` are fetched when they are opened and kept from
+ * then on, so a start with no network does not need them. docs/SYSTEM.md §4 says
+ * what that costs and where it is written down. */
 const SHELL = [
   './',
   'index.html',
   'manifest.webmanifest',
   'src/main.js',
-  'src/board/art.js',
-  'src/board/board.js',
-  'src/board/geometry.js',
-  'src/board/pieces.js',
-  'src/scenes/placeholder.js',
-  'src/engine/engine.js',
+  'src/data/lessons.js',
+  'src/map/banner.js',
+  'src/map/edges.js',
+  'src/map/marker.js',
+  'src/map/route.js',
+  'src/map/terrain.js',
+  'src/path/layout.js',
+  'src/path/progress.js',
+  'src/path/sheet.js',
+  'src/path/stop.js',
+  'src/scenes/path.js',
+  'src/ui/assets.js',
+  'src/ui/button.js',
+  'src/ui/chip.js',
+  'src/ui/panel.js',
+  'src/ui/theme.js',
   'vendor/pixi/pixi.min.mjs',
 ];
 

@@ -50,7 +50,7 @@ const CHROME = 78;
 const MARGIN = 8;
 
 /* The old app's measured palette for words on the page; the game's own colours
- * are #9's to set, exactly as `src/scenes/placeholder.js` notes about its own. */
+ * are `src/ui/theme.js`'s, which is what a screen in this tree draws with. */
 const INK = 0x182046;
 const INK_SOFT = 0x454f72;
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
