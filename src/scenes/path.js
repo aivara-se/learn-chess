@@ -232,7 +232,8 @@ function build(context) {
     boxes: stops.map(({ spot, stop }) => ({ row: spot.depth, x: spot.x, ...stop.box })),
     /* The words under the last stop may run past the painting's own ground by the
      * footing the layout already keeps below the last row: the map grows to hold them,
-     * and the ground colour below the ash is the ash's own. */
+     * and below the painting's last pixel what shows is the screen's own ground colour
+     * under the vignette, not the ash. */
     ground: terrain.height + FOOTING,
   });
   /* The other half of `place`'s contract, and the reason it returns `problems`: a row
