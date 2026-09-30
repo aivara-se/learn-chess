@@ -1,0 +1,37 @@
+THE FOUR MACHINE CHECKS — chore/close-the-rebuild @ 4ac3006
+
+$ bun test
+(pass) progress is written once and read everywhere > the drill’s own answer is what a tap plays, for every drill in the lesson [0.33ms]
+
+ 147 pass
+ 0 fail
+ 50899 expect() calls
+Ran 147 tests across 5 files. [4.82s]
+
+$ bun run scripts/verify-shell.ts
+ok   index.html loads one module (src/main.js) and its 5 references are this site's
+ok   the manifest parses, stays on this site, and names 3 icons
+ok   35 shell sources carry no third-party request (vendor/ is pinned and hashed below)
+ok   the offline worker caches 21 shell files, reads the asset manifest, and caches as learn-chess-v17
+ok   the offline list is closed under its own imports and names the screen the game opens on
+ok   vendor/ holds pixi.js 8.16.0, its MIT licence and its source, and the file hashes as recorded
+ok   the route is the file name: no src/scenes/index.js, no scene imported by the shell itself
+ok   .nojekyll is in place, so Pages publishes vendor/ instead of dropping it
+
+OK — every shell rule passes.
+
+$ bun run scripts/verify-site.ts
+ok   12 stops (2 of them boss games, 3 packs beside them), 44 puzzles — every FEN legal and every answer a legal move
+ok   copy within a nine-year-old's budgets (longest prompt 63, longest paragraph 167)
+ok   the path: 12 stops, 1 open at the start, every stop reachable, 8 rows deep
+ok   the map's rows hold the packs: 3 packs, at most 3 stops in a row of three columns
+ok   no course total is written into a file: 44 puzzles, 12 stops and 3 packs are counted from the course
+ok   the map's art: 35 files, 336 KB of a 500 KB budget, 15 of them named by src/ui/assets.js, largest assets/map/terrain-meadow.png at 118551 bytes
+ok   the manifest matches the tree: 77 entries, every one a file that is here, at the size and hash it records
+ok   the art makes no third-party request and carries no <script> (68 shipped files and SVG sources read)
+
+OK — every course rule passes.
+
+$ bun run scripts/verify-drills.ts
+
+OK — 44 drills measured; 5 noted exception(s), no unexplained findings.

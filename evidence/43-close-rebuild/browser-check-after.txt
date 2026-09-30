@@ -1,0 +1,59 @@
+BROWSER CHECK, served from the checkout (chore/close-the-rebuild), 360×640@3x, 1280×800@2x, and 360×640@3x with prefers-reduced-motion: reduce
+
+ok   360x640@3x: the game opens on the path — scene=path
+ok   360x640@3x: the canvas is the viewport — 360x640 vs 360x640
+ok   360x640@3x: the buffer is the cap, not the raw ratio — 720x1280, cap 2, resolution 2
+ok   360x640@3x: no sideways scroll — 360 vs 360
+ok   360x640@3x: nothing on screen but the game — status=null
+ok   360x640@3x: the path draws 12 stops and 3 packs — 15
+ok   360x640@3x: one stop open at the start — open=1 done=0
+ok   360x640@3x: the art is drawn — bands=3 markers=15 beads=93
+ok   360x640@3x: the arrow's motion follows prefers-reduced-motion (no-preference) — animates=true, reduce=false
+ok   360x640@3x: lesson 1 loads — {"n":1,"id":"board-and-pieces","title":"The board and the pieces","goal":"Learn the squares and how every piece moves.","puzzles":4}
+ok   360x640@3x: the lesson is walked to its end — step={"index":10,"of":11,"kind":"done","puzzle":null,"prompt":null}
+ok   360x640@3x: every puzzle solved on the first try earns its star — 4 of 4, solved 4
+ok   360x640@3x: the coach spoke after every puzzle
+ok   360x640@3x: the coach's two voices are two elements — separate=true
+ok   360x640@3x: opens again with the network off — scene=path status=null
+ok   360x640@3x: offline, no JavaScript error — none
+ok   360x640@3x: no JavaScript error — none
+ok   360x640@3x: no console error — none
+ok   1280x800@2x: the game opens on the path — scene=path
+ok   1280x800@2x: the canvas is the viewport — 1280x800 vs 1280x800
+ok   1280x800@2x: the buffer is the cap, not the raw ratio — 2560x1600, cap 2, resolution 2
+ok   1280x800@2x: no sideways scroll — 1280 vs 1280
+ok   1280x800@2x: nothing on screen but the game — status=null
+ok   1280x800@2x: the path draws 12 stops and 3 packs — 15
+ok   1280x800@2x: one stop open at the start — open=1 done=0
+ok   1280x800@2x: the art is drawn — bands=3 markers=15 beads=124
+ok   1280x800@2x: the arrow's motion follows prefers-reduced-motion (no-preference) — animates=true, reduce=false
+ok   1280x800@2x: lesson 1 loads — {"n":1,"id":"board-and-pieces","title":"The board and the pieces","goal":"Learn the squares and how every piece moves.","puzzles":4}
+ok   1280x800@2x: the lesson is walked to its end — step={"index":10,"of":11,"kind":"done","puzzle":null,"prompt":null}
+ok   1280x800@2x: every puzzle solved on the first try earns its star — 4 of 4, solved 4
+ok   1280x800@2x: the coach spoke after every puzzle
+ok   1280x800@2x: the coach's two voices are two elements — separate=true
+ok   1280x800@2x: opens again with the network off — scene=path status=null
+ok   1280x800@2x: offline, no JavaScript error — none
+ok   1280x800@2x: no JavaScript error — none
+ok   1280x800@2x: no console error — none
+ok   360x640@3x-reduce: the game opens on the path — scene=path
+ok   360x640@3x-reduce: the canvas is the viewport — 360x640 vs 360x640
+ok   360x640@3x-reduce: the buffer is the cap, not the raw ratio — 720x1280, cap 2, resolution 2
+ok   360x640@3x-reduce: no sideways scroll — 360 vs 360
+ok   360x640@3x-reduce: nothing on screen but the game — status=null
+ok   360x640@3x-reduce: the path draws 12 stops and 3 packs — 15
+ok   360x640@3x-reduce: one stop open at the start — open=1 done=0
+ok   360x640@3x-reduce: the art is drawn — bands=3 markers=15 beads=93
+ok   360x640@3x-reduce: the arrow's motion follows prefers-reduced-motion (reduce) — animates=false, reduce=true
+ok   360x640@3x-reduce: with reduce, the arrow stands still — y -58 -> -58
+ok   360x640@3x-reduce: lesson 1 loads — {"n":1,"id":"board-and-pieces","title":"The board and the pieces","goal":"Learn the squares and how every piece moves.","puzzles":4}
+ok   360x640@3x-reduce: the lesson is walked to its end — step={"index":10,"of":11,"kind":"done","puzzle":null,"prompt":null}
+ok   360x640@3x-reduce: every puzzle solved on the first try earns its star — 4 of 4, solved 4
+ok   360x640@3x-reduce: the coach spoke after every puzzle
+ok   360x640@3x-reduce: the coach's two voices are two elements — separate=true
+ok   360x640@3x-reduce: opens again with the network off — scene=path status=null
+ok   360x640@3x-reduce: offline, no JavaScript error — none
+ok   360x640@3x-reduce: no JavaScript error — none
+ok   360x640@3x-reduce: no console error — none
+
+OK — every browser check passes.

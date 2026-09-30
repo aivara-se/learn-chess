@@ -1,0 +1,49 @@
+OFFLINE, BEFORE (main = 8ac8551), browser HTTP cache cleared so the precache is what is tested
+
+--- the worker's cache after one online visit ---
+cache names: ["learn-chess-v16"]
+code held by the worker:
+  /index.html
+  /src/board/art.js
+  /src/board/board.js
+  /src/board/geometry.js
+  /src/board/pieces.js
+  /src/engine/engine.js
+  /src/main.js
+  /src/scenes/placeholder.js
+  /vendor/pixi/pixi.min.mjs
+
+--- the reload with the network off ---
+offline reload with no browser cache: {"scene":null,"status":"There is no screen called “path”."}
+failed requests: ["/src/scenes/path.js net::ERR_FAILED"]
+
+OFFLINE, AFTER (chore/close-the-rebuild)
+
+cache names: ["learn-chess-v17"]
+code held by the worker: {
+ "learn-chess-v17": [
+  "/index.html",
+  "/src/data/lessons.js",
+  "/src/main.js",
+  "/src/map/banner.js",
+  "/src/map/edges.js",
+  "/src/map/marker.js",
+  "/src/map/route.js",
+  "/src/map/terrain.js",
+  "/src/path/layout.js",
+  "/src/path/progress.js",
+  "/src/path/sheet.js",
+  "/src/path/stop.js",
+  "/src/scenes/path.js",
+  "/src/ui/assets.js",
+  "/src/ui/button.js",
+  "/src/ui/chip.js",
+  "/src/ui/panel.js",
+  "/src/ui/theme.js",
+  "/vendor/pixi/pixi.min.mjs"
+ ]
+}
+browser HTTP cache cleared
+offline reload with no browser cache: {"scene":"path","status":null}
+pageerror: []
+failed requests: []
