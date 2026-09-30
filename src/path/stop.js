@@ -3,40 +3,39 @@
  * The illustration is the art's and lives in `src/map/marker.js`: the shield a
  * lesson wears, the medallion a detour wears, the boss crest, the pole behind the
  * shield, one overlay per state and the golden arrow on the stop the child is on.
- * What is left here is what only this screen knows — the stop's own words, where
- * its caption sits under its marker, the row of stars, Pip standing where the child
- * is, and the two questions a tap asks: was this a drag, and is the stop open.
+ * What is left here is what only this screen knows — the stop's own words, which
+ * side of the marker they hang on, the row of stars, Pip standing where the child
+ * is, and the two questions a tap asks: was this a pan, and is the stop open.
  *
- * Two things a reader should know.
+ * Three things a reader should know.
  *
  * **The caption is written on the painting, so it wears a halo.** The map used to
  * be drawn on the app's own pale ground, where ink was enough; it is a painted
- * world now, and the dark end is dark. Every word under a stop is the ink the kit
+ * world now, and it is busy everywhere. Every word on a stop is the ink the kit
  * writes in with the art's own parchment `#efdfbb` around it — `ink` on that
- * parchment is 11.9:1 and the parchment on the darkest ash is 13.9:1, so whichever
- * ground a stop stands on, one of the pair carries the words. That is the same
- * two-tone rule the art card measured its sprites on, applied to the app's text.
+ * parchment is 11.9:1 and the parchment on the darkest ground the painting has is
+ * 13.9:1, so whichever ground a stop stands on, one of the pair carries the words.
+ * That is the same two-tone rule the art card measured its sprites on, applied to
+ * the app's text.
  *
- * **The caption hangs off what the marker really drew** (`box.bottom`), not off a
- * number beside it, so a marker drawn a little taller than the circle it replaces
- * cannot have its name written through it. The stars keep the place they already
- * had, between the name and the line.
+ * **The caption hangs off what the marker really drew** (`box.top` / `box.bottom`),
+ * not off a number beside it, so a marker drawn a little taller than the circle it
+ * replaces cannot have its name written through it. The stars keep the place they
+ * already had, between the name and the line. `side` is the layout's: a stop
+ * standing off the road (a fork's branch) writes on the side it stands, so two
+ * branches' captions cannot meet in the middle, and a stop on the road writes below
+ * it. The stack is mirrored with the side, so the name is the line nearest the
+ * marker either way.
  *
- * **The caption is written at the kit's tiny tier.** At 360px wide a row is 152px,
- * the markers at its ends are 72px each, and what is left for the words is 74px —
- * a name, a row of stars and a line do not fit that, and drawn as the grid says the
- * deepest caption runs into the marker below it (`learn-chess#60`). Two things give
- * the words their room: `src/path/place.js` moves a row later until the boxes in the
- * rows above it clear, and the caption is set at the tiny tier the line already
- * wears, which is what lets the three rows of the pass fit the two bands they stand
- * in. Measured, at 12px the longest name in the course — "Bring out one new piece
- * every move" — wraps to three lines at the narrowest caption and to two in the wider
- * rows, so what the words really took is what the caption's own bottom says: 134px
- * below the stop's own point at 360, down to 88px under a boss. The star row is 16px
- * on the map for the same reason.
+ * **The words are the kit's tiny tier, and the room is the layout's.** `caption` is
+ * the width `src/path/layout.js` left this stop — the map's own edge on one side,
+ * the world's far edge on the other, and half the distance to the nearest stop whose
+ * ground it shares — so a caption is narrow where stops crowd and wide where they do
+ * not. The longest name in the course wraps to three lines at the narrowest caption
+ * the layout gives, which is what the layout reserves when it asks who shares ground.
  *
- * A tap is a tap, not a drag: the map moves under a finger, so the caller passes a
- * `panned()` test and a stop that was scrolled never counts as pressed. Pixi fires
+ * A tap is a tap, not a pan: the map moves under a finger, so the caller passes a
+ * `panned()` test and a stop that was panned never counts as pressed. Pixi fires
  * `pointertap` on whatever the finger lifted over however far it travelled, so the
  * guard belongs here rather than in the gesture.
  *
@@ -62,7 +61,7 @@ function captionText(string, { size, weight, colour, caption, halo = 3 }) {
   return node;
 }
 
-export function createStop(parent, { stop, state, glyph, line, puzzles, here, caption, room = 0, scale = 1, panned, onTap }) {
+export function createStop(parent, { stop, state, glyph, line, puzzles, here, caption, side = 'below', room = 0, scale = 1, panned, onTap }) {
   const k = clamped(scale);
   const node = new Container();
   node.position.set(stop.x, stop.y);
@@ -81,23 +80,22 @@ export function createStop(parent, { stop, state, glyph, line, puzzles, here, ca
     node.addChild(mark);
   }
 
+  /* The words, on the side the layout gave them: below the marker for a stop
+   * standing on the road, above it for a stop standing off the road — a fork's two
+   * branches write outwards, so their captions cannot meet in the middle and neither
+   * one is written over the road the other branch stands off. The stack is mirrored
+   * with it, so the name is always the line nearest the marker and the reading order
+   * is the same either way. Everything is measured off the marker's own box, so a
+   * marker drawn a little taller than the circle it replaces cannot have its name
+   * written through it. */
+  const gap = (n) => Math.round(n * k);
   const title = captionText(stop.title, {
     size: Math.round(TYPE.tiny * k),
     weight: '700',
     colour: COLOUR.ink,
     caption,
   });
-  title.anchor.set(0.5, 0);
-  title.position.set(0, marker.box.bottom + Math.round(6 * k));
-  node.addChild(title);
-  let low = title.position.y + title.height;
-
-  if (puzzles.of) {
-    const row = createStars(node, puzzles);
-    row.node.position.set(0, low + Math.round(4 * k));
-    low += Math.round(4 * k) + row.height;
-  }
-
+  const stars = puzzles.of ? createStars(node, puzzles) : null;
   const sub = captionText(line, {
     size: Math.round(TYPE.tiny * k),
     weight: '500',
@@ -105,12 +103,39 @@ export function createStop(parent, { stop, state, glyph, line, puzzles, here, ca
     caption,
     halo: 2,
   });
-  sub.anchor.set(0.5, 0);
-  sub.position.set(0, low + Math.round(5 * k));
+
+  let top;
+  let bottom;
+  if (side === 'above') {
+    title.anchor.set(0.5, 1);
+    title.position.set(0, marker.box.top - gap(6));
+    let high = title.position.y - title.height;
+    if (stars) {
+      stars.node.position.set(0, high - gap(4) - stars.height);
+      high = stars.node.position.y;
+    }
+    sub.anchor.set(0.5, 1);
+    sub.position.set(0, high - gap(5));
+    top = sub.position.y - sub.height;
+    bottom = marker.box.bottom;
+  } else {
+    title.anchor.set(0.5, 0);
+    title.position.set(0, marker.box.bottom + gap(6));
+    let low = title.position.y + title.height;
+    if (stars) {
+      stars.node.position.set(0, low + gap(4));
+      low += gap(4) + stars.height;
+    }
+    sub.anchor.set(0.5, 0);
+    sub.position.set(0, low + gap(5));
+    top = marker.box.top;
+    bottom = sub.position.y + sub.height;
+  }
+  node.addChild(title);
   node.addChild(sub);
 
-  /* The box is the ground the stop really asks for: the marker's own art above, the
-   * words under it, and the arrow when there is one. Pip stands *beside* the marker
+  /* The box is the ground the stop really asks for: the marker, the words on their
+   * side of it, and the arrow when there is one. Pip stands *beside* the marker
    * rather than under it, so the width his sprite takes is not the width the caption
    * needs — a stop whose marker had Pip in its box would claim the ground next to the
    * neighbouring stop's caption and measure a collision in pixels nothing is drawn in.
@@ -120,8 +145,8 @@ export function createStop(parent, { stop, state, glyph, line, puzzles, here, ca
   const box = {
     left: Math.min(marker.box.left, -words),
     right: Math.max(marker.box.right, words),
-    top: here ? Math.min(marker.box.top, -Math.round(PIP_LIFT * k) - pip) : marker.box.top,
-    bottom: sub.position.y + sub.height,
+    top: here ? Math.min(top, -Math.round(PIP_LIFT * k) - pip) : top,
+    bottom,
   };
 
   node.eventMode = 'static';

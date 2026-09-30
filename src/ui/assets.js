@@ -38,13 +38,11 @@ export async function loadChrome() {
 
 /* The map's art — the painted world, its route, its markers and its banner —
  * loaded by the path screen and by nothing else. The chrome a board draws is 15
- * small files; the map is 336KB of the offline list, and a screen that shows no
+ * small files; the map is 100KB of the offline list, and a screen that shows no
  * map should not pay for one. Every path here is a line in
  * `assets/manifest.json`, which is also where each file's drawn size is written. */
 export const MAP = {
-  meadow: 'assets/map/terrain-meadow.png',
-  pass: 'assets/map/terrain-pass.png',
-  ash: 'assets/map/terrain-ash.png',
+  world: 'assets/map/world.png',
   bead: 'assets/map/route-bead.png',
   beadGlow: 'assets/map/route-bead-glow.png',
   shield: 'assets/map/marker-shield.png',
