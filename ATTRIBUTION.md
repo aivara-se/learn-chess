@@ -54,27 +54,38 @@ not shipped, since the game never loads them.
 - `assets/ui/lock.png` — the mark on a lesson a learner has not unlocked yet.
 - `assets/ui/rank-badge.png` — the badge beside a rank on the path.
 
-## The lessons map (generated for this project)
+## The lessons map
 
-`assets/map/**` is the world the path is drawn on: three terrain bands (meadow and village, the
-rocky pass, the ash), twenty landmark props, the route's bead and its glow, the stop marker set
-(a shield, a detour medallion, a pole and pennant, the done / open / locked overlays, the boss
-crest, a gold star, the golden arrow) and the banner the star count is written on. It was **drawn
-as vector art for this project** — an SVG per sprite, and one `world.svg` for the whole world,
-in `assets/source/map/`. The PNGs are 2× exports of those sources, made in the authoring
-session; the repository holds the SVG and the exported PNG, and no build step. The three
-terrain bands are that one painting cut at three fixed rows, so the rows on either side of a cut
-are the same bytes and a stitched map cannot show a seam. `assets/source/map/contact-sheet.png`
-is the review aid that shows every sprite at the size the map draws it.
+`assets/map/**` is the world the path is drawn on: **one painting**
+(`assets/map/world.png`), twenty landmark props, the route's bead and its glow, the
+stop marker set (a shield, a detour medallion, a pole and pennant, the done / open /
+locked overlays, the boss crest, a gold star, the golden arrow) and the banner the star
+count is written on.
 
-**The Kingdom Rush campaign map the operator sent as a reference was an inspiration only.** What
-was taken from it is a composition — a journey read top to bottom from green to ash, a dotted
-route that curves with the ground, markers on poles, earned stars under a stop, a count in a
-banner, the contrast between a painted world and clean plastic chrome. No Ironhide Game Studio
-asset is used, copied or traced: no icon, no shield design, no character, no castle, no logo, and
-the screenshot itself is not in this repository or in any of its history. Every pixel shipped here
-is this project's own, and the palette is the one in `docs/DESIGN.md` plus the map's own greens,
-rocks and ash.
+**The painting is the operator's own, supplied for this project and cut for it.** The
+file he sent — `1000038600_compressed.webp`, 1584×672 and 147 KB — is not in this
+repository; what is committed is the game's cut of it, 640×272 at 40 colours, 51 KB,
+made by a box downscale to that pixel grid and a palette reduction to those 40 colours.
+He sent it, and holds whatever rights he has in it; the cut ships here on his word,
+for this game. Its ratio is 2.357:1 — the ratio both of the files he sent carry, which
+is not 21:9.
+
+**Everything else under `assets/map/` was drawn as vector art for this project** — an
+SVG per sprite in `assets/source/map/`, exported to PNG at 2× in the authoring session;
+the repository holds the SVG and the exported PNG, and no build step.
+`assets/source/map/contact-sheet.png` is the review aid that shows every sprite at the
+size the map draws it. The world's own vector source (`world.svg`) and the three terrain
+bands it was cut into went when the map became one painting (`#64`): those bands are not
+in this repository any more, because they are not in the game any more.
+
+**The Kingdom Rush campaign map the operator sent as a reference was an inspiration
+only.** What was taken from it is a composition — a journey the eye follows, a dotted
+route that curves with the ground, markers on poles, earned stars under a stop, a count
+in a banner, the contrast between a painted world and clean plastic chrome. No Ironhide
+Game Studio asset is used, copied or traced: no icon, no shield design, no character, no
+castle, no logo, and the screenshot itself is not in this repository or in any of its
+history. Every pixel of the drawn art shipped here is this project's own, and the
+palette is the one in `docs/DESIGN.md` plus the painting's own greens and browns.
 
 ## From this repository's own earlier release
 
