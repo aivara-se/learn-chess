@@ -12,10 +12,11 @@
  * **The viewport can be narrower than the world.** The map's column is
  * `min(window, 520)` and the painting is 520 wide, so on a phone the world is drawn
  * at the column's width and 1:1 vertically. That keeps both things the screen
- * cannot give up: the rows stay where the painting painted them (a uniform scale
+ * cannot give up: the rows start where the painting painted them (a uniform scale
  * would slide the ash front across the two branches of row 5 and leave the last row
- * with no ground under it), and the stops and captions keep the sizes the port
- * contract measured. What it costs is a horizontal squeeze below 520 — the props
+ * with no ground under it — and `src/path/place.js` may open a row within its band,
+ * never across a band's edge, so the regions still are the course), and the stops and
+ * captions keep the sizes the port contract measured. What it costs is a horizontal squeeze below 520 — the props
  * are 69% of their width at 360 — and the alternative, cropping, was measured and
  * rejected: it cuts the outer stops' captions in half and moves the ash front under
  * the wrong branch. The card leaves this call to the screen and the pull request

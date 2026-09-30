@@ -27,14 +27,16 @@ import { LESSONS, PACKS } from '../data/lessons.js';
  * contract sets them (a stop is 64, a pack is the 48px floor itself). */
 export const SIZE = { lesson: 64, boss: 64, pack: 48 };
 
-const ROW = 152;                 // one row of the map: a stop, its caption and a gap
+export const ROW = 152;          // one row of the map: a stop, its caption and a gap
 /* Where the first row's stop stands. The first stop on the path is the one the child
  * is on, so the room above it is Pip's, not the margin's: he stands above the circle
  * and would otherwise be behind the header on a fresh device. */
 export const TOP = 66;
 const COLUMN = [0.19, 0.5, 0.81]; // the three columns, as a share of the map's width
 const SLIP = 84;                 // where a pack goes when its row has no column free
-const GUTTER = 6;                // between two neighbouring stops' captions
+/* Between two neighbouring stops' captions. `src/path/place.js` draws the clear
+ * ground between any two stops' boxes with it, so the two rules agree. */
+export const GUTTER = 6;
 /* The room under the last stop for its caption, its stars and a margin. The
  * screen measures what it really drew and takes the larger of the two, so a
  * longer caption can grow the map but nothing can be cut off by a constant. */
@@ -44,6 +46,10 @@ export const FOOTING = 104;
  * captions can never touch and no caption can run off the map. The scene draws to
  * this and `tests/path.test.ts` holds both ends of it. */
 export const captionWidth = (mapWidth) => Math.max(60, Math.round(0.31 * mapWidth) - GUTTER);
+/* The narrowest room a row ever leaves a caption: three stops across the map. The room
+ * a stop really gets is `stop.caption`, which is wider wherever its row has the space. */
+const MIN_CAPTION = 60;
+const MARGIN = 6;                // the map's own edge, which no caption crosses
 
 /* How far down the path a lesson is. `seen` stops a course that goes in a circle
  * from hanging the renderer — `scripts/verify-site.ts` is what fails one. */
@@ -108,6 +114,22 @@ export function layout(width) {
     size: SIZE[kind(spot.unit)],
     slip: spot.slip,
   }));
+  /* A caption is as wide as the room its row leaves it: the stop beside it in the same
+   * row sets one edge, the map's own margin the other, and a stop alone in its row has
+   * the whole width to write in. The narrowest row in the course — three stops across a
+   * 360px map — leaves `captionWidth(360)`; a detour alone in a row gets much more, and
+   * the room is what decides how many lines a name takes. */
+  for (const stop of stops) {
+    const beside = stops
+      .filter((other) => other.y === stop.y && other.x !== stop.x)
+      .reduce((near, other) => Math.min(near, Math.abs(other.x - stop.x)), Infinity);
+    stop.caption = Math.max(MIN_CAPTION, Math.min(
+      2 * (stop.x - MARGIN),
+      2 * (width - stop.x - MARGIN),
+      Number.isFinite(beside) ? beside - GUTTER : Infinity,
+    ));
+  }
+
   const byId = new Map(stops.map((stop) => [stop.id, stop]));
 
   /* A leg is a `requires`: the lesson that has to be finished first, and the stop

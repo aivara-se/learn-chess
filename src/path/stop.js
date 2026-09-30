@@ -20,10 +20,19 @@
  * **The caption hangs off what the marker really drew** (`box.bottom`), not off a
  * number beside it, so a marker drawn a little taller than the circle it replaces
  * cannot have its name written through it. The stars keep the place they already
- * had, between the name and the line: the map's rows are 152px apart and a row
- * under the *marker* would push every caption into the marker below it — measured,
- * the deepest caption already reaches 132px below its stop at 360px wide while the
- * next row's marker starts 116px below it.
+ * had, between the name and the line.
+ *
+ * **The caption is written at the kit's tiny tier.** At 360px wide a row is 152px,
+ * the markers at its ends are 72px each, and what is left for the words is 74px —
+ * a name, a row of stars and a line do not fit that, and drawn as the grid says the
+ * deepest caption runs into the marker below it (`learn-chess#60`). Two things give
+ * the words their room: `src/path/place.js` moves a row later until the boxes in the
+ * rows above it clear, and the caption is set at the tiny tier the line already
+ * wears, which is what lets the three rows of the pass fit the two bands they stand
+ * in. Measured, at 12px the longest name in the course — "Bring out one new piece
+ * every move" — wraps to three lines at the narrowest caption and to two in the wider
+ * rows, so the caption's height is what the words really took: 132px at 360, down to
+ * 88px for a boss. The star row is 16px on the map for the same reason.
  *
  * A tap is a tap, not a drag: the map moves under a finger, so the caller passes a
  * `panned()` test and a stop that was scrolled never counts as pressed. Pixi fires
@@ -44,8 +53,8 @@ const HALO = 0xefdfbb;  // the art's parchment, around the words the app writes
 
 /* The app's text on the map, with the parchment behind its outline. `width` is the
  * halo's own size: 2px of parchment around a 12px line keeps the letterforms, and
- * 3px around a 13.5px name does the same — a halo that swallowed the counters would
- * cost more legibility than it bought. */
+ * 3px around the 12px name does the same — the name is the heavier of the two, and a
+ * halo that swallowed the counters would cost more legibility than it bought. */
 function captionText(string, { size, weight, colour, caption, halo = 3 }) {
   const node = text(string, { size, weight, colour, align: 'center', wrap: caption });
   node.style.stroke = { color: HALO, width: halo };
@@ -72,7 +81,7 @@ export function createStop(parent, { stop, state, glyph, line, puzzles, here, ca
   }
 
   const title = captionText(stop.title, {
-    size: Math.round((stop.kind === 'pack' ? TYPE.tiny : TYPE.small) * k),
+    size: Math.round(TYPE.tiny * k),
     weight: '700',
     colour: COLOUR.ink,
     caption,
@@ -99,9 +108,17 @@ export function createStop(parent, { stop, state, glyph, line, puzzles, here, ca
   sub.position.set(0, low + Math.round(5 * k));
   node.addChild(sub);
 
+  /* The box is the ground the stop really asks for: the marker's own art above, the
+   * words under it, and the arrow when there is one. Pip stands *beside* the marker
+   * rather than under it, so the width his sprite takes is not the width the caption
+   * needs — a stop whose marker had Pip in its box would claim the ground next to the
+   * neighbouring stop's caption and measure a collision in pixels nothing is drawn in.
+   * The width is what the words really drew (`title.width`), not the width they were
+   * wrapped to, so a caption that wrapped early does not claim ground it left empty. */
+  const words = Math.round(Math.max(title.width, sub.width) / 2);
   const box = {
-    left: Math.min(marker.box.left, -Math.round(caption / 2), here && !pipRight ? -(halfW + Math.round(2 * k) + pip) : 0),
-    right: Math.max(marker.box.right, Math.round(caption / 2), here && pipRight ? halfW + Math.round(2 * k) + pip : 0),
+    left: Math.min(marker.box.left, -words),
+    right: Math.max(marker.box.right, words),
     top: here ? Math.min(marker.box.top, -Math.round(PIP_LIFT * k) - pip) : marker.box.top,
     bottom: sub.position.y + sub.height,
   };

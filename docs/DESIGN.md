@@ -88,7 +88,8 @@ with a dark outline* was settled — the pixels say ink on parchment, twice now.
 
 - **The type ramp at scale 1**: body 17px (the old app's own comfortable line, and the starting point the
   chrome card names), label 17px, small 13.5px, tiny 12px. Nothing in the kit draws below `small`, and
-  `tiny` is for a specimen's own caption.
+  `tiny` is for a specimen's own caption and for the words under a stop on the map, where a
+  row leaves them 74px and a name, a row of stars and a line have to fit into it.
 - **48px is the floor for anything a child taps**, and it is enforced in the kit rather than remembered
   per screen: a button's height is `48 × scale`, its hit area is the same box, and a caller cannot ask for
   less — `scale()` clamps at 1. A caller that wants a smaller control wants a different control.
@@ -238,9 +239,9 @@ nothing about the course itself.
 |---|---|
 | the map's column | `min(window, 520)` — the width the old document capped the board's column at, so a wider window gets margins rather than a stretched phone |
 | a stop's marker | the art's (`src/map/marker.js`): a lesson's shield 64×72, a detour's medallion 48×54, a boss's crest 76×84 — 64 and 48 are the port's own two widths and 48 is the tap floor; the heights are the art's |
-| the type | the kit's ramp at scale 1 at every width — title 13.5px (a detour's 12), the line under it 12px. A finger does not get smaller on a laptop, and neither does a caption |
-| a caption's width | the space one column has between its neighbours — 105px at 360, 155px at 520 — so two captions can never touch |
-| a row | 152px; the first stop stands 66px down, which is Pip's room rather than a margin |
+| the type | the kit's ramp at scale 1 at every width — the words under a stop are the tiny tier, 12px for the name and for the line beneath it. A finger does not get smaller on a laptop, and neither does a caption: the row's own room is what decides, and 152px of row does not hold a 13.5px name and its stars |
+| a caption's width | the room its own row leaves it — the stop beside it sets one edge, the map's margin the other, and a stop alone in its row writes across the map. At 360 that is 106px in a row of three and 348px in a row of one, so a row with space in it gets a shorter name |
+| a row | 152px and the first stop 66px down, which is Pip's room rather than a margin. A row is *placed*: it starts on that grid and moves later only as far as the boxes really drawn above it demand, never out of the band its depth names (`src/path/place.js`), because the words under a deep row need more room than 152px leaves them |
 | the map's height | the deepest stop plus its marker plus a 104px footing, what was really drawn plus 16px, or the painting's own 1280px, whichever is more — a caption can grow the map and none can be cut off by a constant, and the ground is never short of the last thing drawn on it |
 
 **The state of a stop is a shape and a word, and the trail's shape is what says walked.** The marker set is
@@ -289,7 +290,8 @@ against, so the seams are the painting's and no band is stretched to a row. The 
 16px (a detour's thread at 10), spaced 12px walked and 22px not (8 and 15 for a thread), with the glow under
 each walked bead at 34px. The star counter is the art's banner at the top-right of the map's column, 360×78
 at its own size, carrying the two numbers `src/path/progress.js` derives. The star row under a stop is the
-art's gold star at 22px, one per drill, unearned ones ghosted rather than drawn in a second colour. The
+art's gold star at 16px, one per drill, unearned ones ghosted rather than drawn in a second colour —
+​smaller than the 22px the completion card wears, because the row has to fit the room under a stop. The
 edges are a dark vignette in the art's outline ink (`#1d222b`, 0.5 at the edge, over the last 72px), drawn
 at the map's own sides and the window's own top and bottom; nothing there animates, and the only thing on
 this map that moves is the arrow on the stop the child is on, which stops moving under
