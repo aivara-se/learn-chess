@@ -40,7 +40,7 @@ import {
   stops as allStops,
   totalDrills,
 } from '../src/path/progress.js';
-import { FACE, FORK, GUTTER, depth, layout, panFor } from '../src/path/layout.js';
+import { FACE, FORK, GUTTER, depth, detourDepth, layout, panFor } from '../src/path/layout.js';
 import { SPAN, WORLD, roadAt } from '../src/map/road.js';
 import { coverFit, panRange } from '../src/map/terrain.js';
 /* A record built from keys, so a test states where the child is rather than playing
@@ -152,6 +152,34 @@ describe('the map draws the graph', () => {
         expect(stop.depth).toBe(home.depth);
         expect(stop.y).toBe(Math.round(roadAt(stop.u) * WORLD.height * fit.scale));
       }
+    }
+  });
+
+  test('a detour off the deepest lesson stands before it, never on it', () => {
+    /* No detour hangs off the live course's last depth, so this is a shape a course
+       would only meet if one were added. At the deepest depth the half-step past the
+       lesson has nowhere to go — it is the end of the road — and a detour there would
+       stand on the stop it belongs to. */
+    for (let deepest = 1; deepest <= 20; deepest += 1) {
+      for (let d = 0; d <= deepest; d += 1) {
+        const at = detourDepth(d, deepest);
+        /* A half-integer: a lesson stands at every whole depth, so a detour can never
+           be drawn on a lesson's x — which is what keeps "two stops never stand in the
+           same place" true whatever the course grows into. */
+        expect(Number.isInteger(at)).toBe(false);
+        expect(at).toBeGreaterThan(0);
+        expect(at).toBeLessThan(deepest);
+      }
+      /* And the end of the road is never where it hangs. */
+      expect(detourDepth(deepest, deepest)).toBe(deepest - 0.5);
+    }
+    /* The live course's own detours, on its own deepest depth. */
+    for (const pack of PACKS as any[]) {
+      const home = depth(LESSONS.find((lesson: any) => lesson.id === pack.opensWith));
+      const at = detourDepth(home, DEEPEST);
+      expect(Number.isInteger(at)).toBe(false);
+      expect(at).toBeGreaterThan(home);
+      expect(at).toBeLessThanOrEqual(DEEPEST);
     }
   });
 

@@ -22,8 +22,11 @@
  *     for a stop standing on the road. `src/path/stop.js` draws it that way.
  *   - **A detour hangs off the road between two stops**: half a step past the lesson
  *     it belongs to, on the road itself, so the medallion reads as a stop beside the
- *     path rather than a third branch of a fork. No depth in this course holds more
- *     than two lessons and `scripts/verify-site.ts` fails a course that does.
+ *     path rather than a third branch of a fork. A detour off the *deepest* lesson has
+ *     no next stop to hang between, so it goes half a step *before* it instead — the
+ *     end of the road is where that lesson already stands (`detourDepth` below). No
+ *     depth in this course holds more than two lessons and `scripts/verify-site.ts`
+ *     fails a course that does.
  *
  * The layout is pure geometry — it takes the scale the window covers and returns
  * stops, legs and the world's drawn size, and knows nothing about a child's
@@ -77,6 +80,14 @@ export function depth(lesson, seen = new Set()) {
   return 1 + Math.max(...requires.map((id) => depth(LESSONS.find((l) => l.id === id), seen)));
 }
 
+/* Where a detour hangs, as a depth: half a step past the lesson that teaches it, so
+ * the stops either side cannot crowd it. A detour off the *deepest* lesson has no next
+ * stop to hang between — the end of the road is where that lesson already stands — so
+ * it goes half a step before it instead. Half-integer either way, and a lesson stands
+ * at every whole depth, so a detour's x is never a lesson's x; `tests/path.test.ts`
+ * holds both halves of that. */
+export const detourDepth = (home, deepest) => (home < deepest ? home + 0.5 : home - 0.5);
+
 const kind = (unit) => (unit.opensWith ? 'pack' : unit.boss ? 'boss' : 'lesson');
 
 let cache = null;
@@ -114,7 +125,7 @@ export function layout(scale) {
     /* A detour hangs off the road between this depth and the next: half a step past
      * the lesson that teaches it, so it cannot be crowded by the stops either side. */
     for (const pack of PACKS.filter((p) => group.some((l) => l.id === p.opensWith))) {
-      const u = across(Math.min(d + 0.5, deepest));
+      const u = across(detourDepth(d, deepest));
       placed.set(pack.id, { unit: pack, at: d, u, off: 0, on: roadAt(u) * world.height });
     }
   }
