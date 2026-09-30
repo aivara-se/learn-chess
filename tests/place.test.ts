@@ -27,7 +27,7 @@ describe('the map places its rows so that no stop is drawn over another', () => 
       const rows = depths.map((depth) => {
         const nominal = TOP + ROW * depth;
         const band = bandAt(nominal);
-        return { depth, nominal, min: band.y, max: band.y + band.height - 1 };
+        return { depth, nominal, max: band.y + band.height - 1 };
       });
 
       const placed = place({ rows, boxes: [...boxes], ground: Number.POSITIVE_INFINITY });
@@ -56,11 +56,11 @@ describe('the map places its rows so that no stop is drawn over another', () => 
 });
 
 describe('the placement itself', () => {
-  const band = { depth: 1, nominal: 218, min: 0, max: 445 };
+  const band = { depth: 1, nominal: 218, max: 445 };
   const box = (row, top, bottom) => ({ row, x: 180, left: -53, right: 53, top, bottom });
 
   test('a row opens by exactly the room the box above it needs', () => {
-    const rows = [band, { depth: 2, nominal: 370, min: 446, max: 889 }];
+    const rows = [band, { depth: 2, nominal: 370, max: 889 }];
     const boxes = [{ ...box(1, -36, -20), row: 1 }, box(2, -36, 148)];
     const placed = place({ rows, boxes, ground: Infinity });
     expect(placed.problems).toEqual([]);
@@ -73,7 +73,7 @@ describe('the placement itself', () => {
   });
 
   test('a row that cannot fit its band is reported, not hidden', () => {
-    const rows = [band, { depth: 2, nominal: 370, min: 446, max: 460 }];
+    const rows = [band, { depth: 2, nominal: 370, max: 460 }];
     const boxes = [{ ...box(1, -36, 268), row: 1 }, box(2, -36, 148)];
     const placed = place({ rows, boxes, ground: Infinity });
     expect(placed.problems.length).toBe(1);
@@ -81,7 +81,7 @@ describe('the placement itself', () => {
   });
 
   test('boxes that do not overlap across the map never constrain each other', () => {
-    const rows = [band, { depth: 2, nominal: 370, min: 446, max: 889 }];
+    const rows = [band, { depth: 2, nominal: 370, max: 889 }];
     const apart = [{ ...box(1, -36, 268), row: 1, x: 68 }, { ...box(2, -36, 148), x: 292 }];
     const placed = place({ rows, boxes: apart, ground: Infinity });
     expect(placed.y.get(2)).toBe(370);
