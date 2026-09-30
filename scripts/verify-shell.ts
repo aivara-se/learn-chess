@@ -67,22 +67,37 @@ for (const ref of refs) {
 /* The four tags a document needs that a walk of the refs cannot see. v1's site
  * check asserted every one of them; this file walks the refs it *finds*, so a tag
  * deleted outright is invisible to it — a deleted `<meta>` leaves no ref to
- * resolve and no problem to report. One line each, with what breaks when the tag
- * goes: without a viewport a phone lays the page out at 980px; without the
- * apple-touch-icon a home-screen tile is a blank square; without the image's size
- * and alt a share card renders wrong; and without the fallback a browser with no
- * script shows a child nothing at all. */
+ * resolve and no problem to report. One test each, and each one says which tag
+ * went.
+ *
+ * They ask for presence and nothing else — the share image's three properties
+ * included, which were one chained pattern and are now three separate tests. A
+ * chain also demands an *order* the page is free to choose: moving `og:image:alt`
+ * above `og:image:height`, with all four tags present and nothing deleted, failed
+ * the run and the message said the tags were missing. A check that fails for a
+ * reason that is not true is a check people learn to ignore, and the rule this
+ * exists for is presence. For the same reason the attribute order inside a tag is
+ * left alone: the lookaheads ask that the tag carries the property and a non-empty
+ * `content`, in whichever order it was written.
+ *
+ * What breaks when a tag goes: without a viewport a phone lays the page out at
+ * 980px; without the apple-touch-icon a home-screen tile is a blank square;
+ * without the image's size and alt a share card renders wrong; and without the
+ * fallback a browser with no script shows a child nothing at all. */
 const REQUIRED_TAGS: [string, RegExp][] = [
-  ['viewport meta', /<meta\s+name="viewport"[^>]*width=device-width/],
-  ['apple-touch-icon', /<link\s+rel="apple-touch-icon"[^>]*href="[^"]+"/],
-  ['og:image with its width, height and alt', /<meta\s+property="og:image"[\s\S]*?<meta\s+property="og:image:width"[\s\S]*?<meta\s+property="og:image:height"[\s\S]*?<meta\s+property="og:image:alt"/],
+  ['viewport meta', /<meta\s+(?=[^>]*name="viewport")(?=[^>]*content="[^"]*width=device-width)[^>]*>/],
+  ['apple-touch-icon', /<link\s+(?=[^>]*rel="apple-touch-icon")(?=[^>]*href="[^"]+")[^>]*>/],
+  ['og:image', /<meta\s+(?=[^>]*property="og:image")(?=[^>]*content="[^"]+")[^>]*>/],
+  ['og:image:width', /<meta\s+(?=[^>]*property="og:image:width")(?=[^>]*content="[^"]+")[^>]*>/],
+  ['og:image:height', /<meta\s+(?=[^>]*property="og:image:height")(?=[^>]*content="[^"]+")[^>]*>/],
+  ['og:image:alt', /<meta\s+(?=[^>]*property="og:image:alt")(?=[^>]*content="[^"]+")[^>]*>/],
   ['noscript fallback', /<noscript>[\s\S]*?<\/noscript>/],
 ];
 for (const [what, pattern] of REQUIRED_TAGS) {
   if (!pattern.test(html)) problems.push(`index.html carries no ${what}: the old site check asserted it, and nothing else here notices it go`);
 }
 
-checks.push(`index.html loads one module (src/main.js), its ${refs.length} references are this site's, and its four required tags are present`);
+checks.push(`index.html loads one module (src/main.js), its ${refs.length} references are this site's, and its four required tags are present (the share image one property at a time)`);
 
 /* 2. the manifest is the app's identity: it parses, it stays on this site, and
  * the icons it names are the ones a home screen installs with. Those icons are

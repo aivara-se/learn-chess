@@ -73,7 +73,9 @@ against the terrain band its region names. Green says the arithmetic is right. I
 says nothing about what a child sees.
 
 **2. `bun run scripts/verify-shell.ts` — the tree as a served site.** The page names
-one module and nothing off this origin; the manifest is this site's; the offline
+one module and nothing off this origin, and carries the four tags a walk of those
+references cannot see — the viewport, the apple-touch-icon, the share image with its
+width, height and alt, and the no-script fallback; the manifest is this site's; the offline
 worker's list is the first frame's closure and names the screen the game opens on
 (§4); its cache name is free and above the floor the wipe left; the vendored library
 is the version and the hash `vendor/README.md` records; `.nojekyll` is in place, so
