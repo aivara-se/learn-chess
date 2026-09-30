@@ -214,18 +214,17 @@ the kit loops, and nothing moves while a child is thinking about their own move.
 ## 9. What this card does not own
 
 `src/board/**` (#39) owns the board and the pieces; `src/scenes/lesson.js` (#41) and `src/scenes/path.js`
-(#42) own their screens; `sw.js` is nobody's here. `src/scenes/kit.js` is this card's own route and is the
-page a reviewer looks at.
+(#42) own their screens. `src/scenes/kit.js` is this card's own route and is the page a reviewer looks at.
 
-**`src/scenes/kit.js` is not in `sw.js`'s `SHELL` list**, and that is a deviation, written down rather than
-hidden. The rule in `sw.js` is that a file the app needs to draw goes into its list in the same commit —
-and `placeholder.js` is already there — but this card's `Do not touch` list names `sw.js`, so the list is
-left alone and the cost is stated: a returning visitor's worker fetches `kit.js` from the network the
-first time the route is asked for and caches it from then on (the fetch handler is cache-first and stores
-what it fetches), so the route works offline after one online visit. **No file goes stale and no `CACHE`
-bump is owed** — nothing already in `SHELL` changed. Two lines make it exact if a reviewer would rather
-have it: `'src/scenes/kit.js'` in `SHELL`, and `CACHE` to a name no branch holds. It is not a screen a
-learner reaches, so it is also the one route that could be dropped from the offline list on purpose.
+**`src/scenes/kit.js` is not in `sw.js`'s `SHELL` list, and that is now a rule rather than a deviation.**
+`SHELL` is the first frame's closure: the files the game needs to boot and to draw the screen it opens
+on, and `scripts/verify-shell.ts` fails the tree when the list does not name that screen or is not closed
+under its own imports. A screen the router imports on demand — `#/kit`, `#/lesson/1`, `#/board-fixture/*`
+— is fetched when it is first opened and cached from then on. What that costs, and why the list is not
+simply "every screen", is [`docs/SYSTEM.md`](SYSTEM.md) §4. Until #43 this section was a deviation note,
+written because this card's `Do not touch` list named `sw.js`: the list still held the shell's deleted
+`placeholder.js` and named none of the files the game actually opens on, which is how a returning
+visitor's browser met *"There is no screen called `path`"* with the network off.
 
 ## 10. The path — the map a child walks
 
@@ -324,23 +323,21 @@ that a shaky finger still taps; `~/tmp/pw/path-check.ts` drags *over a stop* and
 **A locked stop is a door, not a wall.** It opens a sheet — the kit's card on a scrim, with the raised
 button in front and the flat one for "not now" — that names the lesson which opens it, and offers the
 button that walks there when that lesson is playable. The map's stops and the sheet's buttons both report
-where they are, so a browser check taps a control rather than its own guess at the pixels. Two things are
-deliberately not this card's: the route a stop hands over (`#/lesson/<n>` for a lesson, `#/pack/<id>` for a
-detour — `src/scenes/lesson.js` is `#41`'s, so the button lands on the shell's honest "no screen called
-lesson" until it exists), and a per-square name for the board, which is the board card's business.
+where they are, so a browser check taps a control rather than its own guess at the pixels. A per-square
+name for the board is the board card's business and is not solved here.
 
-**The cache-name debt `#53` reported is not owed, measured against this tree.** That paragraph said
-`src/main.js` changed with the map and that a name was therefore owed and unpaid. Neither half holds: the
-map's commits touch `src/scenes/path.js`, `src/path/stop.js`, `src/ui/assets.js` and `src/map/**`, and
-**none of those is in `sw.js`'s `SHELL` list** (checked file by file with `git log --oneline -- <path>`,
-against the list `sw.js` carries). The change that does matter here — `main.js`'s `DEFAULT_SCENE` is
-`'path'`, so the game opens on the map — landed with `#42` (`34541d3`, the path card), and the cache name
-was bumped **after** it, in the board card's own commit (`b57eb26`, `learn-chess-v15` → `v16`, the same
-commit that added `src/board/**` to `SHELL`). `git log b57eb26..main -- <every file in SHELL>` is empty,
-so no visitor is left holding a stale shell file: a worker that held `v15` installs the new one and
-re-fetches the shell. The ladder, **read off the branches as `sw.js` says to** rather than carried over
-from a paragraph (`for br in $(git branch -r); do git show $br:sw.js | grep -m1 '^const CACHE'; done`):
-`main` serves `learn-chess-v16`, `feat/lesson-end-to-end` — the one open pull request — holds the same
-name, and nothing holds `v17`. A change to a file in `SHELL` takes `v17` in the same commit; the map's own
-files (`src/scenes/path.js`, `src/path/**`, `src/ui/**`, `src/map/**`) are the on-demand class — fetched
-once, cached from then on — and change neither the name nor that answer.
+**The cache name is `learn-chess-v17`, and the change that took it is `#43`'s — the one this paragraph
+used to argue was not owed.** The argument was true as far as it went: the map's commits touch
+`src/scenes/path.js`, `src/path/**`, `src/ui/**` and `src/map/**`, none of which was in `SHELL`, and
+nothing already in `SHELL` had changed since the board card's `v15` → `v16`. But that was a description of
+the bug rather than a reason the name was free: **the files the map is drawn from are the files the game
+opens on**, and a `SHELL` that does not name them leaves the offline game broken — a visitor who loaded it
+once had `index.html` and `src/main.js` in the precache and nothing else, and the router answered *"There
+is no screen called `path`"* on the next load with no network. `#43` puts the screen the game opens on and
+its closure into `SHELL`, deletes the placeholder screen the list still named, takes the next name nobody
+holds, and puts both rules into `scripts/verify-shell.ts` so the list cannot go stale again. The ladder,
+read off the branches rather than from a paragraph
+(`for br in $(git branch -r); do git show $br:sw.js | grep -m1 '^const CACHE'; done`), stood at `v16` on
+`main` and on every other branch at `v16` or below, so `v17` was the name nobody held. A change to a file
+in `SHELL`, or to the list, takes the next name in the same commit; [`docs/SYSTEM.md`](SYSTEM.md) §4 is the
+rule and what the on-demand class costs.
