@@ -182,7 +182,7 @@ checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.pro
     guard.add(l.id);
     return 1 + Math.max(...reqs.map((r: string) => depth(LESSONS.find((x) => x.id === r), guard)));
   };
-  checks.push(`the path: ${LESSONS.length} stops, ${roots.length} open at the start, every stop reachable, ${Math.max(...LESSONS.map((l) => depth(l))) + 1} rows deep`);
+  checks.push(`the path: ${LESSONS.length} stops, ${roots.length} open at the start, every stop reachable, spread over ${Math.max(...LESSONS.map((l) => depth(l))) + 1} depths`);
 
   /* A depth of the path is a place across the painting, and a fork is two branches —
      one above the road the painting draws and one below it. A third lesson at one

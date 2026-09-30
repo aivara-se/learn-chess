@@ -186,7 +186,7 @@ over from a plan is a number that is wrong, which is the second rule above.
   end to end in a browser shows a verdict and a reply in two separate elements after every puzzle.
 - **The path, as data.** Three forks, two merges, every end of the path finishing in a boss game, and the
   drawn map derived from `requires` rather than from a coordinate table — `bun run scripts/verify-site.ts`
-  counts 12 stops, one open at the start, every stop reachable, eight rows deep. The pictures are not the
+  counts 12 stops, one open at the start, every stop reachable, spread over eight depths. The pictures are not the
   port's: the map was re-arted afterwards, and "The path" above says so.
 - **The maths.** A star is a first-try solve, puzzles solved and stars are two numbers, the rank ladder is
   `v1`'s verbatim, and every total is derived rather than written down.
