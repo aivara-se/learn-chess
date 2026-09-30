@@ -1,10 +1,14 @@
-/* The lesson — `#/lesson/<n>`, where a child reads one idea and plays the
- * puzzles that teach it.
+/* The stop a child plays — `#/lesson/<n>` for a lesson, `#/pack/<id>` for a
+ * detour — where they read one idea and play the puzzles that teach it.
  *
- * A lesson is data (`src/data/lessons.js`) and it is walked as a list of steps:
+ * A stop is data (`src/data/lessons.js`) and it is walked as a list of steps:
  * a paragraph to read, the diagram to look at, the puzzles to play, and the
  * panel that says what is open now. `src/lesson/steps.js` makes that list; this
- * screen draws it.
+ * screen draws it. **A pack is this screen under a second address**: the route
+ * resolves differently (`src/lesson/address.js`) and the words around the board
+ * say what a detour needs to say, and the drill loop, the coach, the star rule
+ * and the record are the ones below — once, because a second copy of them is
+ * what `docs/PORT.md` says a port must never become.
  *
  * **The drill loop is `v1`'s, whole.** The prompt, the hint, tapping a piece and
  * then a square it can reach, the wrong answer in the app's own words, the star
@@ -35,7 +39,9 @@
  * `window.learnChessLesson` is the handle a browser check reads, beside the
  * shell's own `window.learnChess` and the kit's `window.learnChessKit`: the step
  * the screen is on, every square where it is really drawn, the controls, the
- * coach's two voices, and what was written to the child's record.
+ * coach's two voices, and what was written to the child's record. A check reads
+ * it on `#/pack/<id>` too — the handle is the screen's, and the screen is one,
+ * whichever address opened it.
  */
 import { Container, Graphics, Rectangle } from '../../vendor/pixi/pixi.min.mjs';
 import { COLOUR, GAP, LIFT, PAD, TAP_FLOOR, TYPE, card, text } from '../ui/theme.js';
@@ -48,6 +54,7 @@ import { createBoard } from '../board/board.js';
 import { createPieces } from '../board/pieces.js';
 import { cornerOf, squareSize } from '../board/geometry.js';
 import { makeMove, parseFen, pieceAt, squareName, toFen } from '../engine/engine.js';
+import { lessonAddress } from '../lesson/address.js';
 import { nextStop, numberOf, openedBy, puzzlesIn, stepsFor } from '../lesson/steps.js';
 import { describeMove, grade, NAMES } from '../lesson/coach.js';
 import { answered, answerMove, moveFor, targetsFor } from '../lesson/drill.js';
@@ -365,7 +372,7 @@ function play(move) {
      * what the child did: one wrong move, or one look at the hint, and the
      * puzzle is solved without a star. A puzzle the coach had to show is still
      * solved — the path opens on it like any other — it just carries no star. */
-    written = solve(view.lesson, drill.index, { firstTry: ok && drill.tries === 1 && !drill.hinted });
+    written = solve(view.unit, drill.index, { firstTry: ok && drill.tries === 1 && !drill.hinted });
   }
   drawStep();
   announce(ok
@@ -483,13 +490,16 @@ function drawHeader() {
   const step = view.steps[view.step];
   const puzzles = puzzlesIn(view.steps);
   const at = puzzles.indexOf(step);
-  header.line.text = at >= 0
-    ? `Lesson ${numberOf(view.lesson)} of ${LESSONS.length} · Puzzle ${at + 1} of ${puzzles.length}`
-    : `Lesson ${numberOf(view.lesson)} of ${LESSONS.length}`;
+  /* Where the child is and how far in: a lesson is its number on the path, and a
+   * detour is its own name, because it has no number to count to. */
+  const where = progress.isPack(view.unit)
+    ? view.unit.title
+    : `Lesson ${numberOf(view.unit)} of ${LESSONS.length}`;
+  header.line.text = at >= 0 ? `${where} · Puzzle ${at + 1} of ${puzzles.length}` : where;
 
   const record = progress.read();
   const won = new Set(puzzles
-    .filter((entry) => progress.firstTry(record, progress.drillKey(view.lesson.id, entry.i)))
+    .filter((entry) => progress.firstTry(record, progress.drillKey(view.unit.id, entry.i)))
     .map((entry) => entry.i));
   header.dots.removeChildren().forEach((node) => node.destroy({ children: true }));
   const dots = stepDots(header.dots, view.steps, view.step, won);
@@ -535,7 +545,7 @@ function place() {
  * a button is not a place to wrap a sentence, and a lesson title is up to forty
  * characters, so the longest name that fits the column is the one drawn — the
  * card's own line names the stop in full either way. */
-const onwardFrom = (record) => openedBy(record, view.lesson).find((entry) => !entry.boss) ?? nextStop(record);
+const onwardFrom = (record) => openedBy(record, view.unit).find((entry) => !entry.boss) ?? nextStop(record);
 
 function labelFor(title, width) {
   for (const candidate of [`Next: ${title}`, title, 'Next lesson']) {
@@ -606,10 +616,53 @@ function showReply() {
   if (view.maxScroll > 0) applyScroll(view.maxScroll);
 }
 
+/* The words a lesson and a detour do not share. Both are stops on the same
+ * screen, so the difference is only what they have to say: a lesson is its
+ * number on the path, its title and its goal; a detour has no number and no
+ * goal, and carries the idea its puzzles practise — which is the step's own text
+ * below this header rather than a second copy of it here. */
+function openingLines(unit) {
+  if (progress.isPack(unit)) {
+    return [
+      { string: 'Detour', size: TYPE.tiny, weight: '700', colour: COLOUR.inkMute },
+      { string: unit.title, size: TYPE.body, weight: '700' },
+    ];
+  }
+  return [
+    { string: `Lesson ${numberOf(unit)}`, size: TYPE.tiny, weight: '700', colour: COLOUR.inkMute },
+    { string: unit.title, size: TYPE.body, weight: '700' },
+    { string: unit.goal, size: TYPE.small, weight: '500', colour: COLOUR.inkSoft },
+  ];
+}
+
+/* What the panel says when there is nothing left to play. A detour is not a
+ * lesson on the path — it is offered beside one and opens nothing — so the
+ * course-wide sentence a lesson earns would be about the wrong thing here, and
+ * the detour gets its own words. */
+function finishWords(unit, stars, everyLesson) {
+  if (everyLesson) {
+    return {
+      heading: 'Every lesson done!',
+      prose: 'Every lesson and every puzzle. The path ends at the two boss games — win those and the whole course is yours.',
+    };
+  }
+  const what = progress.isPack(unit) ? 'detour' : 'lesson';
+  if (stars.stars === stars.of) {
+    return {
+      heading: 'All the stars!',
+      prose: `Every puzzle first time. Brilliant — the ${what} is done and it is a rank closer.`,
+    };
+  }
+  return {
+    heading: progress.isPack(unit) ? 'Detour finished!' : 'Lesson finished!',
+    prose: `Nice work, that is the ${what} done. Play any puzzle again to try for the stars you missed.`,
+  };
+}
+
 /* A step of the lesson. The blocks list is what `place()` walks; the board is
  * re-laid here, once per step, because its room is what the other blocks leave. */
 function buildStep() {
-  const lesson = view.lesson;
+  const unit = view.unit;
   const step = view.steps[view.step];
   const column = view.column;
   const width = column - 2 * PAD;
@@ -626,16 +679,12 @@ function buildStep() {
   if (step.kind === 'read' || step.kind === 'look') {
     const lines = [];
     if (step.kind === 'read') {
-      if (step.i === 0) {
-        lines.push({ string: `Lesson ${numberOf(lesson)}`, size: TYPE.tiny, weight: '700', colour: COLOUR.inkMute });
-        lines.push({ string: lesson.title, size: TYPE.body, weight: '700' });
-        lines.push({ string: lesson.goal, size: TYPE.small, weight: '500', colour: COLOUR.inkSoft });
-      }
+      if (step.i === 0) lines.push(...openingLines(unit));
       lines.push({ string: step.text, size: TYPE.body, weight: '500', colour: COLOUR.inkSoft });
     } else {
       lines.push({ string: 'Look at this', size: TYPE.body, weight: '700' });
-      if (lesson.diagramCaption) {
-        lines.push({ string: lesson.diagramCaption, size: TYPE.tiny, weight: '500', colour: COLOUR.inkMute });
+      if (unit.diagramCaption) {
+        lines.push({ string: unit.diagramCaption, size: TYPE.tiny, weight: '500', colour: COLOUR.inkMute });
       }
     }
     const page = cardBox(view.page, { width, lines });
@@ -721,25 +770,21 @@ function buildStep() {
 
   /* done */
   const record = progress.read();
-  const stars = progress.puzzles(record, lesson);
-  const everyLesson = LESSONS.filter((entry) => !entry.boss).every((entry) => progress.finished(record, entry));
-  const opened = openedBy(record, lesson);
+  const stars = progress.puzzles(record, unit);
+  /* The course-wide sentence is a lesson's: a detour opens nothing and is
+   * required by nothing, so finishing one is not the course being finished. */
+  const everyLesson = !progress.isPack(unit)
+    && LESSONS.filter((entry) => !entry.boss).every((entry) => progress.finished(record, entry));
+  const opened = openedBy(record, unit);
   const onward = onwardFrom(record);
-  const heading = everyLesson
-    ? 'Every lesson done!'
-    : stars.stars === stars.of ? 'All the stars!' : 'Lesson finished!';
-  const prose = everyLesson
-    ? 'Every lesson and every puzzle. The path ends at the two boss games — win those and the whole course is yours.'
-    : stars.stars === stars.of
-      ? 'Every puzzle first time. Brilliant — that is a lesson done and a rank closer.'
-      : 'Nice work, that is the lesson done. Play any puzzle again to try for the stars you missed.';
+  const words = finishWords(unit, stars, everyLesson);
   const lines = [
-    { string: heading, size: TYPE.body, weight: '700' },
+    { string: words.heading, size: TYPE.body, weight: '700' },
     { string: `${stars.stars} of ${stars.of} ${stars.of === 1 ? 'star' : 'stars'} first time`, size: TYPE.small, weight: '700', colour: stars.stars === stars.of ? COLOUR.good : COLOUR.inkSoft },
   ];
   const row = starRow(view.page, stars.stars, stars.of);
   lines.push({ node: row.node, height: row.height });
-  lines.push({ string: prose, size: TYPE.body, weight: '500', colour: COLOUR.inkSoft });
+  lines.push({ string: words.prose, size: TYPE.body, weight: '500', colour: COLOUR.inkSoft });
   if (opened.length) {
     lines.push({
       string: opened.length === 1
@@ -789,7 +834,7 @@ function enter(index) {
   const step = view.steps[view.step];
   announce(step.kind === 'drill'
     ? `Puzzle ${puzzlesIn(view.steps).indexOf(step) + 1}. ${step.drill.prompt}`
-    : `${view.lesson.title}. Step ${view.step + 1} of ${view.steps.length}.`);
+    : `${view.unit.title}. Step ${view.step + 1} of ${view.steps.length}.`);
 }
 
 /* ---- a screen that cannot draw what it was asked for ---- */
@@ -820,29 +865,51 @@ function refuse(context, title, body) {
 
 /* ---- the screen ---- */
 
-function start(context, { step = 0 } = {}) {
-  const asked = Number(context.params[0]);
-  const index = Number.isInteger(asked) ? asked - 1 : -1;
-  const lesson = LESSONS[index];
+/**
+ * The screen a stop is played on. `address` is the whole of the difference
+ * between the two routes that reach it: it takes the route's params and answers
+ * the stop they name, or a refusal in words (`src/lesson/address.js`). Everything
+ * below is the same for a lesson and a detour, and that is the point — a second
+ * drill loop is what `docs/PORT.md` says a port must never become.
+ */
+export function scene(address) {
+  return {
+    mount(context) {
+      start(context, address);
+    },
+
+    /* A new size is a new page: the blocks are measured against the width, so the
+     * step is rebuilt and the child is left on the step they were on. */
+    resize(context) {
+      const step = view ? view.step : 0;
+      window.learnChessLesson = null;
+      stopScene(context);
+      start(context, address, { step });
+    },
+
+    /* The shell destroys the layer's children after this runs; the handle goes
+     * with the screen, so a late check cannot read a destroyed one. */
+    unmount(context) {
+      stopScene(context);
+      announce('');
+    },
+  };
+}
+
+function start(context, address, { step = 0 } = {}) {
+  const found = address(context.params);
+  if (found.refuse) return refuse(context, found.refuse.title, found.refuse.body);
+  const unit = found.unit;
   const column = Math.min(context.width, COLUMN);
 
-  if (!lesson) {
-    return refuse(context, 'That lesson is not here.', `The course has ${LESSONS.length} stops, so #/lesson/1 to #/lesson/${LESSONS.length} are the addresses.`);
-  }
   const record = progress.read();
-  if (lesson.boss) {
-    /* A boss stop is finished by a game against Pip, and the screen that plays
-     * that game is a card of its own. Say so rather than drawing a lesson with
-     * nothing to do in it. */
-    return refuse(context, lesson.title, 'This stop is finished by a game against Pip rather than by puzzles, and the game screen is not built yet.');
-  }
-  if (!progress.open(record, lesson)) {
-    const held = (lesson.requires ?? [])
-      .map((id) => progress.byId.get(id))
-      .find((stop) => stop && !progress.finished(record, stop));
+  if (!progress.open(record, unit)) {
+    /* The one lesson still holding it shut: the lesson that teaches a detour's
+     * idea, or the stops the graph requires of a lesson. */
+    const held = progress.byId.get(progress.heldBy(record, unit));
     return refuse(context, 'Not open yet', held
-      ? `Finish “${held.title}” first — then “${lesson.title}” opens.`
-      : `“${lesson.title}” is not open on the path yet.`);
+      ? `Finish “${held.title}” first — then “${unit.title}” opens.`
+      : `“${unit.title}” is not open on the path yet.`);
   }
 
   /* A fresh screen has nothing walking on it. */
@@ -852,13 +919,13 @@ function start(context, { step = 0 } = {}) {
     root: new Container(),
     column,
     left: Math.round((context.width - column) / 2),
-    step: Math.max(0, Math.min(stepsFor(lesson).length - 1, step)),
+    step: Math.max(0, Math.min(stepsFor(unit).length - 1, step)),
     scroll: 0,
     dragged: false,
     drag: null,
     blocks: [],
-    lesson,
-    steps: stepsFor(lesson),
+    unit,
+    steps: stepsFor(unit),
     header: null,
     page: null,
     pinned: null,
@@ -926,7 +993,7 @@ function start(context, { step = 0 } = {}) {
 
   window.learnChessLesson = handle();
   const first = view.steps[view.step];
-  announce(first.kind === 'drill' ? `Puzzle 1. ${first.drill.prompt}` : `${lesson.title}. Step 1 of ${view.steps.length}.`);
+  announce(first.kind === 'drill' ? `Puzzle 1. ${first.drill.prompt}` : `${unit.title}. Step 1 of ${view.steps.length}.`);
 }
 
 function stopScene(context) {
@@ -950,13 +1017,22 @@ function handle() {
     return { ...size, x: Math.round(at.x + size.width / 2), y: Math.round(at.y + size.height / 2), label: entry.label() };
   };
   return {
-    lesson: () => ({
-      n: numberOf(view.lesson),
-      id: view.lesson.id,
-      title: view.lesson.title,
-      goal: view.lesson.goal,
-      puzzles: (view.lesson.drills ?? []).length,
-    }),
+    /* The stop being played. `n` is its number on the path, and a detour has
+     * none — it is offered beside a lesson rather than on it, so a check names it
+     * by its id. The key stays `lesson`: it is the screen's own handle, and a
+     * check should not have to know which of the two addresses opened it. */
+    lesson: () => {
+      const pack = progress.isPack(view.unit);
+      return {
+        kind: pack ? 'pack' : 'lesson',
+        n: pack ? null : numberOf(view.unit),
+        id: view.unit.id,
+        title: view.unit.title,
+        goal: view.unit.goal ?? null,
+        idea: view.unit.idea ?? null,
+        puzzles: (view.unit.drills ?? []).length,
+      };
+    },
     steps: () => view.steps.map((step) => step.kind),
     step: () => {
       const step = view.steps[view.step];
@@ -1027,7 +1103,7 @@ function handle() {
     },
     turn: () => (view.turnCap ? view.turnCap.text : ''),
     stars: () => {
-      const counted = progress.puzzles(progress.read(), view.lesson);
+      const counted = progress.puzzles(progress.read(), view.unit);
       return { got: counted.stars, of: counted.of, solved: counted.solved };
     },
     record: () => progress.read(),
@@ -1041,24 +1117,6 @@ function handle() {
   };
 }
 
-export default {
-  mount(context) {
-    start(context);
-  },
-
-  /* A new size is a new page: the blocks are measured against the width, so the
-   * step is rebuilt and the child is left on the step they were on. */
-  resize(context) {
-    const step = view ? view.step : 0;
-    window.learnChessLesson = null;
-    stopScene(context);
-    start(context, { step });
-  },
-
-  /* The shell destroys the layer's children after this runs; the handle goes
-   * with the screen, so a late check cannot read a destroyed one. */
-  unmount(context) {
-    stopScene(context);
-    announce('');
-  },
-};
+/* The route the router reaches by name: `#/lesson/<n>` and nothing else. The pack
+ * route is `src/scenes/pack.js`, and it is this screen with the other address. */
+export default scene(lessonAddress);
