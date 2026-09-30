@@ -232,6 +232,14 @@ function build(context) {
      * and the ground colour below the ash is the ash's own. */
     ground: terrain.height + FOOTING,
   });
+  /* The other half of `place`'s contract, and the reason it returns `problems`: a row
+   * whose words need more room than its band leaves is clamped to the band and named
+   * here, never hidden. Nothing on this screen can open a band — that is the course's
+   * depth and the painting's own regions — so a course that no longer fits is a fact
+   * about that course, and the console is the one place it can be read. The real course
+   * places cleanly (`tests/place.test.ts` holds the drawn boxes to it), so this is the
+   * alarm for the day a lesson's caption stops fitting, not a path a child walks. */
+  if (placed.problems.length) console.warn('the map could not place every row inside its band:', placed.problems.join('; '));
   for (const entry of stops) {
     const y = placed.y.get(entry.spot.depth);
     if (y === undefined || y === entry.spot.y) continue;
