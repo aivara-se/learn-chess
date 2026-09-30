@@ -22,7 +22,8 @@ still hold — the tap floor, the board's room, the motion rule. `docs/PORT.md` 
 | `src/ui/speech.js` | the coach — two voices, two elements |
 | `src/scenes/kit.js` | `#/kit`, `#/kit/phone`, `#/kit/desktop`: every component, at both sizes |
 | `src/scenes/path.js` | `#/path`: the map a child walks, and the screen the game opens on (§10) |
-| `src/path/layout.js` | where every stop stands, derived from the course's `requires` graph |
+| `src/path/layout.js` | where every stop stands: its x from the course's `requires` graph, its y from the road the painting draws |
+| `src/map/road.js` | the painting's own size, and the road's centre down it, measured off the painting (§10) |
 | `src/path/progress.js` | the child's record, the stars, the states and the rank |
 | `src/path/stop.js` | one stop drawn: its state, its caption, its stars, Pip |
 | `src/path/sheet.js` | what a tap on a door answers with |
@@ -88,8 +89,8 @@ with a dark outline* was settled — the pixels say ink on parchment, twice now.
 
 - **The type ramp at scale 1**: body 17px (the old app's own comfortable line, and the starting point the
   chrome card names), label 17px, small 13.5px, tiny 12px. Nothing in the kit draws below `small`, and
-  `tiny` is for a specimen's own caption and for the words under a stop on the map, where a
-  row leaves them 74px and a name, a row of stars and a line have to fit into it.
+  `tiny` is for a specimen's own caption and for the words on a stop on the map, where
+  the room is the layout's and a name, a row of stars and a line have to fit into it.
 - **48px is the floor for anything a child taps**, and it is enforced in the kit rather than remembered
   per screen: a button's height is `48 × scale`, its hit area is the same box, and a caller cannot ask for
   less — `scale()` clamps at 1. A caller that wants a smaller control wants a different control.
@@ -229,117 +230,140 @@ visitor's browser met *"There is no screen called `path`"* with the network off.
 
 ## 10. The path — the map a child walks
 
-`#/path` is `#42`'s screen and the one the game opens on, because it is where a learner starts: one open
-stop, the rest of the course locked behind it, and Pip standing on the one they are up to. The stops, the
-forks and the legs are the course's `requires` graph drawn. `src/path/layout.js` derives the layout and
-`src/path/progress.js` says what state each stop is in; the screen draws what those two return and decides
-nothing about the course itself.
+`#/path` is the screen the game opens on, because it is where a learner starts: one
+open stop, the rest of the course locked behind it, and Pip standing on the one they
+are up to. The stops, the forks and the legs are the course's `requires` graph drawn.
+`src/path/layout.js` derives the layout and `src/path/progress.js` says what state each
+stop is in; the screen draws what those two return and decides nothing about the course
+itself.
+
+**The world is one painting, and it is the operator's.** `assets/map/world.png` is his
+own artwork — mailed to `mama@aivara.se` as a 1584×672 webp, **147 KB** — box-downscaled
+to a **640×272** pixel grid and quantised to **40 colours**, which lands it at **51 KB**
+and makes it read as pixel art rather than as a compressed photograph of itself. The
+grid was chosen by looking at both candidates: 320×136 smears the haystacks and the
+roofs, 640×272 keeps them. Its ratio is **2.357:1** — the ratio both of the files he
+sent carry — which is **not 21:9 (2.333)**, and nothing in this repository may call it
+that.
+
+**Edge to edge, and it pans sideways.** The painting is drawn at a **cover fit** — the
+larger of `window/640` and `window/272` — so it fills the window in both directions at
+every window shape and nothing shows round it (`src/map/terrain.js`; `tests/map.test.ts`
+holds it at the shapes the game is played at). Because no phone and no laptop is
+2.357:1, a cover always leaves the world **wider than the pane**, and that is the pan:
+the map is one container moved by a pointer drag and by the wheel, clamped to what there
+is to pan in each direction, and the course is read left to right across it. The page
+itself must not scroll — the canvas is the whole viewport, and the board screen that
+follows keeps a fixed frame — so the gesture is a translated container rather than a
+native scrollbar, which is the second rendering system this port exists to avoid. The
+wheel is taken with `{ passive: false }`, and a wheel moves the world along x: a device
+that sends its scroll as `deltaY` is what every horizontal map has to answer. The view
+opens with the child's own stop in the middle of the window, clamped to what the world
+has.
+
+**A stop's place is derived, and it is derived from two things.** Its **x is its depth
+in the `requires` graph** — the course read left to right, spread across the stretch of
+the painting the road runs through (`SPAN` in `src/map/road.js`) — and its **y is where
+the painting's road runs at that x**. No hand-placed coordinate: a lesson added to the
+graph is placed by the graph, and `tests/path.test.ts` holds both halves of that rule
+for every stop the course has.
+
+**The road is measured off the painting, and the numbers are the record.**
+`src/map/road.js` carries the road's centre as a share of the painting's height, at
+every sixteenth of its width. It was traced by reading each column for the tan of
+packed dirt, keeping the run nearest the column before it — a roof and a road are the
+same brown, so continuity is what separates them — and then drawing the trace back onto
+the painting and looking at it: it follows the road over the bridge and past the mill.
+The one place the trace climbs the roofs is the village, at `u` past about 0.88, where
+the painting's street bends down behind the houses; the village street does run on to
+about 0.95 and then the painting has gardens and no road at all, so the table — and the
+span the stops stand on — ends at the last place the road is really there. A stop past
+that table would be a stop standing on a roof.
 
 | | |
 |---|---|
-| the map's column | `min(window, 520)` — the width the old document capped the board's column at, so a wider window gets margins rather than a stretched phone |
-| a stop's marker | the art's (`src/map/marker.js`): a lesson's shield 64×72, a detour's medallion 48×54, a boss's crest 76×84 — 64 and 48 are the port's own two widths and 48 is the tap floor; the heights are the art's |
-| the type | the kit's ramp at scale 1 at every width — the words under a stop are the tiny tier, 12px for the name and for the line beneath it. A finger does not get smaller on a laptop, and neither does a caption: the row's own room is what decides, and 152px of row does not hold a 13.5px name and its stars |
-| a caption's width | the room its own row leaves it — the stop beside it sets one edge, the map's margin the other, and a stop alone in its row writes across the map. At 360 that is 106px in a row of three and 348px in a row of one, so a row with space in it gets a shorter name |
-| a row | 152px and the first stop 66px down, which is Pip's room rather than a margin. A row is *placed*: it starts on that grid and moves later only as far as the boxes really drawn above it demand, never out of the band its depth names (`src/path/place.js`), because the words under a deep row need more room than 152px leaves them. A row the band cannot hold is clamped to it and named on the console by the screen that asked for the placement, so a course whose words stop fitting is visible rather than silent |
-| the map's height | the deepest stop plus its marker plus a 104px footing, what was really drawn plus 16px, or the painting's own 1280px, whichever is more — a caption can grow the map and none can be cut off by a constant, and the ground is never short of the last thing drawn on it |
+| the world | the painting's own 640×272 grid, drawn at `max(window/640, window/272)` — the cover, which is what makes it edge to edge and what makes the pan real |
+| a stop's x | `SPAN.from + step × depth`, where `step` is the span over the deepest lesson in the course — the course's own shape, never a coordinate |
+| a stop's y | the road's centre at that x, times the scale, plus the stop's own offset — zero for a stop on the road |
+| a fork | two branches, one above the road and one below, `FORK` apart: **48 screen px** each way. It is a screen measurement because what has to fit is a 72px marker and a 12px caption at every window, and a caption does not get smaller on a laptop |
+| a detour | half a step past the lesson that teaches it, on the road: a medallion beside the path, never a third branch of a fork. `scripts/verify-site.ts` fails a course with more than two lessons at one depth |
+| a caption | as wide as its stop's room — the world's margin on one side, its far edge on the other, and half the distance to the nearest stop whose ground it shares; at most **348**, at least **60** |
+| the chrome | the art's star banner in the window's top-right corner, and nothing else: the rank strip and the puzzle chip the port drew are not on this screen |
 
-**The state of a stop is a shape and a word, and the trail's shape is what says walked.** The marker set is
-the art's (`src/map/marker.js`): a lesson wears a heraldic shield on a pole, a detour a medallion with the dotted ring
-around it, a boss stop the crest, and each carries one overlay per state — the white chip and its tick for
-done, the glow for open, the iron band and its padlock for locked. A locked stop still writes the lesson
-that opens it underneath, so nothing has to be told apart by a shade of grey; the open stop still wears its
-own number, in ink on the glow the art draws (**12.12:1**). A leg is a run of the art's beads: a leg not
-walked is a sparse run, a leg walked is a close-set one whose beads touch, and the bead carries its own dark
-outline — measured by the art card at 15.3:1 on the brightest ground and 11.9:1 on the darkest — so the
-shape says the state and the brightness agrees with it. A detour's thread is the same bead at half the
-weight. The words under a stop are the app's ink with the art's parchment `#efdfbb` drawn as a halo behind
-every glyph (**11.95:1**), which is what keeps them legible on grass, snow and ash alike; the halo's own
-edge against the painting runs from 12.94:1 against the ash's median ground up to 4.58:1 at its 95th
-percentile, and it is softest where the ground is mid-tone (3.47:1 at the pass's median grey, where the ink
-alone measures the same 3.47:1) — the words are the app's text on the app's parchment, not a shape read off
-the ground. The measurements this paragraph quotes, and the two pairs that are new with the art, are in
-§2 with the rest of the measured pairs.
+**A stop's marker is the art's** (`src/map/marker.js`): a lesson's shield 64×72, a
+detour's medallion 48×54, a boss's crest 76×84 — 64 and 48 are the port's own two
+widths and both are at or over the tap floor; the heights are the art's, and
+`tests/map.test.ts` holds the layout's own table of those sizes to them. **The state of
+a stop is a shape and a word**: the white chip and its tick for done, the glow for open,
+the iron band and its padlock for locked, and a locked stop still writes the lesson that
+opens it underneath, so nothing has to be told apart by a shade of grey. The open stop
+still wears its own number, in ink on the glow (**12.12:1**). **The words hang on the
+side the stop stands off the road** — a fork's two branches write outwards, so their
+captions cannot meet in the middle, and a stop on the road writes below its marker —
+and every word wears the art's parchment `#efdfbb` as a halo behind its glyphs
+(**11.95:1**), which is what keeps them legible over a busy painting. The type is the
+kit's tiny tier, 12px, at every width: a finger does not get smaller on a laptop and
+neither does a caption.
 
-**The ground is one painting cut into three regions, and a stop's region is its depth in the course.**
-The painting is a single 520×1280 world (`assets/source/map/world.svg`), exported at 2× and cut at two
-fixed rows into the three bands the map draws: **the meadow and its village** (y 0–446, rows 0–2), **the
-rocky pass and its peaks** (y 446–890, rows 3–5) and **the dark end, the ash and the lava** (y 890–1280,
-rows 6–7). A stop's row is `66 + 152·depth` — its depth in the `requires` graph, which is what
-`src/path/layout.js` derives and `scripts/verify-site.ts` checks — so the region a stop stands in is a
-fact about the course rather than a coordinate: green first, hostile last, and the fall of the ground
-*is* the difficulty curve. `src/map/terrain.js` places each band where the painting was cut and never
-wraps one against a row, and the one place a row and a region disagree is deliberate, drawn and
-recorded: `finish-it` and `italian` share row 5, the ash front is a diagonal with a slow wave, and the
-painting puts the left branch on char and the right on rock. `tests/map.test.ts` walks every stop the
-layout places and asks whether the row it stands at falls in the band its region names.
+**The route is a run of the art's beads** (16px, a detour's thread at 10, 22px spacing
+unwalked and 12 walked so a walked leg's beads touch), each bead carrying its own dark
+outline — measured by the art card at 15.3:1 on the brightest ground and 11.9:1 on the
+darkest — so the shape says the state and the brightness agrees with it. The star row
+under a stop is the art's gold star at 16px, one per drill, unearned ones ghosted. **The
+vignette** is a dark fade in the art's outline ink (`#1d222b`, 0.5 at the edge, over the
+last 72px) at the window's own sides, top and bottom; nothing there animates, and the
+only thing on this screen that moves is the arrow over the stop the child is on, which
+stops moving under `prefers-reduced-motion: reduce`.
 
-**Why the map is painted and the board is plastic.** The board's squares and pieces are the 2D Chess
-Pack's own top-down *plastic* render, cut to each sprite's bounds with a 3px rim (§4); the map is vector
-art drawn for this project. The split is the subject: a chess board is an object a child reads the
-pieces off, and plastic keeps a piece legible against either square at 64px — while the path is a
-*place*, and a place has to read as one from a glance at the ground. The journey from green to ash is
-the whole of what the map says before a word is read, and a tile set carries no such journey. The
-composition came from the reference the operator sent (a journey read top to bottom, a route that
-curves, markers on poles, earned stars under a stop, a count in a banner); `ATTRIBUTION.md` records that
-nothing of it is used, and every pixel of the map is this project's own.
+**A tap is not a pan.** Pixi fires `pointertap` on whatever the finger lifted over,
+however far it travelled, so the gesture sets a flag once the pointer has moved more
+than 6px and a stop panned under a finger never counts as pressed. Six is small enough
+that a pan begins at once and large enough that a shaky finger still taps. **A locked
+stop is a door, not a wall**: it opens a sheet — the kit's card on a scrim, with the
+raised button in front and the flat one for "not now" — that names the lesson which
+opens it, and offers the button that walks there when that lesson is playable. The map's
+stops and the sheet's buttons both report where they are, so a browser check taps a
+control rather than its own guess at the pixels.
 
-**The map's own art, as the numbers stand since #54.** Each band is the painting's own slice, placed where
-it was cut: 520×446, 520×444, 520×390, drawn at the column's width and left at the height it was painted
-against, so the seams are the painting's and no band is stretched to a row. The route is the art's bead at
-16px (a detour's thread at 10), spaced 12px walked and 22px not (8 and 15 for a thread), with the glow under
-each walked bead at 34px. The star counter is the art's banner at the top-right of the map's column, 360×78
-at its own size, carrying the two numbers `src/path/progress.js` derives. The star row under a stop is the
-art's gold star at 16px, one per drill, unearned ones ghosted rather than drawn in a second colour —
-​smaller than the 22px the completion card wears, because the row has to fit the room under a stop. The
-edges are a dark vignette in the art's outline ink (`#1d222b`, 0.5 at the edge, over the last 72px), drawn
-at the map's own sides and the window's own top and bottom; nothing there animates, and the only thing on
-this map that moves is the arrow on the stop the child is on, which stops moving under
-`prefers-reduced-motion: reduce`.
+**What this card retired.** `terrain-meadow.png`, `terrain-pass.png` and
+`terrain-ash.png` came out of `assets/map/`, `assets/manifest.json`, `ATTRIBUTION.md`
+and this section in one commit, with their SVG source `assets/source/map/world.svg`,
+because the world they composed is gone: there is one painting and no slice of it. The
+rows went with them — 152px bands a stop's depth had to stay inside — and so did
+`src/path/place.js`, whose whole job was to move a row down until the words under the
+stop above it cleared. Captions cannot collide with a marker below them any more
+because there is no "below": a fork's two branches write on opposite sides and a stop
+on the road is the only thing at its own x. The rank strip and the solved chip left
+this screen for the same reason the header did — with no column to size a bar against,
+every word the map adds is a word written over the painting.
 
-**The record of this art is `assets/manifest.json`, and it is checked.** 35 files, **344,274 bytes
-(336 KB)** against the **500 KB** budget the map's own screen pays before it can open — the three bands
-are 297,985 of those bytes — and `scripts/verify-site.ts` (§4) holds every entry to the bytes and the
-`sha256` it records, fails a file under `assets/map/` the record does not name, and fails the whole art
-past its budget. The screen draws fifteen of those files — the table in `src/ui/assets.js` is the whole
-list of its sprites — and the other twenty are the props, which no module in this tree names. What that
-costs the precache is measured on `#54`; nothing here decides it.
+**The record of this art is `assets/manifest.json`, and it is checked.** 33 files,
+**97 KB (98,937 bytes)** against the **500 KB** budget the map's own screen pays before
+it can open — down from 336 KB, because the painting replaces 291 KB of terrain bands —
+and `scripts/verify-site.ts` (§4) holds every entry to the bytes and the `sha256` it
+records, fails a file under `assets/map/` the record does not name, and fails the whole
+art past its budget. The screen draws thirteen of those files — the table in
+`src/ui/assets.js` is the whole list of its sprites — and the rest are the props, which
+no module in this tree names.
 
-**The map scrolls and the header does not.** The path is taller than a phone (the painting is 1,280px
-against 409px of window at 360×640 — measured in the browser, and the header grew when the star counter
-moved onto the map's own banner), and the page must not scroll: the canvas is the whole viewport and the board
-screen that follows this one keeps a fixed frame. So the map is one Pixi container moved by the pointer,
-finger or wheel, clamped to what there is to scroll, and the header — the rank and the two counts — is
-drawn over it on an opaque curtain that is interactive, so a stop sliding underneath cannot be tapped
-through it. It is a drag and a wheel handler rather than a native scrollbar because a scrollbar means
-putting the map in the DOM beside the canvas, which is the second rendering system this port exists to
-avoid; a translated container is one system. The canvas already carries `touch-action: none`, so the
-browser does not scroll the page under a finger; the wheel is therefore taken natively with
-`{ passive: false }`, because the page must not scroll behind the game either.
+**The cache name is `learn-chess-v20`, and the change that took it is this one.** The
+name has to move because the shell is served cache-first: a device that has played
+before holds `src/scenes/path.js`, `src/path/layout.js`, `src/path/stop.js`,
+`src/map/terrain.js` and `src/ui/assets.js` — every one of them changed here — and
+re-fetches none of them without a new worker, so it would go on drawing three terrain
+bands under a map that has one painting. The ladder, read off the branches rather than
+from a paragraph
+(`for br in $(git branch -r); do git show $br:sw.js | grep -m1 '^const CACHE'; done`),
+stood at `v19` on `main` when this branch was cut — `#63` took it — and no branch held
+`v20` or anything above it. A change to a file in `SHELL`, or to the list, takes the next
+name in the same commit; [`docs/SYSTEM.md`](SYSTEM.md) §4 is the rule and what the
+on-demand class costs.
 
-**A tap is not a drag.** Pixi fires `pointertap` on whatever the finger lifted over, however far it
-travelled, so the gesture sets a flag once the pointer has moved more than 6px and a stop that was scrolled
-under a finger never counts as pressed. Six is small enough that a scroll begins at once and large enough
-that a shaky finger still taps; `~/tmp/pw/path-check.ts` drags *over a stop* and asserts no sheet opened.
-
-**A locked stop is a door, not a wall.** It opens a sheet — the kit's card on a scrim, with the raised
-button in front and the flat one for "not now" — that names the lesson which opens it, and offers the
-button that walks there when that lesson is playable. The map's stops and the sheet's buttons both report
-where they are, so a browser check taps a control rather than its own guess at the pixels. A per-square
-name for the board is the board card's business and is not solved here.
-
-**The cache name is `learn-chess-v17`, and the change that took it is `#43`'s — the one this paragraph
-used to argue was not owed.** The argument was true as far as it went: the map's commits touch
-`src/scenes/path.js`, `src/path/**`, `src/ui/**` and `src/map/**`, none of which was in `SHELL`, and
-nothing already in `SHELL` had changed since the board card's `v15` → `v16`. But that was a description of
-the bug rather than a reason the name was free: **the files the map is drawn from are the files the game
-opens on**, and a `SHELL` that does not name them leaves the offline game broken — a visitor who loaded it
-once had `index.html` and `src/main.js` in the precache and nothing else, and the router answered *"There
-is no screen called `path`"* on the next load with no network. `#43` puts the screen the game opens on and
-its closure into `SHELL`, deletes the placeholder screen the list still named, takes the next name nobody
-holds, and puts both rules into `scripts/verify-shell.ts` so the list cannot go stale again. The ladder,
-read off the branches rather than from a paragraph
-(`for br in $(git branch -r); do git show $br:sw.js | grep -m1 '^const CACHE'; done`), stood at `v16` on
-`main` and on every other branch at `v16` or below, so `v17` was the name nobody held. A change to a file
-in `SHELL`, or to the list, takes the next name in the same commit; [`docs/SYSTEM.md`](SYSTEM.md) §4 is the
-rule and what the on-demand class costs.
+**The map's own files, and who draws what.** `src/map/road.js` is the painting's size
+and the road's course; `src/map/terrain.js` is the cover fit and the one sprite;
+`src/map/route.js`, `src/map/marker.js`, `src/map/banner.js` and `src/map/edges.js` are
+the trail, the markers, the counter and the vignette; `src/path/layout.js` is where
+every stop stands and `src/scenes/path.js` composes them. `src/scenes/kit.js` remains
+this kit's own route — and it is still not in `sw.js`'s `SHELL` list, which is a rule
+rather than a deviation: an on-demand screen is fetched when it is first opened and
+cached from then on, and [`docs/SYSTEM.md`](SYSTEM.md) §4 says what that costs.

@@ -68,9 +68,9 @@ PixiJS, no DOM, no storage, so it needs no browser. `tests/engine.test.ts` is th
 move generator, legality and perft `v1` passed and the port kept. `tests/board.test.ts`
 holds the square geometry and the tap arithmetic, `tests/lesson.test.ts` the drill
 loop's answers and the coach's six bands at their own boundaries, `tests/path.test.ts`
-the unlock rules and the drawn state of a stop, `tests/map.test.ts` every stop's row
-against the terrain band its region names. Green says the arithmetic is right. It
-says nothing about what a child sees.
+the unlock rules and the drawn state of a stop, `tests/map.test.ts` every stop's place
+against the road the painting draws and the cover fit against the window. Green says
+the arithmetic is right. It says nothing about what a child sees.
 
 **2. `bun run scripts/verify-shell.ts` — the tree as a served site.** The page names
 one module and nothing off this origin, and carries the four tags a walk of those
@@ -106,8 +106,9 @@ module and gives the worker no origin — and against the live URL, at **360×64
   the cap, not the raw ratio; the page does not scroll sideways; nothing but the
   game is on screen;
 - **the path**: the game opens on it, and `window.learnChessPath` reports the map's
-  twelve stops and three packs with one open and none done, three terrain bands and
-  their markers drawn;
+  twelve stops and three packs with one open and none done, the painting drawn at a
+  cover fit with its markers on it — the world at least the window in both
+  directions, wider than it across, and a real drag that moves it sideways;
 - **a lesson end to end**: `#/lesson/1` is walked from its first paragraph to its
   completion panel — every puzzle solved on the first try, a star for each, the
   coach's verdict read off the bubble while it is drawn, and the star count the
