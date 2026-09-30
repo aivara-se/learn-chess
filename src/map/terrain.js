@@ -6,7 +6,7 @@
  * has to stay inside.
  *
  * **The fit is a cover, and that is what makes the map pan.** The painting is
- * 2.357:1 and a phone is nothing like it, so it is drawn at the larger of the two
+ * 2.353:1 and a phone is nothing like it, so it is drawn at the larger of the two
  * ratios — `max(window/640, window/272)` — which fills the window in both directions
  * and leaves the world wider than the pane at every window shape. Nothing shows round
  * it: no letterbox bar, no ground colour at the sides. What it costs is that only

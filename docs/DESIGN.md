@@ -242,15 +242,15 @@ own artwork — mailed to `mama@aivara.se` as a 1584×672 webp, **147 KB** — b
 to a **640×272** pixel grid and quantised to **40 colours**, which lands it at **51 KB**
 and makes it read as pixel art rather than as a compressed photograph of itself. The
 grid was chosen by looking at both candidates: 320×136 smears the haystacks and the
-roofs, 640×272 keeps them. Its ratio is **2.357:1** — the ratio both of the files he
-sent carry — which is **not 21:9 (2.333)**, and nothing in this repository may call it
-that.
+roofs, 640×272 keeps them. Its ratio is **2.353:1** (640 ÷ 272) — the files he sent carry
+**2.357:1** (1584 ÷ 672), so the cut is a shade the narrower of the two — and neither is
+**21:9 (2.333)**. Nothing in this repository may call either that.
 
 **Edge to edge, and it pans sideways.** The painting is drawn at a **cover fit** — the
 larger of `window/640` and `window/272` — so it fills the window in both directions at
 every window shape and nothing shows round it (`src/map/terrain.js`; `tests/map.test.ts`
 holds it at the shapes the game is played at). Because no phone and no laptop is
-2.357:1, a cover always leaves the world **wider than the pane**, and that is the pan:
+2.353:1, a cover always leaves the world **wider than the pane**, and that is the pan:
 the map is one container moved by a pointer drag and by the wheel, clamped to what there
 is to pan in each direction, and the course is read left to right across it. The page
 itself must not scroll — the canvas is the whole viewport, and the board screen that

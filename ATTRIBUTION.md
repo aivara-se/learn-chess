@@ -67,16 +67,19 @@ file he sent — `1000038600_compressed.webp`, 1584×672 and 147 KB — is not i
 repository; what is committed is the game's cut of it, 640×272 at 40 colours, 51 KB,
 made by a box downscale to that pixel grid and a palette reduction to those 40 colours.
 He sent it, and holds whatever rights he has in it; the cut ships here on his word,
-for this game. Its ratio is 2.357:1 — the ratio both of the files he sent carry, which
-is not 21:9.
+for this game. Its ratio is 2.353:1 (640 ÷ 272) — the files he sent carry 2.357:1
+(1584 ÷ 672) — and neither is 21:9.
 
 **Everything else under `assets/map/` was drawn as vector art for this project** — an
 SVG per sprite in `assets/source/map/`, exported to PNG at 2× in the authoring session;
 the repository holds the SVG and the exported PNG, and no build step.
 `assets/source/map/contact-sheet.png` is the review aid that shows every sprite at the
-size the map draws it. The world's own vector source (`world.svg`) and the three terrain
-bands it was cut into went when the map became one painting (`#64`): those bands are not
-in this repository any more, because they are not in the game any more.
+size the map draws it. Its first section still shows the three grounds the map was cut
+into before it became one painting (`#64`), and it does not show `world.png`: it predates
+the painting, so read its sprite sections against the tree and not its grounds. The
+world's own vector source (`world.svg`) and the three terrain bands it was cut into went
+when the map became one painting (`#64`): those bands are not in this repository any
+more, because they are not in the game any more.
 
 **The Kingdom Rush campaign map the operator sent as a reference was an inspiration
 only.** What was taken from it is a composition — a journey the eye follows, a dotted
