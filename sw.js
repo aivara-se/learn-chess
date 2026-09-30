@@ -11,23 +11,24 @@
  * to a file in it bumps CACHE in the same commit.
  */
 /* The cache-name ladder. Read off the branches rather than guessed — measured
-   with `git show origin/<branch>:sw.js | grep 'CACHE ='`:
-   the frozen `v1` tag, and so the name the deleted app served, is
-   `learn-chess-v14`; `main` stands at `learn-chess-v17`, the rung `#61` (the
-   rebuild's close) took when it landed, and the live site serves it. Of the
-   open pull requests one holds a name — `60-placed-rows` (#60) takes `v19` —
-   and nobody holds `v18`, which is the name this branch takes. Two branches
-   bumping `sw.js` means the second merge rebases and keeps a name nobody
-   holds: a same-name merge is silent, so the name is the record.
-   This branch owes a name of its own because the files it changes are served
-   cache-first — the fetch handler answers every same-origin GET from the cache
-   and keeps what it fetches, so a device that has played a lesson already holds
-   `src/scenes/lesson.js`, and the new `src/scenes/pack.js` linking against that
-   cached module dies with *does not provide an export named 'scene'* instead of
-   opening the detour. The wipe left the old worker in a returning visitor's
-   browser too, so it *has* to be a name of its own: scripts/verify-shell.ts
-   fails a name at or below `v14` for that reason. */
-const CACHE = 'learn-chess-v18';
+   with `git show origin/<branch>:sw.js | grep '^const CACHE'` on the rebase this
+   name was kept through: the frozen `v1` tag, and so the name the deleted app
+   served, is `learn-chess-v14`, and `main` now stands at `learn-chess-v18`,
+   because #62's pack screen landed first and the live site serves it. This
+   branch keeps `v19`: nobody holds it — read off every branch, local and remote
+   — and nothing on any branch is above it. The one branch beside `main` at
+   `v18` is `evidence/59-pack`, the pack card's own evidence branch, which holds
+   the name `main` itself serves.
+   The name has to be its own because the shell is served cache-first: the fetch
+   handler answers every same-origin GET from the cache and keeps what it
+   fetches, so a device that has played before holds the five modules this branch
+   changes — `src/scenes/path.js`, `src/path/layout.js`, `src/path/stop.js`,
+   `src/map/terrain.js`, `src/map/marker.js` — and re-fetches none of them
+   without a new worker, so it keeps drawing the old rows over a locked stop's
+   caption. `scripts/verify-shell.ts` fails a name at or below `v14` for the same
+   reason: reusing a name a device already holds leaves the old app in its
+   browser. */
+const CACHE = 'learn-chess-v19';
 
 /* The shell: the files the app needs to boot and to draw its first frame. Two
  * rules, and scripts/verify-shell.ts now holds the list to both of them, because
@@ -57,6 +58,7 @@ const SHELL = [
   'src/map/route.js',
   'src/map/terrain.js',
   'src/path/layout.js',
+  'src/path/place.js',
   'src/path/progress.js',
   'src/path/sheet.js',
   'src/path/stop.js',
