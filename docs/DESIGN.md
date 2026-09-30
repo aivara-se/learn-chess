@@ -45,6 +45,8 @@ button's bottom edge.
 | | | the raised face's mid-tone `#28afe9` | **6.30:1** |
 | | | the flat face `#1c9fd7` | **5.24:1** |
 | | | the disabled face `#dadce7` | **11.52:1** |
+| | | the map's glow `#ffdf88` — the number the open stop wears | **12.12:1** |
+| | | the art's parchment `#efdfbb` — the halo behind every caption on the map | **11.95:1** |
 | `inkSoft` | `#454f72` | the card — body copy | **8.03:1** |
 | `inkMute` | `#5f698a` | the card — the small print | **5.42:1** |
 | `good` | `#0f7b46` | `goodSoft` `#e3f7ec` | **4.76:1** |
@@ -72,6 +74,15 @@ same colour as what it sits on. So the kit draws its arrow and its tick in ink (
 the pack's icons, on the light chip: the tick's own fill is 2.15:1 on the card but the pack draws it with
 a `#146587` rim at **6.48:1**, and the star is `#1c9fd7` with a `#12729a` rim at **5.39:1** — the rim is
 what makes the glyph legible, and the word beside it is `inkSoft` at 8.03:1.
+
+**Two pairs are the map's, and both are the app's own ink on the art's own colour.** The number the
+open stop wears is drawn over the art's glow — `#182046` on `#ffdf88`, the glow's own centre pixel read
+out of `assets/map/marker-state-open.png`, **12.12:1** — and every word under a stop on the map is that
+same ink with the art's parchment `#efdfbb` around it, **11.95:1**. That is the two-tone rule of the
+table above applied to a painting rather than to a card, and the halo's own edge against each ground is
+measured in §10. Both pairs were measured on the rendered map for `#54`: the parchment and the ink are
+both in a 360×640 screenshot's own histogram, which is how a vision read that called the captions *white
+with a dark outline* was settled — the pixels say ink on parchment, twice now.
 
 ## 3. Size — the ramp, the floor, the scale
 
@@ -227,14 +238,14 @@ nothing about the course itself.
 | | |
 |---|---|
 | the map's column | `min(window, 520)` — the width the old document capped the board's column at, so a wider window gets margins rather than a stretched phone |
-| a stop's marker | the art's (§10 below): a lesson's shield 64×72, a detour's medallion 48×54, a boss's crest 76×84 — 64 and 48 are the port's own two widths and 48 is the tap floor; the heights are the art's |
+| a stop's marker | the art's (`src/map/marker.js`): a lesson's shield 64×72, a detour's medallion 48×54, a boss's crest 76×84 — 64 and 48 are the port's own two widths and 48 is the tap floor; the heights are the art's |
 | the type | the kit's ramp at scale 1 at every width — title 13.5px (a detour's 12), the line under it 12px. A finger does not get smaller on a laptop, and neither does a caption |
 | a caption's width | the space one column has between its neighbours — 105px at 360, 155px at 520 — so two captions can never touch |
 | a row | 152px; the first stop stands 66px down, which is Pip's room rather than a margin |
 | the map's height | the deepest stop plus its marker plus a 104px footing, what was really drawn plus 16px, or the painting's own 1280px, whichever is more — a caption can grow the map and none can be cut off by a constant, and the ground is never short of the last thing drawn on it |
 
 **The state of a stop is a shape and a word, and the trail's shape is what says walked.** The marker set is
-the art's (§ below): a lesson wears a heraldic shield on a pole, a detour a medallion with the dotted ring
+the art's (`src/map/marker.js`): a lesson wears a heraldic shield on a pole, a detour a medallion with the dotted ring
 around it, a boss stop the crest, and each carries one overlay per state — the white chip and its tick for
 done, the glow for open, the iron band and its padlock for locked. A locked stop still writes the lesson
 that opens it underneath, so nothing has to be told apart by a shade of grey; the open stop still wears its
@@ -247,10 +258,33 @@ every glyph (**11.95:1**), which is what keeps them legible on grass, snow and a
 edge against the painting runs from 12.94:1 against the ash's median ground up to 4.58:1 at its 95th
 percentile, and it is softest where the ground is mid-tone (3.47:1 at the pass's median grey, where the ink
 alone measures the same 3.47:1) — the words are the app's text on the app's parchment, not a shape read off
-the ground. The measurements this paragraph quotes, and the two pairs that are new with the art, are the
-pull request's and #54's to carry into §2.
+the ground. The measurements this paragraph quotes, and the two pairs that are new with the art, are in
+§2 with the rest of the measured pairs.
 
-**The map's own art, as the numbers stand since #52.** Each band is the painting's own slice, placed where
+**The ground is one painting cut into three regions, and a stop's region is its depth in the course.**
+The painting is a single 520×1280 world (`assets/source/map/world.svg`), exported at 2× and cut at two
+fixed rows into the three bands the map draws: **the meadow and its village** (y 0–446, rows 0–2), **the
+rocky pass and its peaks** (y 446–890, rows 3–5) and **the dark end, the ash and the lava** (y 890–1280,
+rows 6–7). A stop's row is `66 + 152·depth` — its depth in the `requires` graph, which is what
+`src/path/layout.js` derives and `scripts/verify-site.ts` checks — so the region a stop stands in is a
+fact about the course rather than a coordinate: green first, hostile last, and the fall of the ground
+*is* the difficulty curve. `src/map/terrain.js` places each band where the painting was cut and never
+wraps one against a row, and the one place a row and a region disagree is deliberate, drawn and
+recorded: `finish-it` and `italian` share row 5, the ash front is a diagonal with a slow wave, and the
+painting puts the left branch on char and the right on rock. `tests/map.test.ts` walks every stop the
+layout places and asks whether the row it stands at falls in the band its region names.
+
+**Why the map is painted and the board is plastic.** The board's squares and pieces are the 2D Chess
+Pack's own top-down *plastic* render, cut to each sprite's bounds with a 3px rim (§4); the map is vector
+art drawn for this project. The split is the subject: a chess board is an object a child reads the
+pieces off, and plastic keeps a piece legible against either square at 64px — while the path is a
+*place*, and a place has to read as one from a glance at the ground. The journey from green to ash is
+the whole of what the map says before a word is read, and a tile set carries no such journey. The
+composition came from the reference the operator sent (a journey read top to bottom, a route that
+curves, markers on poles, earned stars under a stop, a count in a banner); `ATTRIBUTION.md` records that
+nothing of it is used, and every pixel of the map is this project's own.
+
+**The map's own art, as the numbers stand since #54.** Each band is the painting's own slice, placed where
 it was cut: 520×446, 520×444, 520×390, drawn at the column's width and left at the height it was painted
 against, so the seams are the painting's and no band is stretched to a row. The route is the art's bead at
 16px (a detour's thread at 10), spaced 12px walked and 22px not (8 and 15 for a thread), with the glow under
@@ -261,6 +295,14 @@ edges are a dark vignette in the art's outline ink (`#1d222b`, 0.5 at the edge, 
 at the map's own sides and the window's own top and bottom; nothing there animates, and the only thing on
 this map that moves is the arrow on the stop the child is on, which stops moving under
 `prefers-reduced-motion: reduce`.
+
+**The record of this art is `assets/manifest.json`, and it is checked.** 35 files, **344,274 bytes
+(336 KB)** against the **500 KB** budget the map's own screen pays before it can open — the three bands
+are 297,985 of those bytes — and `scripts/verify-site.ts` (§4) holds every entry to the bytes and the
+`sha256` it records, fails a file under `assets/map/` the record does not name, and fails the whole art
+past its budget. The screen draws fifteen of those files — the table in `src/ui/assets.js` is the whole
+list of its sprites — and the other twenty are the props, which no module in this tree names. What that
+costs the precache is measured on `#54`; nothing here decides it.
 
 **The map scrolls and the header does not.** The path is taller than a phone (the painting is 1,280px
 against 409px of window at 360×640 — measured in the browser, and the header grew when the star counter
@@ -287,18 +329,18 @@ deliberately not this card's: the route a stop hands over (`#/lesson/<n>` for a 
 detour — `src/scenes/lesson.js` is `#41`'s, so the button lands on the shell's honest "no screen called
 lesson" until it exists), and a per-square name for the board, which is the board card's business.
 
-**The one deviation this section carries, and the single line that pays it.** `src/main.js` is in `sw.js`'s
-`SHELL` list and this card changes it — the screen the game opens on becomes the path — so the rule at the
-top of `sw.js` ("to a file in it bumps `CACHE` in the same commit") is owed and **not paid, because `sw.js`
-is on this card's `Do not touch` list**. The consequence is measured from the fetch handler's own code
-rather than guessed: the handler is cache-first and only ever writes to the cache on a **miss**, and a
-browser only re-installs a worker when `sw.js`'s bytes change — so a visitor who already holds
-`learn-chess-v15` keeps the cached, older `main.js` and its old default screen until `sw.js` changes
-(`#/path` is still reachable by hash; the map just does not open by itself). `src/scenes/path.js`,
-`src/path/**` and `src/ui/**` are the same on-demand class as `kit.js` and `src/board/**` — fetched once,
-cached from then on — so they do not change that answer. The line that pays the debt is one, and the name
-is read off the branches rather than taken from this paragraph:
-
-```js
-const CACHE = 'learn-chess-v17';   // v16 is the highest name any branch holds — `feat/board-and-pieces`
-```
+**The cache-name debt `#53` reported is not owed, measured against this tree.** That paragraph said
+`src/main.js` changed with the map and that a name was therefore owed and unpaid. Neither half holds: the
+map's commits touch `src/scenes/path.js`, `src/path/stop.js`, `src/ui/assets.js` and `src/map/**`, and
+**none of those is in `sw.js`'s `SHELL` list** (checked file by file with `git log --oneline -- <path>`,
+against the list `sw.js` carries). The change that does matter here — `main.js`'s `DEFAULT_SCENE` is
+`'path'`, so the game opens on the map — landed with `#42` (`34541d3`, the path card), and the cache name
+was bumped **after** it, in the board card's own commit (`b57eb26`, `learn-chess-v15` → `v16`, the same
+commit that added `src/board/**` to `SHELL`). `git log b57eb26..main -- <every file in SHELL>` is empty,
+so no visitor is left holding a stale shell file: a worker that held `v15` installs the new one and
+re-fetches the shell. The ladder, **read off the branches as `sw.js` says to** rather than carried over
+from a paragraph (`for br in $(git branch -r); do git show $br:sw.js | grep -m1 '^const CACHE'; done`):
+`main` serves `learn-chess-v16`, `feat/lesson-end-to-end` — the one open pull request — holds the same
+name, and nothing holds `v17`. A change to a file in `SHELL` takes `v17` in the same commit; the map's own
+files (`src/scenes/path.js`, `src/path/**`, `src/ui/**`, `src/map/**`) are the on-demand class — fetched
+once, cached from then on — and change neither the name nor that answer.
