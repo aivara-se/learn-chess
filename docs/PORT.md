@@ -99,6 +99,18 @@ is written into the interface, so a stop cannot be placed somewhere the course d
 - The old check fails a `requires` that names no lesson, a circle, or a stop no route can reach — a
   learner stranded behind a graph bug has no way round it. Keep that property in the new shape.
 
+**The screen the path is drawn on was re-arted after the port, and this contract is about the graph
+rather than the pictures.** The port drew the map out of the app's own chrome — a circle per stop, a
+line per leg, the words under them — with every position derived from `requires`. The screen a child
+walks now is a painted world instead: three terrain bands cut from one 520×1280 painting, a route of
+beads, a marker set and a banner, all art made for this project and landed after the port (`#52` and
+`#53`), documented in [`docs/DESIGN.md`](DESIGN.md) §10. What this contract promised is what still
+holds and it is all about the *data*: a stop's row is its depth in the graph, its legs are its
+`requires`, its state is the child's record and its stars are first tries. `src/path/layout.js` derives
+every position and `src/path/progress.js` reads the record, so the art decides nothing — and a reader
+who sees a painting here should not think the port drew it, nor that a drawn coordinate table has crept
+back in.
+
 ## The maths
 
 - **A star is a first-try solve.** Never for a puzzle solved after a wrong answer or a hint, and a boss
