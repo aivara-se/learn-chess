@@ -4,11 +4,12 @@
  *
  *   bun run scripts/verify-shell.ts
  *
- * It answers seven questions: does the page name one module and nothing else,
+ * It answers eight questions: does the page name one module and nothing else,
  * does every file it points at exist, is the manifest this site's, does the shell
- * ask anything of a third party, is the offline worker complete and is its cache
- * name free, is the vendored library the version the repository says it is, and
- * is the publish frame — `.nojekyll` — in place.
+ * ask anything of a third party, is the offline worker complete — the first
+ * frame's closure, naming the screen the game opens on — and is its cache name
+ * free, is the vendored library the version the repository says it is, and is the
+ * publish frame — `.nojekyll` — in place.
  *
  * What it cannot see: whether a frame is drawn, whether the canvas is crisp,
  * whether the app opens with the network off, and whether it looks like a game.
@@ -133,6 +134,54 @@ if (!sw.includes("'assets/manifest.json'")) {
 }
 checks.push(`the offline worker caches ${listed.length} shell files, reads the asset manifest, and caches as ${cache}`);
 
+/* 4b. and the list is the first frame's closure, naming the screen the game opens
+ * on. It went stale once, and the cost is the failure this check exists for: the
+ * list still named the old shell's placeholder screen while the game opened on
+ * `path`, so a visitor who had loaded the game once and then had no network got
+ * `index.html` and the shell out of the precache and the router answered with
+ * "There is no screen called "path"" — a wrong bug, named confidently. A screen
+ * the router imports on demand is not in this list and is not expected to be, but
+ * every import of a file that *is* in it has to be in it. */
+const shellMain = await read('src/main.js');
+/* The route segment rule, read off the shell rather than repeated: it is what
+ * decides whether a name can become a file name at all. */
+const SCENE_NAME = /^[a-z][a-z0-9-]*$/;
+const openScene = shellMain.match(/const DEFAULT_SCENE = '([^']+)'/)?.[1];
+if (!openScene) {
+  problems.push('src/main.js does not name a DEFAULT_SCENE, so the screen the game opens on cannot be checked against sw.js');
+} else if (!SCENE_NAME.test(openScene)) {
+  problems.push(`src/main.js opens on “${openScene}”, which is not a scene name, so no file can be checked`);
+} else {
+  const sceneFile = `src/scenes/${openScene}.js`;
+  if (!listed.includes(sceneFile)) {
+    problems.push(`sw.js's SHELL does not name the screen the game opens on (${sceneFile}): offline, the shell boots and the router reports "there is no screen called ${openScene}"`);
+  }
+}
+const shellImport = (file: string, spec: string) => {
+  const base = file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '';
+  const parts = `${base}/${spec}`.split('/');
+  const out: string[] = [];
+  for (const part of parts) {
+    if (part === '.' || part === '') continue;
+    if (part === '..') out.pop();
+    else out.push(part);
+  }
+  return out.join('/');
+};
+for (const file of listed) {
+  /* A file that is not here is already reported above; reading it here would
+   * throw rather than report, and one problem is enough. */
+  if (file === './' || !file.endsWith('.js') || !(await exists(file))) continue;
+  const text = await read(file);
+  for (const match of text.matchAll(/from '(\.[^']+)'/g)) {
+    const target = shellImport(file, match[1]);
+    if (!listed.includes(target)) {
+      problems.push(`${file} imports ${target}, which is not in sw.js's SHELL: offline it fails where it is loaded, and the router reports a screen that does not exist rather than a missing file`);
+    }
+  }
+}
+checks.push('the offline list is closed under its own imports and names the screen the game opens on');
+
 /* 5. the vendored library is the version, and the file, the repository says */
 const vendorFiles = ['vendor/pixi/pixi.min.mjs', 'vendor/pixi/LICENSE', 'vendor/README.md'];
 const missing = [];
@@ -163,6 +212,8 @@ if (missing.length) {
 if (await exists('src/scenes/index.js')) {
   problems.push('src/scenes/index.js exists: a registry of screens is a file every screen has to edit, and the route is already the file name');
 }
+/* The shell's own source, read once: §4b holds it to `DEFAULT_SCENE` and this
+ * holds it to the route convention. */
 const main = await read('src/main.js');
 if (!/import\(\s*`\.\/scenes\/\$\{/.test(main)) {
   problems.push('src/main.js does not import a scene by name, so a screen cannot be added without editing it');

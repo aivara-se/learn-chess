@@ -18,16 +18,14 @@
   <meta name="theme-color" content="#eef3ff">
   <title>Learn chess</title>
   <meta name="description" content="A beginner's chess course as a small game: short lessons, puzzles you play yourself, and a coach for your moves.">
-  <!-- The favicon, the rendered icons and the apple-touch-icon are assets/**, the
-       assets card's files, and they are not in the tree yet: they were deleted
-       with the old app and come back with it. The page names them anyway,
-       because a browser that is told nothing invents /favicon.ico and 404s on
-       that instead, and because index.html is not that card's file to edit — the
-       files land at these addresses and the requests resolve with no second
-       change. Until they do, each one is a 404 in the console and a `todo` line
-       in `scripts/verify-shell.ts`, which reports them rather than failing on
-       another card's in-flight work. og:image is different: a string a sharing
-       service reads, not a request this page makes. -->
+  <!-- The favicon, the rendered icons and the apple-touch-icon are assets/** and
+       they are in the tree: the page names them and the requests resolve. The
+       addresses are the old app's own, so the files came back with the rebuild
+       and nothing here had to change. scripts/verify-shell.ts reports a name the
+       page or the manifest points at and the tree does not hold as a `todo`
+       rather than a failure, which is what a file in flight looks like; there is
+       none behind these. og:image is different: a string a sharing service
+       reads, not a request this page makes. -->
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
