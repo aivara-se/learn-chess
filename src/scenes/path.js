@@ -48,10 +48,12 @@ import { createPanel } from '../ui/panel.js';
 import { loadChrome, loadMap } from '../ui/assets.js';
 import { LESSONS } from '../data/lessons.js';
 import * as progress from '../path/progress.js';
-import { captionWidth, layout, scrollFor } from '../path/layout.js';
+import { layout, scrollFor } from '../path/layout.js';
+import { place } from '../path/place.js';
 import { createStop } from '../path/stop.js';
 import { openSheet } from '../path/sheet.js';
-import { createTerrain } from '../map/terrain.js';
+import { bandAt, createTerrain } from '../map/terrain.js';
+import { FOOTING } from '../path/layout.js';
 import { drawRoute } from '../map/route.js';
 import { createBanner } from '../map/banner.js';
 import { createEdges } from '../map/edges.js';
@@ -71,7 +73,6 @@ const MAP_SPRITES = await loadMap();
  * contract measured — 64 and 48 for a finger, the ramp for the words — at every
  * width: a finger does not get smaller on a laptop. */
 const MAP_WIDTH = 520;
-const GUTTER = 6;          // between two neighbouring stops' captions
 const BELOW = 16;          // the screen's own margin, above and below its chrome
 const DRAG = 6;            // how far a finger travels before it is a drag, not a tap
 const BANNER_MAX = 360;    // the banner's own width, the size the art drew it for
@@ -145,7 +146,6 @@ function build(context) {
   const height = context.height;
   const column = Math.min(width, MAP_WIDTH);
   const left = Math.round((width - column) / 2);
-  const caption = captionWidth(column);
 
   const root = new Container();
   root.addChild(new Graphics().rect(0, 0, width, height).fill(COLOUR.ground));
@@ -205,18 +205,46 @@ function build(context) {
         line: lineFor({ kind: spot.kind, state, puzzles, held: progress.heldBy(record, unit), here: isHere }),
         puzzles,
         here: isHere,
-        caption,
+        caption: spot.caption,
         room: column - spot.x,
         panned: () => view.dragged,
         onTap: () => tapStop(context, unit, spot.kind),
       }),
     });
   }
+  /* The words under a stop need more room than a 152px row leaves them, so the rows
+   * are placed before the route is drawn: a row starts where the grid puts it and
+   * moves later only as far as the boxes really drawn in the rows above demand,
+   * inside the band its depth stands in and never more than half a row off the grid.
+   * `src/path/place.js` is the rule; the numbers it works on are the boxes
+   * `src/path/stop.js` measured while drawing, so the check is against what a child
+   * sees and not against a second copy of the geometry. */
+  const rows = [...new Set(geometry.stops.map((spot) => spot.depth))].map((depth) => {
+    const nominal = geometry.stops.find((spot) => spot.depth === depth).y;
+    const band = bandAt(nominal);
+    return { depth, nominal, min: band.y, max: band.y + band.height - 1 };
+  });
+  const placed = place({
+    rows,
+    boxes: stops.map(({ spot, stop }) => ({ row: spot.depth, x: spot.x, ...stop.box })),
+    /* The words under the last stop may run past the painting's own ground by the
+     * footing the layout already keeps below the last row: the map grows to hold them,
+     * and the ground colour below the ash is the ash's own. */
+    ground: terrain.height + FOOTING,
+  });
+  for (const entry of stops) {
+    const y = placed.y.get(entry.spot.depth);
+    if (y === undefined || y === entry.spot.y) continue;
+    entry.spot = { ...entry.spot, y };
+    entry.stop.node.position.y = y;
+  }
+  const byId = new Map(stops.map((entry) => [entry.spot.id, entry.spot]));
+
   /* The route goes over the ground and under the stops: a bead is never drawn on
    * top of the marker it runs into. */
   const route = drawRoute(map, {
     legs: geometry.legs,
-    byId: geometry.byId,
+    byId,
     walked: (id) => progress.finished(record, progress.byId.get(id)),
   });
 
@@ -238,7 +266,7 @@ function build(context) {
   const maxScroll = Math.max(0, contentHeight - viewport);
 
   const arrow = stops.find((entry) => entry.stop.arrow) ?? null;
-  return { root, map, stops, geometry, caption, left, column, top, viewport, contentHeight, maxScroll, here: here?.id ?? null, strip, chips: [solved], terrain, route, banner, edges, arrow };
+  return { root, map, stops, byId, geometry, left, column, top, viewport, contentHeight, maxScroll, here: here?.id ?? null, strip, chips: [solved], terrain, route, banner, edges, arrow };
 }
 
 function applyScroll(next) {
@@ -292,7 +320,7 @@ function handle() {
       kind: leg.kind,
       from: leg.from,
       to: leg.to,
-      at: { from: view.geometry.byId.get(leg.from), to: view.geometry.byId.get(leg.to) },
+      at: { from: view.byId.get(leg.from), to: view.byId.get(leg.to) },
     })),
     graph: () => ({ stops: progress.stops.map((stop) => stop.id), legs: view.geometry.legs.map((leg) => `${leg.from}->${leg.to}`) }),
     /* The point of a stop a check should tap: the centre of the marker, in the page's
@@ -356,7 +384,7 @@ function start(context, { scroll = null } = {}) {
   context.layer.eventMode = 'static';
   context.layer.hitArea = new Rectangle(0, 0, context.width, context.height);
   context.layer.addChild(view.root);
-  applyScroll(scroll ?? (view.here ? scrollFor({ stops: view.geometry.stops, viewport: view.viewport, scroll: view.maxScroll, id: view.here }) : 0));
+  applyScroll(scroll ?? (view.here ? scrollFor({ stops: view.stops.map((entry) => entry.spot), viewport: view.viewport, scroll: view.maxScroll, id: view.here }) : 0));
 
   /* The one thing on the map that moves: the arrow over the stop the child is on.
    * It hovers, and it stops hovering the moment the device asks for less motion —

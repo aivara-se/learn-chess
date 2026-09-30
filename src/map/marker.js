@@ -37,7 +37,7 @@ export const MARKER = {
 };
 export const POLE = { asset: MAP.pole, width: 20, height: 52 };
 export const OVERLAY = { width: 64, height: 72 };
-export const STAR = { size: 22, gap: 2 };
+export const STAR = { size: 16, gap: 2 };
 export const ARROW = { width: 30, height: 36, gap: 4 };
 
 const OVERLAY_FOR = { done: MAP.done, open: MAP.open, locked: MAP.locked };
