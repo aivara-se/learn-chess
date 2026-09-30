@@ -215,14 +215,17 @@ function build(context) {
   /* The words under a stop need more room than a 152px row leaves them, so the rows
    * are placed before the route is drawn: a row starts where the grid puts it and
    * moves later only as far as the boxes really drawn in the rows above demand,
-   * inside the band its depth stands in and never more than half a row off the grid.
+   * inside the band its depth stands in, and no further. The distance is set by the
+   * boxes the rows above really drew, not by a fraction of the row: a half-row clamp
+   * would put the caption's own bottom into the marker below it, which is the overlap
+   * this change removes.
    * `src/path/place.js` is the rule; the numbers it works on are the boxes
    * `src/path/stop.js` measured while drawing, so the check is against what a child
    * sees and not against a second copy of the geometry. */
   const rows = [...new Set(geometry.stops.map((spot) => spot.depth))].map((depth) => {
     const nominal = geometry.stops.find((spot) => spot.depth === depth).y;
     const band = bandAt(nominal);
-    return { depth, nominal, min: band.y, max: band.y + band.height - 1 };
+    return { depth, nominal, max: band.y + band.height - 1 };
   });
   const placed = place({
     rows,

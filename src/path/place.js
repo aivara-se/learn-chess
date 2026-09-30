@@ -28,12 +28,14 @@
  * pixels of clear ground between them.
  *
  * The placement is one pass over the rows in order: a row's y is the latest of the
- * grid, its band's top, and every constraint from a row above it — monotone, so the
- * rows stay in the order the course puts them, and a row only ever opens the room the
- * words above it were measured to need. No iteration, no randomness, the same answer
- * every time. `problems` is the honest half of the result: a course whose words need
- * more room than its band leaves cannot be placed, and the caller reports that instead
- * of hiding it behind a clamp.
+ * grid and every constraint from a row above it — monotone, so the rows stay in the
+ * order the course puts them, and a row only ever opens the room the words above it
+ * were measured to need. Nothing guards the band's top: a row starts at its nominal y,
+ * which stands in its band by `bandAt`'s own definition, and a row is only ever moved
+ * later than that. No iteration, no randomness, the same answer every time. `problems`
+ * is the honest half of the result: a course whose words need more room than its band
+ * leaves cannot be placed, and the caller reports that instead of hiding it behind a
+ * clamp.
  */
 import { GUTTER } from './layout.js';
 
