@@ -4,12 +4,12 @@
  *
  *   bun run scripts/verify-shell.ts
  *
- * It answers eight questions: does the page name one module and nothing else,
- * does every file it points at exist, is the manifest this site's, does the shell
- * ask anything of a third party, is the offline worker complete — the first
- * frame's closure, naming the screen the game opens on — and is its cache name
- * free, is the vendored library the version the repository says it is, and is the
- * publish frame — `.nojekyll` — in place.
+ * It answers eight questions: does the page name one module and nothing else
+ * and carry the four tags a document needs, does every file it points at exist,
+ * is the manifest this site's, does the shell ask anything of a third party, is
+ * the offline worker complete — the first frame's closure, naming the screen the
+ * game opens on — and is its cache name free, is the vendored library the version
+ * the repository says it is, and is the publish frame — `.nojekyll` — in place.
  *
  * What it cannot see: whether a frame is drawn, whether the canvas is crisp,
  * whether the app opens with the network off, and whether it looks like a game.
@@ -64,7 +64,25 @@ for (const ref of refs) {
   if (ref.startsWith(OTHER_CARD_OWNS)) pending.push(ref);
   else problems.push(`index.html points at a file that is not here: ${ref}`);
 }
-checks.push(`index.html loads one module (src/main.js) and its ${refs.length} references are this site's`);
+/* The four tags a document needs that a walk of the refs cannot see. v1's site
+ * check asserted every one of them; this file walks the refs it *finds*, so a tag
+ * deleted outright is invisible to it — a deleted `<meta>` leaves no ref to
+ * resolve and no problem to report. One line each, with what breaks when the tag
+ * goes: without a viewport a phone lays the page out at 980px; without the
+ * apple-touch-icon a home-screen tile is a blank square; without the image's size
+ * and alt a share card renders wrong; and without the fallback a browser with no
+ * script shows a child nothing at all. */
+const REQUIRED_TAGS: [string, RegExp][] = [
+  ['viewport meta', /<meta\s+name="viewport"[^>]*width=device-width/],
+  ['apple-touch-icon', /<link\s+rel="apple-touch-icon"[^>]*href="[^"]+"/],
+  ['og:image with its width, height and alt', /<meta\s+property="og:image"[\s\S]*?<meta\s+property="og:image:width"[\s\S]*?<meta\s+property="og:image:height"[\s\S]*?<meta\s+property="og:image:alt"/],
+  ['noscript fallback', /<noscript>[\s\S]*?<\/noscript>/],
+];
+for (const [what, pattern] of REQUIRED_TAGS) {
+  if (!pattern.test(html)) problems.push(`index.html carries no ${what}: the old site check asserted it, and nothing else here notices it go`);
+}
+
+checks.push(`index.html loads one module (src/main.js), its ${refs.length} references are this site's, and its four required tags are present`);
 
 /* 2. the manifest is the app's identity: it parses, it stays on this site, and
  * the icons it names are the ones a home screen installs with. Those icons are
