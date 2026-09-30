@@ -5,8 +5,8 @@
  *
  *   - **The painting covers the window.** One painting, drawn at a cover fit, is
  *     what makes the map edge to edge — no letterbox bar, no ground colour at the
- *     sides — and it is also what makes the pan real: a cover of a 2.357:1 painting
- *     in a window that is not 2.357:1 leaves the world wider than the pane, so there
+ *     sides — and it is also what makes the pan real: a cover of a 2.353:1 painting
+ *     in a window that is not 2.353:1 leaves the world wider than the pane, so there
  *     is always somewhere to pan. Both halves are arithmetic, and they are checked at
  *     the window shapes the game is played at.
  *   - **The road is a road.** `src/map/road.js` is the measured centre of the road
@@ -33,7 +33,7 @@ import { FACE, HALF } from '../src/path/layout.js';
 import { TAP_FLOOR } from '../src/ui/theme.js';
 
 /* The window shapes the game is played at: a small phone, a phone, a laptop. None of
-   them is the painting's own 2.357:1 — that shape is checked on its own below. */
+   them is the painting's own 2.353:1 — that shape is checked on its own below. */
 const WINDOWS = [
   { width: 360, height: 640 },
   { width: 390, height: 844 },
@@ -44,8 +44,9 @@ describe('the painting is the world', () => {
   test('it is the grid it was cut on, and the table is inside it', () => {
     expect(WORLD.width).toBeGreaterThan(0);
     expect(WORLD.height).toBeGreaterThan(0);
-    /* The painting is not 21:9, and nothing may call it that: 2.357:1 is the ratio
-       both of the operator's files carry. */
+    /* The painting is not 21:9, and nothing may call it that: the committed cut is
+       2.353:1 (640 ÷ 272), a hair under the 2.357:1 both of the operator's files carry
+       (1584 ÷ 672). */
     expect(WORLD.width / WORLD.height).toBeCloseTo(2.353, 2);
     expect(Math.abs(WORLD.width / WORLD.height - 21 / 9)).toBeGreaterThan(0.015);
   });

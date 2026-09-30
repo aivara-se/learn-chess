@@ -17,7 +17,7 @@
  * Four things a reader should know before changing it:
  *
  *   - **The world is wider than the window, and that is the pan.** The painting is
- *     2.357:1 and no phone is, so the cover fit leaves the world wider than the pane
+ *     2.353:1 and no phone is, so the cover fit leaves the world wider than the pane
  *     at every window shape (measured in `src/map/terrain.js`). The map is one Pixi
  *     container moved by a pointer drag and by the wheel, clamped to what there is to
  *     pan in each direction, and the course is read left to right across it — the
@@ -360,7 +360,7 @@ function start(context, { pan = null } = {}) {
   /* One gesture, one owner: the pointer moves the world, and the stops read `dragged`
    * to tell a lift from a tap. Both axes move, but only one of them has anywhere to
    * go: the cover leaves the painting taller than the window only when the window is
-   * wider than 2.357:1, and the pan is clamped to whatever that leaves. */
+   * wider than 2.353:1, and the pan is clamped to whatever that leaves. */
   const down = (event) => {
     if (view.sheet) return;
     view.drag = { at: { x: event.global.x, y: event.global.y }, from: { x: view.pan.x, y: view.pan.y } };
