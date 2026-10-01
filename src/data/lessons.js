@@ -1,11 +1,21 @@
 /* Learn chess — the course.
  *
- * Ten lessons for someone who has never played, three drills each (looking
- * before you move has five), in order: the board and the pieces, what material
- * is worth, pawns in the centre, developing, castling, the early queen, looking
- * before you move, finishing a won game with the queen, the Italian opening as
- * a model, and the shapes a mate in one takes — and then a boss stop closes each
- * end of the path, a whole game against Pip that is finished by checkmating him.
+ * Eight lessons for someone who has never played, three to five drills each, in
+ * order: the board and the pieces, what material is worth, pawns in the centre,
+ * bringing the pieces out, castling, looking before you move, the Italian opening
+ * as a model, and the shapes a mate in one takes — and then one boss stop closes
+ * the path, a whole game against Pip that is finished by checkmating him.
+ *
+ * **The path is a chain, not a graph with branches.** It forked four times while
+ * the map drew a depth that held two lessons as branches above and below the road;
+ * the operator's map has one line of stops, so every lesson now names the lesson
+ * before it and nothing else. Two lessons went rather than fork it again — the
+ * early queen, which is a special case of bringing the pieces out, and finishing a
+ * won game with the queen, which is the mate `mate-in-one` already teaches more of.
+ * Their drills went with them, except the one that gives check without mating:
+ * `look-first` carries that one now, because the coach's "Check! ..." line is
+ * written for it. `scripts/verify-site.ts` fails a course that puts two lessons at
+ * one depth, so a fork cannot come back quietly.
  * Three of those lessons also carry a **pack**: three optional puzzles on the same
  * idea, hung beside the lesson that teaches it and required by nothing — the
  * `PACKS` array at the end of this file, and the only other thing in here that is
@@ -14,19 +24,19 @@
  * A lesson is data: { id, title, goal, body[], diagram, diagramCaption, drills[],
  * requires[] }. A **boss stop** is that shape without the drills, plus
  * `boss: { level }` — the strength of Pip the game is won at. `requires` is the
- * lesson that has to be finished first, and it is the whole of the map — the
- * path forks three times and merges twice, and every end finishes in a boss:
+ * lesson that has to be finished first, and it is the whole of the map — one line,
+ * ten stops deep, with a boss at the end:
  *
- *   1 board-and-pieces ─┬─ 2 piece-values ─┬─ 4 develop ─┬─ 5 castle-early ─┬─ 7 look-first ─┬─ 8 finish-it ─── 11 boss
- *                       └─ 3 centre-pawns ─┘             └─ 6 queen-early ──┘                └─ 9 italian ── 10 mate-in-one ── 12 boss
+ *   1 board-and-pieces ── 2 piece-values ── 3 centre-pawns ── 4 develop
+ *     ── 5 castle-early ── 6 look-first ── 7 italian ── 8 mate-in-one
+ *     ── 9 boss: beat Pip ── 10 boss: the last game
  *
- * so a learner chooses which of the first two to take, which habit to learn
- * next, and whether to learn to finish a game before the Italian opening — but
- * material still comes before developing, both habits come before looking for
- * loose pieces, the Italian comes before the ladder of mates in one, and each
- * end of the path is closed by a game rather than another puzzle. The map is
- * drawn from this and nothing else; `scripts/verify-site.ts` fails a `requires`
- * that names no lesson, a cycle, or a lesson no path can reach.
+ * so material comes before developing, the habits come before looking for loose
+ * pieces, the Italian comes before the ladder of mates in one, and the path is
+ * closed by a game rather than another puzzle. The three packs hang beside the
+ * lessons that teach them and sit on no line at all. The map is drawn from this
+ * and nothing else; `scripts/verify-site.ts` fails a `requires` that names no
+ * lesson, a cycle, a lesson no path can reach, or a depth that holds two.
  * A drill is a position, the task in the learner's words, and the moves that
  * count as an answer:
  *   fen       the position, side to move taken from the FEN
