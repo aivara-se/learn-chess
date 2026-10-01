@@ -44,10 +44,9 @@ describe('the painting is the world', () => {
   test('it is the grid it was cut on, and the table is inside it', () => {
     expect(WORLD.width).toBeGreaterThan(0);
     expect(WORLD.height).toBeGreaterThan(0);
-    /* The painting is not 21:9, and nothing may call it that: the committed cut is
-       2.353:1 (640 ÷ 272), a hair under the 2.357:1 both of the operator's files carry
-       (1584 ÷ 672). */
-    expect(WORLD.width / WORLD.height).toBeCloseTo(2.353, 2);
+    /* The painting is not 21:9, and nothing may call it that. It ships as the operator
+       sent it — 1584 × 672, 2.357:1 — and it is not 21:9 (2.3333). */
+    expect(WORLD.width / WORLD.height).toBeCloseTo(2.357, 2);
     expect(Math.abs(WORLD.width / WORLD.height - 21 / 9)).toBeGreaterThan(0.015);
   });
 
@@ -93,13 +92,19 @@ describe('the road', () => {
     for (let i = 1; i < ROAD.length; i += 1) {
       expect(ROAD[i][0]).toBeGreaterThan(ROAD[i - 1][0]);
     }
-    expect(ROAD[0][0]).toBe(0);
+    /* The table starts where the road does, not at the frame's edge: the marking these
+       numbers are read off has no stroke in the leftmost column, so the table begins
+       at the first sixteenth and `SPAN.from` sits just inside it. */
+    expect(ROAD[0][0]).toBeLessThanOrEqual(0.0625);
     for (const [u, v] of ROAD) {
       expect(u).toBeGreaterThanOrEqual(0);
       expect(u).toBeLessThanOrEqual(1);
-      /* The road never leaves the painting's middle half, where the painting drew it. */
-      expect(v).toBeGreaterThan(0.25);
-      expect(v).toBeLessThan(0.75);
+      /* A road stays inside the painting, and nothing more than that is a law here. The
+         table before this one also held to the painting's middle half — that was a fact
+         about that painting's road, not about roads. This painting's road runs
+         diagonally: 0.93 of the height at the left edge, 0.45 across the middle. */
+      expect(v).toBeGreaterThan(0);
+      expect(v).toBeLessThan(1);
     }
   });
 

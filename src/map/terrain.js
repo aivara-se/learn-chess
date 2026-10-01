@@ -23,11 +23,12 @@ import { WORLD } from './road.js';
 
 export { WORLD };
 
-/* The painting is a pixel grid magnified — 2.4× on a phone — so its own pixels stay
- * square and hard-edged rather than being smoothed into a photograph of themselves.
- * That is the whole reason the cut is quantised to a grid and not shipped as the
- * operator's webp. */
-const IMAGE = 'nearest';
+/* The painting is drawn at or just under its own pixels — 0.86× to 1.00×, measured at
+ * the window shapes the game is played at — and it is a smooth illustration, not a
+ * pixel grid, so it is drawn the way it was made: smoothing on, no invented steps. The
+ * pieces are the other way round and set nearest in `src/board/pieces.js`; the filter
+ * follows the art, not the project. */
+const IMAGE = 'linear';
 
 /* The scale that covers a window, and the size the painting is drawn at. The drawn
  * size is rounded up: a cover that rounds down leaves a pixel of ground showing at
