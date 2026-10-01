@@ -1,6 +1,6 @@
 {
   "note": "Every shipped asset, path and size, and where it came from. sw.js precaches exactly this list, so a card that adds a sprite adds it here and never to sw.js. assets/source/** is deliberately not listed: those are the unmodified pack archives, kept as provenance, and the start screen must not wait on a 22MB download. Terms live in ATTRIBUTION.md.",
-  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the 2D Chess Pack's top-down render with a 3px contrasting rim added; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge. The map's sprites are the same rule at a bigger size: the props, the markers and the beads are 2x exports of an SVG source beside the packs in assets/source/map/ (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite and is not a slice of anything: assets/map/world.png is the operator's own painting, cut to its own 640x272 pixel grid and drawn at a cover fit (src/map/terrain.js), so its pixels are magnified at every window shape. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
+  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the operator's own generated set with its alpha kept, box-downscaled to the size the game draws and quantised to one 32-colour palette; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge \u2014 the king lands 99 tall against the plastic pack's 102, so the scale the code has always used is unchanged. The two board squares are drawn, not cropped: flat 64x64 tiles in the set's own palette. The map's sprites are the same rule at a bigger size: the props, the markers and the beads are 2x exports of an SVG source beside the packs in assets/source/map/ (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite and is not a slice of anything: assets/map/world.png is the operator's own painting, cut to its own 640x272 pixel grid and drawn at a cover fit (src/map/terrain.js), so its pixels are magnified at every window shape. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
   "assets": [
     {
       "path": "assets/favicon.svg",
@@ -58,15 +58,15 @@
     },
     {
       "path": "assets/board/dark.png",
-      "bytes": 2792,
-      "sha256": "3123e5c36d308f2355ea57674d4bbd088eb96df70b45bbfe2df369aef2204706",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 473,
+      "sha256": "654c68d0d5051ec487cdca806514148bc34bc26b1dfff876219d8345aeca3942",
+      "source": "generated for this project \u2014 the board's dark square, retoned to #746865 out of the set's own palette so the pieces' worst-case contrast against it is 29 rather than 12"
     },
     {
       "path": "assets/board/light.png",
-      "bytes": 3356,
-      "sha256": "5304e379febe575c6d96b4fb0dd9a45c46d4a8023d130df63417d872dbb21931",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 469,
+      "sha256": "5a2ada80db9e35d98c03b26097ab0d08bc310fbb92c8f1e8763ad31a738f785a",
+      "source": "generated for this project \u2014 the board's light square: 64x64, the set's own #d8d9db with a one-pixel #e5e4e6 speckle"
     },
     {
       "path": "assets/characters/pip.png",
@@ -298,75 +298,75 @@
     },
     {
       "path": "assets/pieces/bb.png",
-      "bytes": 1916,
-      "sha256": "4e83f1ce6be172f80d2e1b2c2ff47e0b74997f35c5d73b883d67813f5f800216",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 3557,
+      "sha256": "6b2f13d2f45cb3ca81bfd336ee6e68ba104d478c9fe5a8e9f9a2e98cfbcb3ed1",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/bk.png",
-      "bytes": 2212,
-      "sha256": "13f8aba9184f077e9c935597e8f01b5e1ddeb7fd130e7e798a88f9989c114e90",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 3914,
+      "sha256": "ffd3b641c28793340e52afddbf1df07558cfd0fa7754795b76016c817c747943",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/bn.png",
-      "bytes": 2054,
-      "sha256": "fb92d784f2bc677ee0340589d11324df720190a864356da0acc0cbc719db8d27",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 4044,
+      "sha256": "9c390de379c4c6fdf5d704480c1164bc8d6164430d69d8db5b20ca59a6f4650e",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/bp.png",
-      "bytes": 1563,
-      "sha256": "2e18400f689b82ae2cccdd6e27a14fe13be98fe1f52a8be27fbe6055ec55c358",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 2346,
+      "sha256": "b9c31e62109b3f663db40e785f6fcd5fa04162c1c995db4f33b8eb582add3d69",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/bq.png",
-      "bytes": 1868,
-      "sha256": "26e7eeb881aa26f8722e5f00a7c422fdc535be9ede8ac7e9b51e674f7bd99de9",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 4062,
+      "sha256": "6b435d5d5725838bad5659bb033d04c66a53685c35006b3b1e53f382a98688b9",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/br.png",
-      "bytes": 1956,
-      "sha256": "5219b2ab56c93119978f351beada34b8d14b4daf52c35337dc4b5e0eb92e19db",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 4003,
+      "sha256": "740036d6fc87085f4b0ba1fe1c8298b2c9966a7c27c4ff03afaba17ee73ebecc",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/wb.png",
-      "bytes": 1505,
-      "sha256": "77a63a1f8d0eba4091b665ba612bc9cedb80fedbe98bfb4ee0c488e2f1167804",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 4133,
+      "sha256": "6d6d94a46228634327aba56b9e5810ca84e130b56770a50e26233616cbf25662",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/wk.png",
-      "bytes": 1716,
-      "sha256": "2659b3d2f37e4b587131fad73c033ac8976a7fc50b7cdd9a6eb3d4ef4840e258",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 4654,
+      "sha256": "79beb6f553ff6231ec14459ae2ff8d3c0def9ba77908dd597d868c5d636391a1",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/wn.png",
-      "bytes": 1588,
-      "sha256": "359fa0a2372ad624aa64f5c6e8d89f46ce3e4d60f5e9d6e0cec854812b452a60",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 4730,
+      "sha256": "07d1682f081185942c889f53c12434686f2ed78cdfd55452cf97f81e841eebd8",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/wp.png",
-      "bytes": 1255,
-      "sha256": "2b926b3482cc8769b16aa74b6b4e2d0464330ca4bd32c9560f8ff7cd323db997",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 2620,
+      "sha256": "f602981dada0dfb2ac667bb2070270aa1b3ea3016c1748adda2d32883e5f77d9",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/wq.png",
-      "bytes": 1486,
-      "sha256": "3779e8476dbca2778666d4a93cc75f547b56d2388454ee1dd80d1fd25315b6e5",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 4405,
+      "sha256": "55d081adba1bba925d49972242192b9b3cc3144b1dc10ca6baac76cdbc4eb576",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/pieces/wr.png",
-      "bytes": 1520,
-      "sha256": "b683656f7ebf2ba63383ba431af3fff26f6a47ac348483dc5e91b2abcd0a9bfd",
-      "source": "2D Chess Pack \u2014 tight crop of the top-down plastic render, 3px rim added"
+      "bytes": 4371,
+      "sha256": "039e41e112f3dcb8bd9cbeb12bf22f5c6f8b26282eed31c3d59a6cdf0b7ac84d",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
     },
     {
       "path": "assets/ui/arrow-east.png",

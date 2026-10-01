@@ -15,12 +15,12 @@ pack are in [`assets/source/`](assets/source/), and the file-by-file list is
 - **2D Chess Pack** — Screaming Brain Studios — **CC0** ("credit is appreciated, but never
   required") — <https://opengameart.org/content/2d-chess-pack>. The archive ships unmodified
   as `assets/source/chess-pack.zip` (it carries no licence file inside; the CC0 statement is
-  the pack's page). Modified: the twelve pieces and the two board tiles are tight crops of
-  the **top-down, _plastic_** renders (`Pieces/White/White - Plastic 1 128x128.png`,
-  `Pieces/Black/Black - Plastic 1 128x128.png`, `Boards/Tops/Top - Plastic TD 512x520.png`),
-  cut to the sprite's own bounds and, for the pieces, given a 3px contrasting rim so a piece
-  reads against either square. Nothing else of the pack ships: the marble, wood, glass and
-  isometric renders are not used.
+  the pack's page) and **nothing from it is used**: the twelve pieces and the two board tiles
+  were tight crops of its **top-down, _plastic_** renders (`Pieces/White/White - Plastic 1
+  128x128.png`, `Pieces/Black/Black - Plastic 1 128x128.png`, `Boards/Tops/Top - Plastic TD
+  512x520.png`) until the operator's own generated set replaced them; the marble, wood, glass
+  and isometric renders were never used. It is kept so the archive matches what was actually
+  collected.
 - **Kenney UI Pack** — Kenney — **CC0** — <https://kenney.nl/assets/ui-pack>. The archive
   ships unmodified as `assets/source/kenney_ui-pack.zip`. Modified: none — twelve of the
   shipped UI images are byte-for-byte copies of pack members (the pack's *Blue* set for the
@@ -53,6 +53,14 @@ not shipped, since the game never loads them.
   carried into the game as a sprite.
 - `assets/ui/lock.png` — the mark on a lesson a learner has not unlocked yet.
 - `assets/ui/rank-badge.png` — the badge beside a rank on the path.
+- `assets/pieces/**` — the twelve chess pieces. The operator sent the generator's 3168×1344
+  sheet; what ships is the alpha it came with, cut to each piece's own bounds, box-downscaled
+  by 4 to the size the game draws (the king lands 41×99 where the pack's king was 52×102) and
+  quantised to one 32-colour palette for the whole set.
+- `assets/board/light.png`, `assets/board/dark.png` — the board's two squares, drawn for this
+  project: flat 64×64 tiles with a one-pixel speckle, and both tones taken out of the piece
+  set's own palette (`#d8d9db` and `#746865`) so the board cannot drift away from the pieces
+  standing on it.
 
 ## The lessons map
 
