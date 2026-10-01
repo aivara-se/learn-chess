@@ -35,7 +35,19 @@ const COLOURS = ['w', 'b'];
 const TYPES = ['P', 'N', 'B', 'R', 'Q', 'K'];
 const KINDS = COLOURS.flatMap((color) => TYPES.map((type) => ({ color, type })));
 const SPRITES = new Map(
-  await Promise.all(KINDS.map(async (kind) => [`${kind.color}${kind.type}`, await Assets.load(piecePath(kind))])),
+  await Promise.all(KINDS.map(async (kind) => {
+    const texture = await Assets.load(piecePath(kind));
+    /* The pieces are pixel art, and the game draws them at `square / 64`, which is
+     * rarely a whole number — 0.9375 on the board fixture. On the default smoothing
+     * that costs the art its whole style: a pawn cut to 30 colours lands on screen
+     * as 563, because the filter's job is to invent the shades between the steps.
+     * The source is set to nearest the way the map's painting is
+     * (`src/map/terrain.js`): a square that falls between two pixels is a square
+     * with an uneven step, which is what pixel art does at a fractional scale, and
+     * it is the honest one of the two. */
+    texture.source.scaleMode = 'nearest';
+    return [`${kind.color}${kind.type}`, texture];
+  })),
 );
 
 export function createPieces({ app }) {
