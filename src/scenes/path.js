@@ -380,14 +380,22 @@ function start(context, { pan = null } = {}) {
   context.layer.on('pointerupoutside', up);
 
   /* The wheel is a native listener rather than a Pixi one: the canvas carries
-   * `touch-action: none` and the page must not scroll behind the game, so the event
-   * has to be taken before the browser acts on it. A wheel moves the world the way
-   * the course is read — sideways — and a device that sends its scroll as `deltaY`
-   * is what this and every other horizontal map has to answer. */
+   * `touch-action: none`, so the event has to be taken before the browser acts on it.
+   *
+   * **The gesture is read on its own axis, and that is a fix, not a detail.** A touchpad
+   * sends a two-finger sideways swipe as `deltaX` and an up-and-down scroll as `deltaY`.
+   * This used to pan by `deltaY` alone, so the two gestures came out swapped: a sideways
+   * swipe moved nothing, and a vertical scroll slid the map sideways. The world pans
+   * sideways, so `deltaX` is the pan. `deltaY` is the pan only under `shift`, which is
+   * how a browser says "scroll me sideways" and the only way a one-axis mouse wheel can
+   * pan a world that has no up and down. A plain vertical scroll is not this screen's to
+   * take, so it is left to the page. */
   wheel = (event) => {
     if (view.sheet) return;
+    const across = event.deltaX !== 0 ? event.deltaX : (event.shiftKey ? event.deltaY : 0);
+    if (!across) return;
     event.preventDefault();
-    applyPan({ x: view.pan.x + (event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY), y: view.pan.y });
+    applyPan({ x: view.pan.x + across * (event.deltaMode === 1 ? 16 : 1), y: view.pan.y });
   };
   context.app.canvas.addEventListener('wheel', wheel, { passive: false });
   window.learnChessPath = handle(context);

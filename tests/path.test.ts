@@ -11,15 +11,15 @@
  *
  * The placement itself is the card's own rule, and it is checked here too: a stop's x
  * is its depth in the `requires` graph and its y is the painting's road at that x
- * (`src/map/road.js`), a fork puts one branch above the road and one below it, a
- * detour hangs off the road between two stops, and no two stops that share ground
- * claim the same pixels. Every number below is read off the tree — the road table,
- * the graph, the fit — and none of them is written down twice.
+ * (`src/map/road.js`), and the path is a **chain**: one stop at every depth, each of them
+ * standing on the road the painting drew. A detour hangs off the road between two stops,
+ * and no two stops that share ground claim the same pixels. Every number below is read off
+ * the tree — the road table, the graph, the fit — and none of them is written down twice.
  *
  * The rest of the file is the behaviour the card is about, also without a browser:
  * a fresh device has one open stop and the rest locked; a stop opens exactly when the
- * graph says, including both branches of a fork and both sides of a merge; a star is
- * a first try; and the rank follows the stars.
+ * graph says, which on a chain is the lesson after it; a star is a first try; and the
+ * rank follows the stars.
  */
 import { describe, expect, test } from 'bun:test';
 import { LESSONS, PACKS } from '../src/data/lessons.js';
@@ -109,7 +109,7 @@ describe('the map draws the graph', () => {
     }
   });
 
-  test('a fork puts one branch above the road and one below it', () => {
+  test('the course is a chain: one stop at every depth, every stop on the road', () => {
     for (const { fit } of SHAPES) {
       const map = layout(fit.scale);
       const byDepth = new Map<number, any[]>();
@@ -117,24 +117,17 @@ describe('the map draws the graph', () => {
         if (!byDepth.has(stop.depth)) byDepth.set(stop.depth, []);
         byDepth.get(stop.depth)!.push(stop);
       }
-      let forks = 0;
-      for (const [, group] of byDepth) {
-        if (group.length !== 2) continue;
-        forks += 1;
-        const offsets = group.map((stop) => stop.off).sort((a, b) => a - b);
-        expect(offsets).toEqual([-FORK, FORK]);
-        const sides = group.map((stop) => stop.side).sort();
-        expect(sides).toEqual(['above', 'below']);
-        expect(Math.abs(group[0].y - group[1].y)).toBe(2 * FORK);
-        /* Their words write outwards, so the two captions cannot meet in the middle:
-           the upper branch's ground ends before the lower branch's marker begins. */
-        const upper = group.find((stop) => stop.side === 'above')!;
-        const lower = group.find((stop) => stop.side === 'below')!;
-        expect(upper.y + upper.half + GUTTER).toBeLessThanOrEqual(lower.y - lower.half);
+      /* The path is linear, so no depth holds two lessons. A fork would need two markers
+         at one x and there is one line of them on the operator's map — `scripts/verify-site.ts`
+         fails a course that forks, so this cannot come back by accident. */
+      for (const group of byDepth.values()) expect(group.length).toBe(1);
+      /* And a stop with a depth to itself stands on the road the painting drew, which is
+         the whole reason `src/map/road.js` exists. */
+      for (const stop of map.stops) {
+        expect(stop.off).toBe(0);
+        expect(stop.y).toBe(stop.onRoad);
+        expect(stop.side).toBe('below');
       }
-      /* This course is a fork three times over, and four if a merge counts: a test
-         that found none would be a test that passes on nothing. */
-      expect(forks).toBeGreaterThan(1);
     }
   });
 
@@ -278,7 +271,7 @@ describe('the path opens the way the graph says', () => {
     const opened = allStops.filter((unit) => unit.id !== LESSONS[0].id && open(first, unit)).map((unit) => unit.id).sort();
     const wants = LESSONS.filter((l: any) => (l.requires ?? []).includes(LESSONS[0].id)).map((l: any) => l.id).sort();
     expect(opened).toEqual(wants);
-    expect(wants.length).toBeGreaterThan(1); // the first stop is a fork: it opens both ways
+    expect(wants.length).toBe(1); // the path is linear: one lesson follows the first, and nothing else
 
     /* Everything finished but that lesson: it is open, and it is open because every
        requirement it names is done. */
@@ -287,15 +280,22 @@ describe('the path opens the way the graph says', () => {
     }
   });
 
-  test('a merge needs both branches, not one', () => {
-    const merge = LESSONS.find((l: any) => (l.requires ?? []).length > 1) as any;
-    expect(merge).toBeTruthy();
-    for (const one of merge.requires) {
-      const record_ = allDoneExcept([one, merge.id]);
-      expect(state(record_, merge)).toBe('locked');
-      expect(heldBy(record_, merge)).toBe(one);
+  test('a stop needs the one lesson before it, and never more than one', () => {
+    /* The path is a chain: every lesson names at most one requirement — the lesson before
+       it — and it opens exactly when that one is finished. A fork's merge, which needed
+       two branches and neither alone, cannot be written down any more. */
+    /* A boss stop is left out: it has no drills of its own, so a record of drills alone
+       reports it finished. Every other test in this file covers the boss stops. */
+    for (const lesson of (LESSONS as any[]).filter((entry) => !entry.boss)) {
+      const requires = lesson.requires ?? [];
+      expect(requires.length).toBeLessThanOrEqual(1);
+      for (const one of requires) {
+        const record_ = allDoneExcept([one, lesson.id]);
+        expect(state(record_, lesson)).toBe('locked');
+        expect(heldBy(record_, lesson)).toBe(one);
+      }
+      expect(state(allDoneExcept([lesson.id]), lesson)).toBe('open');
     }
-    expect(state(allDoneExcept([merge.id]), merge)).toBe('open');
   });
 
   test('a stop is never locked while a stop it requires is unfinished', () => {
