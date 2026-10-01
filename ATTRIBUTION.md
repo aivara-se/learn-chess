@@ -65,18 +65,26 @@ not shipped, since the game never loads them.
 ## The lessons map
 
 `assets/map/**` is the world the path is drawn on: **one painting**
-(`assets/map/world.png`), twenty landmark props, the route's bead and its glow, the
-stop marker set (a shield, a detour medallion, a pole and pennant, the done / open /
-locked overlays, the boss crest, a gold star, the golden arrow) and the banner the star
-count is written on.
+(`assets/map/world.jpg`), the route's bead and its glow, the stop marker set (a shield,
+a detour medallion, a pole and pennant, the done / open / locked overlays, the boss
+crest, a gold star, the golden arrow) and the banner the star count is written on.
 
-**The painting is the operator's own, supplied for this project and cut for it.** The
-file he sent — `1000038600_compressed.webp`, 1584×672 and 147 KB — is not in this
-repository; what is committed is the game's cut of it, 640×272 at 40 colours, 51 KB,
-made by a box downscale to that pixel grid and a palette reduction to those 40 colours.
-He sent it, and holds whatever rights he has in it; the cut ships here on his word,
-for this game. Its ratio is 2.353:1 (640 ÷ 272) — the files he sent carry 2.357:1
-(1584 ÷ 672) — and neither is 21:9.
+**The twenty landmark props are gone.** `assets/map/prop-*.png` — trees, rocks, the
+hedgerow, the village, the bridge, the fence, the temple, the lava fissure, the ash and
+the smoke — were still in the manifest and still precached, 33 KB every visitor
+downloaded for nothing: no module had drawn one since the map became a single painting.
+Their vector sources stay in `assets/source/map/` as provenance, and nothing ships from
+them.
+
+**The painting is the operator's own, supplied for this project and shipped as sent.**
+`assets/map/world.jpg` is the file he mailed to `mama@aivara.se` — `Generated Image
+September 30, 2026 - 10_30PM.jpg`, 1584×672, **1,110,084 bytes**, sha256
+`d18509f674d57d97823b290c4768ee4e99ab84600d80e7ec97850ad2f6753e11` — committed
+byte-for-byte and unmodified: not cut, not quantised, not re-encoded, by his decision. He
+sent it, and holds whatever rights he has in it; it ships here on his word, for this game.
+Its ratio is 2.357:1 (1584 ÷ 672) and it is not 21:9. He also sent a second copy with the
+road painted flat `#FF0000`, and the road's course in `src/map/road.js` is read off that
+marking — the marked copy itself is not in this repository.
 
 **Everything else under `assets/map/` was drawn as vector art for this project** — an
 SVG per sprite in `assets/source/map/`, exported to PNG at 2× in the authoring session;

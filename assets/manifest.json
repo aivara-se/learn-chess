@@ -1,6 +1,6 @@
 {
   "note": "Every shipped asset, path and size, and where it came from. sw.js precaches exactly this list, so a card that adds a sprite adds it here and never to sw.js. assets/source/** is deliberately not listed: those are the unmodified pack archives, kept as provenance, and the start screen must not wait on a 22MB download. Terms live in ATTRIBUTION.md.",
-  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the operator's own generated set with its alpha kept, box-downscaled to the size the game draws and quantised to one 32-colour palette; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge \u2014 the king lands 99 tall against the plastic pack's 102, so the scale the code has always used is unchanged. The two board squares are drawn, not cropped: flat 64x64 tiles in the set's own palette. The map's sprites are the same rule at a bigger size: the props, the markers and the beads are 2x exports of an SVG source beside the packs in assets/source/map/ (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite and is not a slice of anything: assets/map/world.png is the operator's own painting, cut to its own 640x272 pixel grid and drawn at a cover fit (src/map/terrain.js), so its pixels are magnified at every window shape. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
+  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the operator's own generated set with its alpha kept, box-downscaled to the size the game draws and quantised to one 32-colour palette; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge \u2014 the king lands 99 tall against the plastic pack's 102, so the scale the code has always used is unchanged. The two board squares are drawn, not cropped: flat 64x64 tiles in the set's own palette. The map's sprites are the same rule at a bigger size: the markers and the beads are 2x exports of an SVG source beside the packs in assets/source/map/ (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite: assets/map/world.jpg is the operator's own painting, shipped as he sent it \u2014 1584x672, unmodified \u2014 and drawn at a cover fit (src/map/terrain.js), so it is drawn at 0.86x to 1.00x of its own pixels rather than magnified. Its splines and its road are read out of it; the road table is src/map/road.js. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
   "assets": [
     {
       "path": "assets/favicon.svg",
@@ -99,130 +99,10 @@
       "source": "this repository's previous release (v1)"
     },
     {
-      "path": "assets/map/world.png",
-      "bytes": 52648,
-      "sha256": "b6a240d07bbc8223cbabdc1f7a673e19682523806f1d7fd8a82f3aeb0f2e4895",
-      "source": "the operator's own painting, sent by mail to mama@aivara.se \u2014 1584\u00d7672 webp, box-downscaled to a 640\u00d7272 pixel grid and quantised to 40 colours; drawn at a cover fit rather than at its own size"
-    },
-    {
-      "path": "assets/map/prop-tree-oak.png",
-      "bytes": 1062,
-      "sha256": "cb5f95f92acf6ad5737b11b7b7adb5176690f1e9fbcf2b006edbf64b6816261f",
-      "source": "generated for this project \u2014 a map prop \u2014 a meadow oak; drawn 48\u00d758, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-tree-pine.png",
-      "bytes": 885,
-      "sha256": "ab3a044bbef87d330476b7078481ec52d2a6c0d301444fcf580d2bad5f4acf59",
-      "source": "generated for this project \u2014 a map prop \u2014 a pass pine; drawn 40\u00d756, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-tree-dead.png",
-      "bytes": 650,
-      "sha256": "0c4c5bb675d00c41e7bc3f214d743b5863e71efdc064270d9b11cf92637e5faa",
-      "source": "generated for this project \u2014 a map prop \u2014 a dead tree for the ash; drawn 44\u00d758, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-bush.png",
-      "bytes": 655,
-      "sha256": "9025e2921e8b95f5af221c8df4a9fd62508affb950e461b4023abadb35928994",
-      "source": "generated for this project \u2014 a map prop \u2014 a bush; drawn 34\u00d722, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-hedgerow.png",
-      "bytes": 835,
-      "sha256": "8b7dc4d549796101b49aa36e57bfa5c25bac6a25d45bfc9c56594021d2816336",
-      "source": "generated for this project \u2014 a map prop \u2014 a hedgerow run; drawn 96\u00d726, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-flowers.png",
-      "bytes": 913,
-      "sha256": "2b311a8dafb6cea9712fa5721681c7f1e05c45eed41afe09f6536ead6165e963",
-      "source": "generated for this project \u2014 a map prop \u2014 a flower clump; drawn 30\u00d720, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-cattails.png",
-      "bytes": 687,
-      "sha256": "d94f13f1fde5d3ef2d1871bfd74c062c24ba463b5cff6f2559f551b768205dbe",
-      "source": "generated for this project \u2014 a map prop \u2014 reeds for the bank; drawn 34\u00d744, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-rock-small.png",
-      "bytes": 641,
-      "sha256": "e23818f2b21622c9f233a418a48d3a684085fab612dd7aa99be42b32eb9ec71d",
-      "source": "generated for this project \u2014 a map prop \u2014 a loose stone; drawn 32\u00d724, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-rock-ridge.png",
-      "bytes": 2986,
-      "sha256": "1c44cba7c71b40667e25afefafc632d6211a73351e2256571c0c5282a3b643fe",
-      "source": "generated for this project \u2014 a map prop \u2014 a rocky outcrop; drawn 120\u00d764, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-mesa.png",
-      "bytes": 1965,
-      "sha256": "f586e609698aef5356c2e60e2a6a7b1b41e0779919eae0f6f1c44fddb646a0c4",
-      "source": "generated for this project \u2014 a map prop \u2014 a canyon mesa; drawn 116\u00d772, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-village.png",
-      "bytes": 2846,
-      "sha256": "4f826a912d2539adb3f862a97480765cd8d44d5ced0bc02317a02971e4b91bbf",
-      "source": "generated for this project \u2014 a map prop \u2014 the village cluster; drawn 124\u00d776, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-bridge.png",
-      "bytes": 1043,
-      "sha256": "fee2ca30c192e619173723817d283c2c08637785953c1a21a18825e5a225a3ad",
-      "source": "generated for this project \u2014 a map prop \u2014 a wooden bridge; drawn 88\u00d744, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-fence.png",
-      "bytes": 770,
-      "sha256": "3a15d7831824287005104692c2e8470bbf9eaa4adf4d23ac3e59659702ce6e1f",
-      "source": "generated for this project \u2014 a map prop \u2014 a field fence; drawn 76\u00d726, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-signpost.png",
-      "bytes": 543,
-      "sha256": "13c34576c96ea339711600414ef50148704e20df150e02a4f67ccb7a38c97efd",
-      "source": "generated for this project \u2014 a map prop \u2014 a signpost; drawn 34\u00d754, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-ruin.png",
-      "bytes": 1571,
-      "sha256": "106c29abedce6da6c5a1ced4b9e796f29fba446f765b93ddbc59ecce4b0dd506",
-      "source": "generated for this project \u2014 a map prop \u2014 a ruin; drawn 84\u00d760, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-temple.png",
-      "bytes": 1786,
-      "sha256": "b5d071fb11c4f8cd448292ca8e92a329efd1caa30e45a03fb72918a21783998b",
-      "source": "generated for this project \u2014 a map prop \u2014 the temple on the peak; drawn 76\u00d776, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-lava-fissure.png",
-      "bytes": 2338,
-      "sha256": "957d2be9265292e4359dc2fdecbdd29f7f7b79e94389e60eab43512e5a5ba9df",
-      "source": "generated for this project \u2014 a map prop \u2014 a lava fissure; drawn 116\u00d750, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-ash-mound.png",
-      "bytes": 1089,
-      "sha256": "a0c7fb442f01e6bf28501d5758021b4701ebb6a9ca6e86a25e8e7263ef9e7d7d",
-      "source": "generated for this project \u2014 a map prop \u2014 an ash mound; drawn 62\u00d726, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-smoke.png",
-      "bytes": 1094,
-      "sha256": "e663981502052fbeec10c57cbb8c1bd4fa809d1e4530d7cecfede6f7cc31ac9c",
-      "source": "generated for this project \u2014 a map prop \u2014 a smoke plume; drawn 64\u00d784, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/prop-compass.png",
-      "bytes": 1999,
-      "sha256": "6e37bfaf9c0fdd39017a7248de7eb42e7818a74481e0ea1331d909b8d73c5507",
-      "source": "generated for this project \u2014 a map prop \u2014 a compass rose; drawn 60\u00d760, exported at 2\u00d7"
+      "path": "assets/map/world.jpg",
+      "bytes": 1110084,
+      "sha256": "d18509f674d57d97823b290c4768ee4e99ab84600d80e7ec97850ad2f6753e11",
+      "source": "the operator's own painting, sent by mail to mama@aivara.se as 'Generated Image September 30, 2026 - 10_30PM.jpg' \u2014 shipped exactly as sent at 1584x672, 1.06 MB: not cut, not quantised, not re-encoded, by his decision"
     },
     {
       "path": "assets/map/marker-shield.png",

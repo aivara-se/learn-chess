@@ -237,17 +237,18 @@ are up to. The stops, the forks and the legs are the course's `requires` graph d
 stop is in; the screen draws what those two return and decides nothing about the course
 itself.
 
-**The world is one painting, and it is the operator's.** `assets/map/world.png` is his
-own artwork — mailed to `mama@aivara.se` as a 1584×672 webp, **147 KB** — box-downscaled
-to a **640×272** pixel grid and quantised to **40 colours**, which lands it at **51 KB**
-and makes it read as pixel art rather than as a compressed photograph of itself. The
-grid was chosen by looking at both candidates: 320×136 smears the haystacks and the
-roofs, 640×272 keeps them. Its ratio is **2.353:1** (640 ÷ 272) — the files he sent carry
-**2.357:1** (1584 ÷ 672), so the cut is a shade the narrower of the two — and neither is
-**21:9 (2.333)**. Nothing in this repository may call either that.
+**The world is one painting, and it is the operator's.** `assets/map/world.jpg` is his own
+artwork, shipped **exactly as he sent it** — mailed to `mama@aivara.se` as `Generated Image
+September 30, 2026 - 10_30PM.jpg`, **1584×672, 1.06 MB**, JPEG — by his decision: not cut,
+not quantised, not re-encoded. It is a smooth illustration rather than a pixel grid, and the
+cover fit draws it at **0.86× to 1.00×** of its own pixels at every window shape the game is
+played at, so it is drawn with smoothing on (`IMAGE` in `src/map/terrain.js`). The pieces go
+the other way and set `nearest` in `src/board/pieces.js`, because they are pixel art
+magnified: the filter follows the art, not the project. Its ratio is **2.357:1**
+(1584 ÷ 672) and it is not **21:9 (2.333)**. Nothing in this repository may call it that.
 
 **Edge to edge, and it pans sideways.** The painting is drawn at a **cover fit** — the
-larger of `window/640` and `window/272` — so it fills the window in both directions at
+larger of `window/1584` and `window/672` — so it fills the window in both directions at
 every window shape and nothing shows round it (`src/map/terrain.js`; `tests/map.test.ts`
 holds it at the shapes the game is played at). Because no phone and no laptop is
 2.353:1, a cover always leaves the world **wider than the pane**, and that is the pan:
@@ -274,6 +275,17 @@ every sixteenth of its width. It was traced by reading each column for the tan o
 packed dirt, keeping the run nearest the column before it — a roof and a road are the
 same brown, so continuity is what separates them — and then drawing the trace back onto
 the painting and looking at it: it follows the road over the bridge and past the mill.
+
+**On the painting that ships now, that reader does not work, and the numbers came from the
+operator's own hand instead.** Re-run against the new painting it locked onto a 98px
+plough field, a 75px patch of bare dirt and 2–4px fence slivers, and a tightened
+road-shaped rule wandered by ±100px; packed dirt, a field, a fence line and a road are all
+the same brown, and the new painting's road is also cut into pieces by the river and the
+buildings. So he marked the road himself — flat `#FF0000`, edge to edge — and the table
+above is read off that marking: the stroke is 28–44px wide on his 3168×1344 copy and stays
+inside that band across the whole frame, which is what says one road was followed rather
+than a field. The marking also showed the old table was wrong here by up to 0.44 of the
+height — about 282px at a 640-tall window — because this painting's road runs diagonally.
 The one place the trace climbs the roofs is the village, at `u` past about 0.88, where
 the painting's street bends down behind the houses; the village street does run on to
 about 0.95 and then the painting has gardens and no road at all, so the table — and the
