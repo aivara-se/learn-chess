@@ -297,8 +297,8 @@ that table would be a stop standing on a roof.
 | the world | the painting's own 640×272 grid, drawn at `max(window/640, window/272)` — the cover, which is what makes it edge to edge and what makes the pan real |
 | a stop's x | `SPAN.from + step × depth`, where `step` is the span over the deepest lesson in the course — the course's own shape, never a coordinate |
 | a stop's y | the road's centre at that x, times the scale, plus the stop's own offset — zero for a stop on the road |
-| a fork | two branches, one above the road and one below, `FORK` apart: **48 screen px** each way. It is a screen measurement because what has to fit is a 72px marker and a 12px caption at every window, and a caption does not get smaller on a laptop |
-| a detour | half a step past the lesson that teaches it, on the road: a medallion beside the path, never a third branch of a fork. `scripts/verify-site.ts` fails a course with more than two lessons at one depth |
+| a fork | two branches, one above the road and one below, `FORK` apart: **48 screen px** each way. It is a screen measurement because what has to fit is a 72px marker and a 12px caption at every window, and a caption does not get smaller on a laptop. **No course uses it any more**: the operator's path is linear, and `scripts/verify-site.ts` fails a course that puts two lessons at one depth |
+| a detour | half a step past the lesson that teaches it, on the road: a medallion beside the path, never a third branch of a fork. `scripts/verify-site.ts` fails a course with more than one lesson at one depth |
 | a caption | as wide as its stop's room — the world's margin on one side, its far edge on the other, and half the distance to the nearest stop whose ground it shares; at most **348**, at least **60** |
 | the chrome | the art's star banner in the window's top-right corner, and nothing else: the rank strip and the puzzle chip the port drew are not on this screen |
 

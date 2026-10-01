@@ -189,13 +189,18 @@ checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.pro
      depth has nowhere to stand that is not drawn over another stop, and a detour is
      not a branch: it hangs off the lesson that teaches it, half a step further along.
      So the course is what fails here, not the drawing. */
+  /* The path is a chain by the operator's decision: one stop at every depth, each of them
+     standing on the road the painting draws. A fork would need two markers at one x and
+     his map has room for one line of them, so the course is what fails here, not the
+     drawing. A detour is not a branch: it hangs off the lesson that teaches it, half a
+     step further along, and does not count against a depth. */
   const perDepth = new Map<number, number>();
   for (const l of LESSONS) perDepth.set(depth(l), (perDepth.get(depth(l)) || 0) + 1);
-  const crowded = [...perDepth].filter(([, n]) => n > 2);
+  const crowded = [...perDepth].filter(([, n]) => n > 1);
   for (const [d, n] of crowded) {
-    problems.push(`${n} lessons stand at depth ${d} of the path, and a depth of the map is two branches — one above the road and one below it: a third could only be drawn over another stop`);
+    problems.push(`${n} lessons stand at depth ${d} of the path, and the path is a chain — one stop at every depth: a fork would need two markers at one x, and there is one line of them on the painting`);
   }
-  checks.push(`the map's depths hold the forks: ${LESSONS.length} lessons, at most ${Math.max(...perDepth.values())} at one depth of the two a fork has, and ${PACKS.length} detours hanging off the road between them`);
+  checks.push(`the path is a chain: ${LESSONS.length} lessons, one at every depth, and ${PACKS.length} detours hanging off the road between them`);
 }
 
 /* 3. no course total is written into a file: they are counted from the course.

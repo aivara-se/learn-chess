@@ -13,18 +13,18 @@
 /* The cache-name ladder. Read off the branches rather than guessed — measured
    with `git show origin/<branch>:sw.js | grep '^const CACHE'` on the rebase this
    name was kept through: the frozen `v1` tag, and so the name the deleted app
-   served, is `learn-chess-v14`, and `main` stands at `learn-chess-v21`. This
-   branch keeps `v22`: nobody holds it — read off every branch, local and remote —
+   served, is `learn-chess-v14`, and `main` stands at `learn-chess-v22`. This
+   branch keeps `v23`: nobody holds it — read off every branch, local and remote —
    and nothing on any branch is above it.
    The name has to be its own because the shell is served cache-first: the fetch
    handler answers every same-origin GET from the cache and keeps what it
-   fetches, so a device that has played before holds the painting this branch
-   replaces — `assets/map/world.png`, and the road table that says where the stops
-   stand on it — and re-fetches neither without a new worker, so it keeps drawing
-   the retired painting with the stops standing on its road. `scripts/verify-shell.ts`
-   fails a name at or below `v14` for the same reason: reusing a name a device already
+   fetches, so a device that has played before holds the course and the screen this
+   branch rewrites — `src/data/lessons.js` and `src/scenes/path.js` — and re-fetches
+   neither without a new worker, so it keeps walking the forking path with the wheel
+   gesture back to front. `scripts/verify-shell.ts` fails a
+   name at or below `v14` for the same reason: reusing a name a device already
    holds leaves the old app in its browser. */
-const CACHE = 'learn-chess-v22';
+const CACHE = 'learn-chess-v23';
 
 /* The shell: the files the app needs to boot and to draw its first frame. Two
  * rules, and scripts/verify-shell.ts now holds the list to both of them, because

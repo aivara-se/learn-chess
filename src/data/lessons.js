@@ -143,7 +143,7 @@ export const LESSONS = [
 
   {
     id: 'centre-pawns',
-    requires: ['board-and-pieces'],
+    requires: ['piece-values'],
     title: 'Put a pawn in the centre',
     goal: 'Take the middle of the board with a pawn.',
     body: [
@@ -184,7 +184,7 @@ export const LESSONS = [
 
   {
     id: 'develop',
-    requires: ['piece-values', 'centre-pawns'],
+    requires: ['centre-pawns'],
     title: 'Bring out one new piece every move',
     goal: 'Bring out a new piece with every move.',
     body: [
@@ -272,49 +272,8 @@ export const LESSONS = [
   },
 
   {
-    id: 'queen-early',
-    requires: ['develop'],
-    title: 'Do not bring the queen out early',
-    goal: 'Keep the queen at home until the other pieces are out.',
-    body: [
-      'The queen is the strongest piece and one of the easiest to lose. Coming out on move two, it has no support.',
-      'Any pawn or knight can attack it, so it must run away again. Every time it runs, the other player brings out a new piece for free.',
-      'The queen needs open lines to be strong. At the start the board is full of pawns, so she has no room.',
-      'Bring the knights and bishops out and castle first. The queen will find work on her own.',
-    ],
-    diagram: 'r1bqkbnr/pppp1ppp/2n5/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3',
-    diagramCaption: 'White has played the queen out on move two, and every attack on it costs White a move.',
-    drills: [
-      {
-        fen: 'rnb1kbnr/pppp1ppp/8/4p3/4P2q/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3',
-        prompt: 'Black\'s queen is out on h4. Take it with your knight.',
-        hint: 'a piece you already brought out is looking at the queen',
-        why: 'Your knight on f3 attacks h4, and no black piece defends the queen. You win the queen for a knight, and that wins the game.',
-        best: 'f3h4',
-        accepted: ['f3h4'],
-      },
-      {
-        fen: 'q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1',
-        prompt: 'The queen is on a8. Find a knight move that hits both.',
-        hint: 'one knight square can see the king and the queen',
-        why: 'Your knight jumps to c7 and gives check. From c7 it also attacks the queen on a8, so she falls next move.',
-        best: 'b5c7',
-        accepted: ['b5c7'],
-      },
-      {
-        fen: '4k3/8/8/8/3q4/2B5/8/3NK3 w - - 0 1',
-        prompt: 'The black queen is on d4 with nothing defending her. Take her.',
-        hint: 'see if your bishop can reach the queen',
-        why: 'Your bishop on c3 takes the queen on d4 along the diagonal. The queen is worth nine pawns and nothing defends her.',
-        best: 'c3d4',
-        accepted: ['c3d4'],
-      },
-    ],
-  },
-
-  {
     id: 'look-first',
-    requires: ['castle-early', 'queen-early'],
+    requires: ['castle-early'],
     title: 'Look first: checks and captures',
     goal: 'Look before every move, for captures and for checks.',
     body: [
@@ -367,57 +326,14 @@ export const LESSONS = [
         best: 'a1a8',
         accepted: ['a1a8'],
       },
-    ],
-  },
 
-  {
-    id: 'finish-it',
-    requires: ['look-first'],
-    title: 'Finish it: mate with the queen',
-    goal: 'Trap the lone king, then mate him with your queen.',
-    body: [
-      'A queen on her own cannot mate a king. He runs away from every check she gives, and the game goes on for ever. Your king has to come and help.',
-      'First, fence him in. A queen in the middle of the board draws a line the king cannot cross, and every move he makes he has less room.',
-      'Then keep your queen one knight move away from his king. From there she is safe, because he cannot take her, and every step he takes is a step towards the edge.',
-      'Last, walk your king up. When your king stands beside him the queen comes right up too, your king guards her, and it is mate.',
-    ],
-    diagram: '8/8/8/8/Q7/4k3/8/5K2 w - - 0 1',
-    diagramCaption: 'The queen draws a line across the board. The black king cannot step over it.',
-    drills: [
       {
-        fen: '8/8/8/8/8/4k3/8/Q4K2 w - - 0 1',
-        prompt: 'Fence his king in: put your queen on the fourth rank.',
-        hint: 'four squares up the board from your queen',
-        why: 'From a4 the queen watches every square on the fourth rank. The black king cannot cross that line, so he is left with the smaller half of the board.',
-        best: 'a1a4',
-        // A queen and king against a bare king is won by many moves, so the
-        // engine's ranking is not the lesson; the drill asks for the move that
-        // fences the king in, rather than the fastest mate.
-        accepted: ['a1a4'],
-        note: 'the position is won by many moves, so the drill accepts only the move that fences the king off the fourth rank',
-      },
-      {
-        /* The queen can reach exactly one square a knight jump from the king in
-           this position, so the prompt has one answer: a knight jump away is the
-           safe distance, and every other knight jump is out of her reach here.
-           Measured: /usr/games/stockfish, depth 18, MultiPV 6 — g6d3 is the top
-           move, mate in 4, and no other move reaches a knight jump square. */
-        fen: '8/8/6Q1/8/8/8/8/2k1K3 w - - 0 1',
-        prompt: 'Keep her safe: a knight jump from his king.',
-        hint: 'his king can never reach a knight jump away',
-        why: 'The queen lands on d3, a knight jump from the king on c1. He cannot reach her there, so she is safe while your king walks up to help.',
-        best: 'g6d3',
-        // Same again: many moves win, and the lesson is the box, not the clock.
-        accepted: ['g6d3'],
-        note: 'the position is won by many moves, so the drill accepts only the queen move a knight jump from his king',
-      },
-      {
-        fen: 'k7/8/2K5/8/8/8/8/1Q6 w - - 0 1',
-        prompt: 'He has no room left. Mate him.',
-        hint: 'your king guards the square next to his king',
-        why: 'The queen comes to b7, beside the king on a8, and your king on c6 guards her. He cannot take her and has nowhere to run.',
-        best: 'b1b7',
-        accepted: ['b1b7'],
+        fen: 'q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1',
+        prompt: 'The queen is on a8. Find a knight move that hits both.',
+        hint: 'one knight square can see the king and the queen',
+        why: 'Your knight jumps to c7 and gives check. From c7 it also attacks the queen on a8, so she falls next move.',
+        best: 'b5c7',
+        accepted: ['b5c7'],
       },
     ],
   },
@@ -527,10 +443,10 @@ export const LESSONS = [
      and `boss.level` is the strength of Pip it is won against. */
   {
     id: 'boss-first-game',
-    requires: ['finish-it'],
+    requires: ['mate-in-one'],
     boss: { level: 1 },
     title: 'Boss: beat Pip',
-    goal: 'Beat Pip in a real game to finish this branch.',
+    goal: 'Beat Pip in a real game to finish this stretch.',
     body: [
       'This stop is a whole game, not a puzzle: you play White, and Pip plays at his sleepiest.',
       'Win it by checkmate. A draw or a loss leaves the stop open, so you can start again.',
@@ -539,7 +455,7 @@ export const LESSONS = [
 
   {
     id: 'boss-last-game',
-    requires: ['mate-in-one'],
+    requires: ['boss-first-game'],
     boss: { level: 2 },
     title: 'Boss: the last game',
     goal: 'Beat a stronger Pip to finish the whole path.',
