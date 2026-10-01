@@ -146,8 +146,8 @@ of `button.png` are `#146587`). The fill bar's pill is 16px tall with a 4px radi
 | `ui/lock.png`, `ui/rank-badge.png` | 96×96 | generated for this project; the locked chip and the rank chip |
 | `ui/divider.png` | 64×4 | between the coach's two voices |
 | `characters/pip.png` | 128×128 | the coach's avatar, drawn at 36 |
-| `board/light.png`, `dark.png` | 64×64 | the board's squares |
-| `pieces/<colour><piece>.png` | 46–52 wide, 70–102 tall | a piece is drawn at `k = square/64`, bottom-centred — taller than its square on purpose (the black king is 52×102) |
+| `board/light.png`, `dark.png` | 64×64 | the board's squares — flat, a one-pixel speckle, tones `#d8d9db` and `#746865` out of the piece set's own palette |
+| `pieces/<colour><piece>.png` | 36–43 wide, 61–99 tall | a piece is drawn at `k = square/64`, bottom-centred — taller than its square on purpose (the king is 41×99) |
 
 ## 5. The components
 

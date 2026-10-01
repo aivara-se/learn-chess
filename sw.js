@@ -13,20 +13,18 @@
 /* The cache-name ladder. Read off the branches rather than guessed — measured
    with `git show origin/<branch>:sw.js | grep '^const CACHE'` on the rebase this
    name was kept through: the frozen `v1` tag, and so the name the deleted app
-   served, is `learn-chess-v14`, and `main` stands at `learn-chess-v19`, because
-   #63's placed rows landed and the live site serves them. This branch keeps
-   `v20`: nobody holds it — read off every branch, local and remote — and nothing
-   on any branch is above it.
+   served, is `learn-chess-v14`, and `main` stands at `learn-chess-v20`. This
+   branch keeps `v21`: nobody holds it — read off every branch, local and remote —
+   and nothing on any branch is above it.
    The name has to be its own because the shell is served cache-first: the fetch
    handler answers every same-origin GET from the cache and keeps what it
-   fetches, so a device that has played before holds the modules this branch
-   changes — `src/scenes/path.js`, `src/path/layout.js`, `src/path/stop.js`,
-   `src/map/terrain.js`, `src/ui/assets.js` — and re-fetches none of them without
-   a new worker, so it keeps drawing three terrain bands under a map that has
-   none. `scripts/verify-shell.ts` fails a name at or below `v14` for the same
-   reason: reusing a name a device already holds leaves the old app in its
-   browser. */
-const CACHE = 'learn-chess-v20';
+   fetches, so a device that has played before holds the sprites this branch
+   replaces — the twelve `assets/pieces/*.png` and both `assets/board/*.png` —
+   and re-fetches none of them without a new worker, so it keeps drawing the
+   retired plastic set on the retired board. `scripts/verify-shell.ts` fails a
+   name at or below `v14` for the same reason: reusing a name a device already
+   holds leaves the old app in its browser. */
+const CACHE = 'learn-chess-v21';
 
 /* The shell: the files the app needs to boot and to draw its first frame. Two
  * rules, and scripts/verify-shell.ts now holds the list to both of them, because
