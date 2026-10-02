@@ -1,6 +1,6 @@
 {
   "note": "Every shipped asset, path and size, and where it came from. sw.js precaches exactly this list, so a card that adds a sprite adds it here and never to sw.js. assets/source/** is deliberately not listed: those are the unmodified pack archives, kept as provenance, and the start screen must not wait on a 22MB download. Terms live in ATTRIBUTION.md.",
-  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the operator's own generated set with its alpha kept, box-downscaled to the size the game draws and quantised to one 32-colour palette; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge \u2014 the king lands 99 tall against the plastic pack's 102, so the scale the code has always used is unchanged. The two board squares are drawn, not cropped: flat 64x64 tiles in the set's own palette. The map's sprites are the same rule at a bigger size: the beads are 2x exports of an SVG source beside the packs in assets/source/map/, and the pieces and the three lesson towers are cut from the operator's own generated sheet, kept as assets/source/generated-set.png (which is not precached) (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite: assets/map/world.jpg is the operator's own painting, shipped as he sent it \u2014 1584x672, unmodified \u2014 and drawn at a cover fit (src/map/terrain.js), so it is drawn at 0.86x to 1.00x of its own pixels rather than magnified. Its splines and its road are read out of it; the road table is src/map/road.js. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
+  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the operator's own generated set with its alpha kept, box-downscaled to the size the game draws and quantised to one 32-colour palette; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge \u2014 the king lands 99 tall against the plastic pack's 102, so the scale the code has always used is unchanged. The two board squares are drawn, not cropped: flat 64x64 tiles in the set's own palette. The map's sprites are the same rule at a bigger size: the beads are 2x exports of an SVG source beside the packs in assets/source/map/, and the pieces, the three lesson towers and the map's markers are cut from the operator's own generated sheet, kept as assets/source/generated-set.png (which is not precached) (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite: assets/map/world.jpg is the operator's own painting, shipped as he sent it \u2014 1584x672, unmodified \u2014 and drawn at a cover fit (src/map/terrain.js), so it is drawn at 0.86x to 1.00x of its own pixels rather than magnified. Its splines and its road are read out of it; the road table is src/map/road.js. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
   "assets": [
     {
       "path": "assets/favicon.svg",
@@ -123,12 +123,6 @@
       "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); the locked tower is cut to its own bounds and drawn on a 64x96 canvas standing on its base, exported at 2\u00d7"
     },
     {
-      "path": "assets/map/marker-medallion.png",
-      "bytes": 1787,
-      "sha256": "61b269f9f678be0bbe0bc7a87dae0ec6fa4d24a4070f86f4906046896322f2b6",
-      "source": "generated for this project \u2014 the map's marker set \u2014 the round medallion a detour wears; drawn 48\u00d754, exported at 2\u00d7"
-    },
-    {
       "path": "assets/map/marker-state-done.png",
       "bytes": 1494,
       "sha256": "a001434c0061e395ba3c5bec1ba20af34d0d1f5ca04c2bd48e644b080da4d748",
@@ -147,16 +141,34 @@
       "source": "generated for this project \u2014 the map's marker set \u2014 the locked overlay \u2014 an iron band and its padlock, bright on any shield; drawn 64\u00d772, exported at 2\u00d7"
     },
     {
+      "path": "assets/map/marker-pack-mine.png",
+      "bytes": 4819,
+      "sha256": "3ece24eb24641f1c1e9b13a3e379e9c223e14ee17f5c47247522cf8860d54020",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); the mine a detour wears, cut to its own bounds and drawn on a 48x54 canvas standing on its base, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-pack-farm.png",
+      "bytes": 3522,
+      "sha256": "b785f25446e75aef815be7099aa3dd48b8b85e48e926fdd306d634bac709d636",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); the farm plot a detour wears, cut to its own bounds and drawn on a 48x54 canvas standing on its base, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-pack-cave.png",
+      "bytes": 4692,
+      "sha256": "91babeb5d89191477d7a9c0b337664fc8c1f4db81077ac5f7e72331979a4e16d",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); the cave a detour wears, cut to its own bounds and drawn on a 48x54 canvas standing on its base, exported at 2\u00d7"
+    },
+    {
       "path": "assets/map/marker-boss.png",
-      "bytes": 2946,
-      "sha256": "622ab80dc337a3d4cdc5a49117fd2f1796bf204023fab9dc46ebfaf3c34cd187",
-      "source": "generated for this project \u2014 the map's marker set \u2014 the boss crest \u2014 a red shield carrying a cracked piece; drawn 76\u00d784, exported at 2\u00d7"
+      "bytes": 10291,
+      "sha256": "6c479d60d417b18c836733088fad0f5273fecf9e0ad86f5e4cb501c4fa91feaa",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); the crossed swords a boss stop wears, cut to its own bounds and drawn on a 64x72 canvas standing on its base, exported at 2\u00d7"
     },
     {
       "path": "assets/map/marker-arrow.png",
-      "bytes": 715,
-      "sha256": "326566a6a91e3a986020a1d1ac588c0a087b0450fdbf1758eb03a875b6640ee6",
-      "source": "generated for this project \u2014 the map's marker set \u2014 the golden arrow that hovers over the current stop; drawn 30\u00d736, exported at 2\u00d7"
+      "bytes": 2394,
+      "sha256": "e138e9f2a2c10a6f651c09ba9f93296a2c2d9fa0b4e78178855096deabaa56c3",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); the quest pin over the stop the child is on, cut to its own bounds and drawn on a 30x36 canvas standing on its base, exported at 2\u00d7"
     },
     {
       "path": "assets/map/route-bead.png",

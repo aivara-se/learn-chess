@@ -41,6 +41,7 @@ import {
   totalDrills,
 } from '../src/path/progress.js';
 import { DETOUR, FACE, FORK, depth, detourDepth, layout, panFor } from '../src/path/layout.js';
+import { PACK_FOR } from '../src/map/marker.js';
 import { SPAN, WORLD, roadAt } from '../src/map/road.js';
 import { coverFit, panRange } from '../src/map/terrain.js';
 /* A record built from keys, so a test states where the child is rather than playing
@@ -128,6 +129,15 @@ describe('the map draws the graph', () => {
         expect(stop.off).toBe(0);
         expect(stop.y).toBe(stop.onRoad);
       }
+    }
+  });
+
+  test('every detour has a place on the sheet to wear', () => {
+    /* A detour's icon is picked per pack, off the pack's own id. A fourth pack
+       added to the course with no line in `PACK_FOR` would draw the fallback and
+       quietly never say so, so the missing line is a failing test instead. */
+    for (const pack of PACKS as any[]) {
+      expect(PACK_FOR[pack.id as keyof typeof PACK_FOR], pack.id).toBeTruthy();
     }
   });
 
