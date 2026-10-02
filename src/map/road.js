@@ -49,9 +49,12 @@ export const ROAD = [
 
 /* The stretch of the painting the stops span, in `u`. It starts a little inside the
  * left edge — a stop's caption is centred on it and would otherwise be half off the
- * world — and it ends at the table's own last sample, because past that there is no
- * thicker sample of the road to stand on. */
-export const SPAN = { from: 0.055, to: ROAD[ROAD.length - 1][0] };
+ * world. Its far end is the stop line, not the road's: the painting's bridge
+ * crosses the river at u 0.49–0.54 (read off the shipped art), so the line ends
+ * at 0.46 and the last lesson stands before the bridge, with no stop drawn on
+ * the deck or in the water. The road table itself still runs to the last place
+ * the road is really there. */
+export const SPAN = { from: 0.055, to: 0.46 };
 
 /* The road's centre at `u`, as a share of the painting's height. Straight lines
  * between the samples, clamped at both ends — past the table the honest answer to

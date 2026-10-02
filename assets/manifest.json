@@ -1,6 +1,6 @@
 {
   "note": "Every shipped asset, path and size, and where it came from. sw.js precaches exactly this list, so a card that adds a sprite adds it here and never to sw.js. assets/source/** is deliberately not listed: those are the unmodified pack archives, kept as provenance, and the start screen must not wait on a 22MB download. Terms live in ATTRIBUTION.md.",
-  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the operator's own generated set with its alpha kept, box-downscaled to the size the game draws and quantised to one 32-colour palette; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge \u2014 the king lands 99 tall against the plastic pack's 102, so the scale the code has always used is unchanged. The two board squares are drawn, not cropped: flat 64x64 tiles in the set's own palette. The map's sprites are the same rule at a bigger size: the markers and the beads are 2x exports of an SVG source beside the packs in assets/source/map/ (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite: assets/map/world.jpg is the operator's own painting, shipped as he sent it \u2014 1584x672, unmodified \u2014 and drawn at a cover fit (src/map/terrain.js), so it is drawn at 0.86x to 1.00x of its own pixels rather than magnified. Its splines and its road are read out of it; the road table is src/map/road.js. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
+  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the operator's own generated set with its alpha kept, box-downscaled to the size the game draws and quantised to one 32-colour palette; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge \u2014 the king lands 99 tall against the plastic pack's 102, so the scale the code has always used is unchanged. The two board squares are drawn, not cropped: flat 64x64 tiles in the set's own palette. The map's sprites are the same rule at a bigger size: the beads are 2x exports of an SVG source beside the packs in assets/source/map/, and the three lesson towers are 2x exports of the operator's own generated sheet, kept as assets/source/tower-sheet.png (which is not precached) (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite: assets/map/world.jpg is the operator's own painting, shipped as he sent it \u2014 1584x672, unmodified \u2014 and drawn at a cover fit (src/map/terrain.js), so it is drawn at 0.86x to 1.00x of its own pixels rather than magnified. Its splines and its road are read out of it; the road table is src/map/road.js. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
   "assets": [
     {
       "path": "assets/favicon.svg",
@@ -105,22 +105,28 @@
       "source": "the operator's own painting, sent by mail to mama@aivara.se as 'Generated Image September 30, 2026 - 10_30PM.jpg' \u2014 shipped exactly as sent at 1584x672, 1.06 MB: not cut, not quantised, not re-encoded, by his decision"
     },
     {
-      "path": "assets/map/marker-shield.png",
-      "bytes": 2843,
-      "sha256": "4bd73184e1501fce9ff0d7912b02452603a68ba39784598eb8c18041eb1940fc",
-      "source": "generated for this project \u2014 the map's marker set \u2014 the shield base a lesson stop wears; drawn 64\u00d772, exported at 2\u00d7"
+      "path": "assets/map/marker-tower-open.png",
+      "bytes": 10749,
+      "sha256": "c1a9b07bc656efa531e93c0df8d4d8ae6625744ef06ad1af4badda789bb99d9d",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, the open tower cut to its own bounds and drawn on a 64x96 canvas, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-tower-done.png",
+      "bytes": 11433,
+      "sha256": "521c731b1f59b4edd38167f5f57fb088b9fe79621051bd9c06801915fa52db02",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, the done tower cut to its own bounds and drawn on a 64x96 canvas, exported at 2\u00d7"
+    },
+    {
+      "path": "assets/map/marker-tower-locked.png",
+      "bytes": 12563,
+      "sha256": "7b664f3b4b39686627b48abf050dbd3bdd90a626d7964e164c1a65ffa62875f7",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, the locked tower cut to its own bounds and drawn on a 64x96 canvas, exported at 2\u00d7"
     },
     {
       "path": "assets/map/marker-medallion.png",
       "bytes": 1787,
       "sha256": "61b269f9f678be0bbe0bc7a87dae0ec6fa4d24a4070f86f4906046896322f2b6",
       "source": "generated for this project \u2014 the map's marker set \u2014 the round medallion a detour wears; drawn 48\u00d754, exported at 2\u00d7"
-    },
-    {
-      "path": "assets/map/marker-pole.png",
-      "bytes": 480,
-      "sha256": "2b4495de48d9b8597debb46be6a912a879934ae4f4bb4da0fc43b6f5a7842806",
-      "source": "generated for this project \u2014 the map's marker set \u2014 the pole and pennant under a shield; drawn 20\u00d752, exported at 2\u00d7"
     },
     {
       "path": "assets/map/marker-state-done.png",

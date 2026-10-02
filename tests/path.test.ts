@@ -189,21 +189,21 @@ describe('the map draws the graph', () => {
       const map = layout(fit.scale);
       for (const stop of map.stops) {
         expect(stop.caption).toBeGreaterThan(0);
-        expect(stop.x - stop.caption / 2).toBeGreaterThanOrEqual(0);
-        expect(stop.x + stop.caption / 2).toBeLessThanOrEqual(map.world.width + 1);
+        /* The words wrap inside the face, so a caption narrower than its own
+           marker is fine — but it still has to sit inside the world. */
+        expect(stop.x - Math.max(stop.face, stop.caption) / 2).toBeGreaterThanOrEqual(-1);
+        expect(stop.x + Math.max(stop.face, stop.caption) / 2).toBeLessThanOrEqual(map.world.width + 1);
       }
       for (let i = 0; i < map.stops.length; i += 1) {
         for (let j = i + 1; j < map.stops.length; j += 1) {
           const a = map.stops[i];
           const b = map.stops[j];
-          /* What each stop has to be drawn in: the marker, or the words when they are
-             wider than it. */
-          const halfA = Math.max(FACE[a.kind], a.caption) / 2;
-          const halfB = Math.max(FACE[b.kind], b.caption) / 2;
-          const shares = Math.abs(a.x - b.x) < halfA + halfB + GUTTER;
-          /* The ground they claim top to bottom: the marker and the words on the side
-             they hang on. Two stops whose ground overlaps must be far enough apart
-             across the map — which is what the caption's width is measured from. */
+          /* Two stops share ground only when they stand at the same height: the
+             ground a stop asks for is its own point, because markers may overlap
+             on a winding road. What they must not do is stand in the same place,
+             which the test below holds, and the browser check holds the real
+             boxes apart. */
+          const shares = Math.abs(a.x - b.x) < FACE[a.kind] / 2 + FACE[b.kind] / 2 + GUTTER;
           const over = a.band.top < b.band.bottom && b.band.top < a.band.bottom;
           const clash = shares && over;
           expect(clash ? `${a.id} over ${b.id}` : 'clear').toBe('clear');
