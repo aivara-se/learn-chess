@@ -47,7 +47,6 @@ button's bottom edge.
 | | | the flat face `#1c9fd7` | **5.24:1** |
 | | | the disabled face `#dadce7` | **11.52:1** |
 | | | the map's glow `#ffdf88` — the number the open stop wears | **12.12:1** |
-| | | the art's parchment `#efdfbb` — the halo behind the number a tower wears | **11.95:1** |
 | `inkSoft` | `#454f72` | the card — body copy | **8.03:1** |
 | `inkMute` | `#5f698a` | the card — the small print | **5.42:1** |
 | `good` | `#0f7b46` | `goodSoft` `#e3f7ec` | **4.76:1** |
@@ -76,14 +75,15 @@ the pack's icons, on the light chip: the tick's own fill is 2.15:1 on the card b
 a `#146587` rim at **6.48:1**, and the star is `#1c9fd7` with a `#12729a` rim at **5.39:1** — the rim is
 what makes the glyph legible, and the word beside it is `inkSoft` at 8.03:1.
 
-**Two pairs are the map's, and both are the app's own ink on the art's own colour.** The number the
-open stop wears is drawn over the art's glow — `#182046` on `#ffdf88`, the glow's own centre pixel read
-out of `assets/map/marker-state-open.png`, **12.12:1** — and every word under a stop on the map is that
-same ink with the art's parchment `#efdfbb` around it, **11.95:1**. That is the two-tone rule of the
-table above applied to a painting rather than to a card, and the halo's own edge against each ground is
-measured in §10. Both pairs were measured on the rendered map for `#54`: the parchment and the ink are
+**Two pairs *were* the map's, and both are now retired, because the map carries no text at all.** They
+were the app's own ink on the art's own colour: the number an open stop wore, drawn over the art's glow —
+`#182046` on `#ffdf88`, the glow's own centre pixel read out of `assets/map/marker-state-open.png`,
+**12.12:1** — and every word under a stop, that same ink with the art's parchment `#efdfbb` around it,
+**11.95:1**. The numbers and the captions are gone; the record of the measurements stays here because the
+colours are still in the tree and the next person to want a word on the painting should know they were
+measured, not guessed. Both were measured on the rendered map for `#54`: the parchment and the ink are
 both in a 360×640 screenshot's own histogram, which is how a vision read that called the captions *white
-with a dark outline* was settled — the pixels say ink on parchment, twice now.
+with a dark outline* was settled — the pixels said ink on parchment, twice over.
 
 ## 3. Size — the ramp, the floor, the scale
 
@@ -299,29 +299,33 @@ that table would be a stop standing on a roof.
 | a stop's y | the road's centre at that x, times the scale, plus the stop's own offset — zero for a stop on the road |
 | a fork | two branches, one above the road and one below, `FORK` apart: **48 screen px** each way, a screen measurement because what has to fit between them is a 96px tower and a finger's width of air at every window. **No course uses it any more**: the operator's path is linear, and `scripts/verify-site.ts` fails a course that puts two lessons at one depth |
 | a detour | half a step past the lesson that teaches it and `DETOUR` — **120 screen px** — above the road: a medallion beside the path, never a third branch of a fork. The lift is a clearance, not a decoration: half a step is 68px on the smallest phone and a 54px medallion cannot stand 34px from a 96px tower, so on the road it would be drawn through its own lesson |
-| a stop's words | **there are none.** The map is markers and one number; `src/path/layout.js` measures no text, and the only thing two stops can collide over is their markers — which is the rule the span's end has to respect |
+| a stop's words | **there are none.** Not a name, not a number, not why a door is shut: the map is the painting and its markers. `src/path/layout.js` measures no text, so the only thing two stops can collide over is their markers — which is the rule the span's end has to respect |
 | the chrome | the art's star banner in the window's top-right corner, and nothing else: the rank strip and the puzzle chip the port drew are not on this screen |
 
-**A stop's marker is the art's** (`src/map/marker.js`): a lesson's tower 64×96, a
-detour's medallion 48×54, a boss's crest **64×72** — all three widths at or over the
-tap floor; the heights are the art's, and `tests/map.test.ts` holds the layout's own
-table of those sizes to them. **No marker is wider than the step between two stops**,
-which is the rule the compression forces: the art's crest is 76px and ten stops have
-to fit in the road west of the bridge, where a step is about 68px on the smallest
-phone, so the crest is drawn at the tower's own 64. **The state of a lesson is the
-tower itself** — the open, done and locked towers the operator sent — and the
-medallion and the crest keep the overlays the art drew for them.
+**Every marker is the operator's own art** (`src/map/marker.js`): a lesson's tower
+64×96, a detour's place — a mine, a farm plot, a cave — 48×54, and the crossed swords
+a boss stop wears **64×72**. All three widths are at or over the tap floor; the
+heights are the art's, and `tests/map.test.ts` holds the layout's own table of those
+sizes to them. **No marker is wider than the step between two stops**, which is the
+rule the compression forces: the art's own boss crest was 76px and ten stops have to
+fit in the road west of the bridge, where a step is about 68px on the smallest phone,
+so that marker is drawn at the tower's own 64. **The state of a lesson is the tower
+itself** — the open, done and locked towers — and the places and the swords keep the
+overlays the art drew for them; a detour's dotted ring is drawn by the code, since a
+detour is not a step on the course and has to say so now that no word underneath
+does.
 
-**The map carries one word per lesson: its number.** A tower wears its lesson's
-number underneath it and nothing else, drawn in the kit's tiny tier (12px) in ink
-with the art's parchment `#efdfbb` as a halo behind it (**11.95:1**, §2). A detour
-and a boss stop wear no word at all. Everything else a child might read — the
-lesson's name, what it teaches, how far a stop has got, why a door is shut — is on
-the sheet a tap opens (`src/path/sheet.js`). Before this the map carried a name, a
-row of stars and a line under every stop, which on a compressed span was three
-blocks of words written over one another on somebody's painting; the words are
-where there is room for them now. `tests/path.test.ts` holds the consequence: no two
-markers are drawn over each other, at the window shapes the game is played at.
+**The map carries no words at all.** A stop is a marker and nothing else — no name,
+no number, no "locked", no row of stars, no "after lesson 2". Everything a child
+might read is on the sheet a tap opens (`src/path/sheet.js`), which names the lesson,
+says what it teaches and says which lesson opens it: a screen with the room to say a
+thing properly, where a caption no bigger than a fingernail was a word written over
+somebody's painting. The spoken name survives for anyone who cannot see the painting
+— `spoken()` is what the shell's live region is handed. **Three things went with the
+captions**: the words themselves, the per-stop star row (the count is the art's
+banner, as it always was), and `assets/map/marker-star.png`. `tests/path.test.ts`
+holds the consequence: no two markers are drawn over each other, at the window shapes
+the game is played at.
 
 **The route is a run of the art's beads** (16px, a detour's thread at 10, 22px spacing
 unwalked and 12 walked so a walked leg's beads touch), each bead carrying its own dark

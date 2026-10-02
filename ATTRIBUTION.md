@@ -53,15 +53,17 @@ not shipped, since the game never loads them.
   carried into the game as a sprite.
 - `assets/ui/lock.png` — the mark on a lesson a learner has not unlocked yet.
 - `assets/ui/rank-badge.png` — the badge beside a rank on the path.
-- `assets/pieces/**` — the twelve chess pieces, and `assets/map/marker-tower-*.png` — the
-  three lesson towers. Both come from **one sheet the operator sent**, the generator's
-  3168×1344 set, shipped here as `assets/source/generated-set.png` (kept as provenance and
-  deliberately not precached: 431 KB nothing loads). The pieces are the alpha it came with,
-  cut to each piece's own bounds, box-downscaled to the size the game draws (the king lands
-  41×99, where the CC0 pack's king was 52×102) and quantised to one 32-colour palette for the
-  whole set; all twelve are scaled by **one shared factor**, so a pawn is still a pawn beside
-  a king. The towers are cut to each tower's own bounds and drawn on a 64×96 canvas standing
-  on its base. Every sprite in both sets is exported at 2×.
+- `assets/pieces/**` — the twelve chess pieces — and **every marker on the lessons map**:
+  `assets/map/marker-tower-*.png` (the three lesson towers), `marker-pack-{mine,farm,cave}.png`
+  (the places a detour wears), `marker-boss.png` (the crossed swords) and `marker-arrow.png`
+  (the quest pin over the current stop). All of it comes from **one sheet the operator sent**,
+  the generator's 3168×1344 set, shipped here as `assets/source/generated-set.png` (kept as
+  provenance and deliberately not precached: 431 KB nothing loads). The pieces are the alpha it
+  came with, cut to each piece's own bounds, box-downscaled to the size the game draws (the
+  king lands 41×99, where the CC0 pack's king was 52×102) and quantised to one 32-colour palette
+  for the whole set; all twelve are scaled by **one shared factor**, so a pawn is still a pawn
+  beside a king. Each marker is cut to its own bounds and drawn on its own canvas standing on
+  its base. Every sprite is exported at 2×.
 - `assets/board/light.png`, `assets/board/dark.png` — the board's two squares, drawn for this
   project: flat 64×64 tiles with a one-pixel speckle, and both tones taken out of the piece
   set's own palette (`#d8d9db` and `#746865`) so the board cannot drift away from the pieces

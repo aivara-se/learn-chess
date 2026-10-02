@@ -34,11 +34,11 @@
  *     over, however far it travelled, so the gesture sets a `moved` flag past a
  *     threshold and a stop panned under a finger never counts as pressed — and a
  *     locked stop still opens the sheet that names its opener and walks there.
- *   - **The map says a lesson's number and nothing else.** Every other word a stop
- *     ever wore — its name, how far it is, why its door is shut — is on that sheet,
- *     which is one tap away and has the room to say it properly. The only reason
- *     the map ever carried words was that a caption was cheaper than a screen, and
- *     a caption on a painting is a word written over somebody's drawing.
+ *   - **The map carries no words at all.** Every word a stop ever wore — its name,
+ *     its number, how far it is, why its door is shut — is on that sheet, which is
+ *     one tap away and has the room to say it properly. The only reason the map
+ *     ever carried words was that a caption was cheaper than a screen, and a
+ *     caption on a painting is a word written over somebody's drawing.
  *   - **The arrow on the stop the child is on is the only thing that moves**, and it
  *     stops under `prefers-reduced-motion: reduce`.
  *
@@ -78,10 +78,6 @@ const status = document.getElementById('status');
 let view = null;
 let wheel = null;
 let bob = null;
-
-/* The number a lesson wears under its tower. A boss stop and a detour pass none:
- * neither is a step on the course, and numbering them would say they were. */
-const numberFor = (spot, unit) => (spot.kind === 'lesson' ? String(LESSONS.indexOf(unit) + 1) : '');
 
 /* What a tap on a locked stop answers with: which lesson opens it, and the way there
  * when that lesson is playable. */
@@ -142,7 +138,6 @@ function build(context) {
       stop: createStop(world, {
         stop: spot,
         state,
-        number: numberFor(spot, unit),
         here: isHere,
         panned: () => view.dragged,
         onTap: () => tapStop(context, unit, spot.kind),
@@ -224,7 +219,6 @@ function handle(context) {
       depth: spot.depth,
       state: stop.state,
       title: stop.title,
-      number: stop.number,
       off: spot.off,
       here: spot.id === view.here,
       floor: TAP_FLOOR,
@@ -281,7 +275,7 @@ function handle(context) {
       beads: view.route.beads.length,
       beadsWalked: view.route.beads.filter((bead) => bead.walked).length,
       drawnBeads: view.route.beads.map((bead) => ({ from: bead.from, to: bead.to, walked: bead.walked, x: bead.x, y: bead.y })),
-      markers: view.stops.map(({ spot, stop }) => ({ id: spot.id, kind: stop.kind, state: stop.state, number: stop.number })),
+      markers: view.stops.map(({ spot, stop }) => ({ id: spot.id, kind: stop.kind, state: stop.state })),
       banner: { read: view.banner.read(), x: view.banner.node.x, y: view.banner.node.y, width: view.banner.width, height: view.banner.height, stars: view.banner.stars, of: view.banner.of },
       edges: { depth: view.edges.depth, peak: view.edges.peak },
       arrow: view.arrow ? {
