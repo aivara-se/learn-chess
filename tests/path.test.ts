@@ -40,7 +40,7 @@ import {
   stops as allStops,
   totalDrills,
 } from '../src/path/progress.js';
-import { FACE, FORK, GUTTER, depth, detourDepth, layout, panFor } from '../src/path/layout.js';
+import { DETOUR, FACE, FORK, depth, detourDepth, layout, panFor } from '../src/path/layout.js';
 import { SPAN, WORLD, roadAt } from '../src/map/road.js';
 import { coverFit, panRange } from '../src/map/terrain.js';
 /* A record built from keys, so a test states where the child is rather than playing
@@ -121,12 +121,12 @@ describe('the map draws the graph', () => {
          at one x and there is one line of them on the operator's map — `scripts/verify-site.ts`
          fails a course that forks, so this cannot come back by accident. */
       for (const group of byDepth.values()) expect(group.length).toBe(1);
-      /* And a stop with a depth to itself stands on the road the painting drew, which is
-         the whole reason `src/map/road.js` exists. */
-      for (const stop of map.stops) {
+      /* And a stop on the course stands on the road the painting drew, which is the
+         whole reason `src/map/road.js` exists. A detour is the exception and it is
+         the one the test above covers: it hangs above the road, beside the path. */
+      for (const stop of map.stops.filter((entry) => entry.kind !== 'pack')) {
         expect(stop.off).toBe(0);
         expect(stop.y).toBe(stop.onRoad);
-        expect(stop.side).toBe('below');
       }
     }
   });
@@ -138,12 +138,14 @@ describe('the map draws the graph', () => {
         const stop = map.byId.get(pack.id)!;
         const home = map.byId.get(pack.opensWith)!;
         expect(stop.kind).toBe('pack');
-        /* Half a step past the lesson that teaches it, on the road: a detour beside
-           the path, never a third branch of a fork. */
-        expect(stop.off).toBe(0);
+        /* Half a step past the lesson that teaches it, `DETOUR` clear of the road:
+           a detour beside the path, never a third branch of a fork — and clear of
+           the road because half a step is nothing like enough room for a 96px tower
+           and a 54px medallion to stand side by side. */
+        expect(stop.off).toBe(-DETOUR);
         expect(stop.u - home.u).toBeCloseTo(STEP / 2, 9);
         expect(stop.depth).toBe(home.depth);
-        expect(stop.y).toBe(Math.round(roadAt(stop.u) * WORLD.height * fit.scale));
+        expect(stop.y).toBe(Math.round(roadAt(stop.u) * WORLD.height * fit.scale - DETOUR));
       }
     }
   });
@@ -184,29 +186,28 @@ describe('the map draws the graph', () => {
     }
   });
 
-  test('a caption fits the world, and two stops that share ground keep their words apart', () => {
+  test('no two markers are drawn over each other, and each stands inside the world', () => {
     for (const { fit } of SHAPES) {
       const map = layout(fit.scale);
       for (const stop of map.stops) {
-        expect(stop.caption).toBeGreaterThan(0);
-        /* The words wrap inside the face, so a caption narrower than its own
-           marker is fine — but it still has to sit inside the world. */
-        expect(stop.x - Math.max(stop.face, stop.caption) / 2).toBeGreaterThanOrEqual(-1);
-        expect(stop.x + Math.max(stop.face, stop.caption) / 2).toBeLessThanOrEqual(map.world.width + 1);
+        expect(stop.x - stop.face / 2).toBeGreaterThanOrEqual(-1);
+        expect(stop.x + stop.face / 2).toBeLessThanOrEqual(map.world.width + 1);
+        expect(stop.y - stop.half).toBeGreaterThanOrEqual(-1);
+        expect(stop.y + stop.half).toBeLessThanOrEqual(map.world.height + 1);
       }
+      /* The map carries no words any more, so the only thing two stops can collide
+         over is their markers — and none of them may. This is the rule the span's
+         own end has to respect: ten stops west of the bridge means a step of about
+         68px on the smallest phone, which is why no marker is drawn wider than
+         that (`src/path/layout.js`'s FACE) and why a detour stands clear of the
+         road rather than on it. */
       for (let i = 0; i < map.stops.length; i += 1) {
         for (let j = i + 1; j < map.stops.length; j += 1) {
           const a = map.stops[i];
           const b = map.stops[j];
-          /* Two stops share ground only when they stand at the same height: the
-             ground a stop asks for is its own point, because markers may overlap
-             on a winding road. What they must not do is stand in the same place,
-             which the test below holds, and the browser check holds the real
-             boxes apart. */
-          const shares = Math.abs(a.x - b.x) < FACE[a.kind] / 2 + FACE[b.kind] / 2 + GUTTER;
-          const over = a.band.top < b.band.bottom && b.band.top < a.band.bottom;
-          const clash = shares && over;
-          expect(clash ? `${a.id} over ${b.id}` : 'clear').toBe('clear');
+          const across = Math.min(a.x + a.face / 2, b.x + b.face / 2) - Math.max(a.x - a.face / 2, b.x - b.face / 2);
+          const deep = Math.min(a.y + a.half, b.y + b.half) - Math.max(a.y - a.half, b.y - b.half);
+          expect(across > 0 && deep > 0 ? `${a.id} over ${b.id}` : 'clear').toBe('clear');
         }
       }
     }

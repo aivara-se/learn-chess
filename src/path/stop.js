@@ -1,135 +1,73 @@
 /* One stop on the map, drawn — and the tap it answers.
  *
  * The illustration is the art's and lives in `src/map/marker.js`: the tower a
- * lesson wears, the medallion a detour wears, the boss crest, one overlay per
- * state on the medallion and the crest, and the golden arrow on the stop the
- * child is on. What is left here is what only this screen knows — the stop's
- * own words, which side of the marker they hang on, the row of stars, and the
- * two questions a tap asks: was this a pan, and is the stop open.
+ * lesson wears, the medallion a detour wears, the boss crest, and the golden
+ * arrow on the stop the child is on. What is left here is what only this screen
+ * knows — the lesson's number, which is the **only word on the map**, and the two
+ * questions a tap asks: was this a pan, and is the stop open.
  *
  * Three things a reader should know.
  *
- * **The caption is written on the painting, so it wears a halo.** The map used to
- * be drawn on the app's own pale ground, where ink was enough; it is a painted
- * world now, and it is busy everywhere. Every word on a stop is the ink the kit
- * writes in with the art's own parchment `#efdfbb` around it — `ink` on that
- * parchment is 11.9:1 and the parchment on the darkest ground the painting has is
- * 13.9:1, so whichever ground a stop stands on, one of the pair carries the words.
- * That is the same two-tone rule the art card measured its sprites on, applied to
- * the app's text.
+ * **The number is the whole of what a stop says.** A tower wears its lesson's
+ * number underneath it and nothing else; a detour and a boss stop wear no word at
+ * all. Every other thing a child might want to read — the lesson's name, what it
+ * teaches, which stop is which, why a door is shut — is on the sheet a tap opens
+ * (`src/path/sheet.js`), which is where the words belong now: they were a caption
+ * no bigger than a fingernail written over a painting, and the map reads as a map
+ * without them.
  *
- * **The caption hangs off what the marker really drew** (`box.top` / `box.bottom`),
- * not off a number beside it, so a marker drawn a little taller than the circle it
- * replaces cannot have its name written through it. The stars keep the place they
- * already had, between the name and the line. `side` is the layout's: a stop
- * standing off the road (a fork's branch) writes on the side it stands, so two
- * branches' captions cannot meet in the middle, and a stop on the road writes below
- * it. The stack is mirrored with the side, so the name is the line nearest the
- * marker either way.
+ * **The number is drawn on the painting, so it wears a halo.** The map used to be
+ * drawn on the app's own pale ground, where ink was enough; it is a painted world
+ * now, and it is busy everywhere. The number is the ink the kit writes in with the
+ * art's own parchment `#efdfbb` around it — `ink` on that parchment is 11.9:1 and
+ * the parchment on the darkest ground the painting has is 13.9:1, so whichever
+ * ground a stop stands on, one of the pair carries the word. That is the same
+ * two-tone rule the art card measured its sprites on, applied to the app's text.
  *
- * **The words are the kit's tiny tier, and the room is the layout's.** `caption` is
- * the width `src/path/layout.js` left this stop — the map's own edge on one side,
- * the world's far edge on the other, and half the distance to the nearest stop whose
- * ground it shares — so a caption is narrow where stops crowd and wide where they do
- * not. The longest name in the course wraps to three lines at the narrowest caption
- * the layout gives, which is what the layout reserves when it asks who shares ground.
+ * **The number hangs off what the marker really drew** (`marker.box.bottom`), not
+ * off a number beside it, so a marker drawn a little taller than the circle it
+ * replaced cannot have its number written through it.
  *
  * A tap is a tap, not a pan: the map moves under a finger, so the caller passes a
  * `panned()` test and a stop that was panned never counts as pressed. Pixi fires
  * `pointertap` on whatever the finger lifted over however far it travelled, so the
  * guard belongs here rather than in the gesture.
  *
- * The words are the caller's: this file draws a stop, it does not decide what a
- * stop says. `line` is the sentence under the name, `glyph` what an open stop wears.
+ * The number is the caller's: this file draws a stop, it does not decide which
+ * lesson is number three.
  */
 import { Container } from '../../vendor/pixi/pixi.min.mjs';
 import { COLOUR, TYPE, scale as clamped, text } from '../ui/theme.js';
-import { createMarker, createStars } from '../map/marker.js';
+import { createMarker } from '../map/marker.js';
 
 const HALO = 0xefdfbb;  // the art's parchment, around the words the app writes
 
-/* The app's text on the map, with the parchment behind its outline. `width` is the
- * halo's own size: 2px of parchment around a 12px line keeps the letterforms, and
- * 3px around the 12px name does the same — the name is the heavier of the two, and a
- * halo that swallowed the counters would cost more legibility than it bought. */
-function captionText(string, { size, weight, colour, caption, halo = 3 }) {
-  const node = text(string, { size, weight, colour, align: 'center', wrap: caption });
-  node.style.stroke = { color: HALO, width: halo };
-  return node;
-}
-
-export function createStop(parent, { stop, state, glyph, line, puzzles, here, caption, side = 'below', scale = 1, panned, onTap }) {
+export function createStop(parent, { stop, state, number = '', here = false, scale = 1, panned, onTap }) {
   const k = clamped(scale);
   const node = new Container();
   node.position.set(stop.x, stop.y);
 
-  const marker = createMarker(node, { kind: stop.kind, state, here, glyph });
+  const marker = createMarker(node, { kind: stop.kind, state, here });
 
-  /* The words, on the side the layout gave them: below the marker for a stop
-   * standing on the road, above it for a stop standing off the road — a fork's two
-   * branches write outwards, so their captions cannot meet in the middle and neither
-   * one is written over the road the other branch stands off. The stack is mirrored
-   * with it, so the name is always the line nearest the marker and the reading order
-   * is the same either way. Everything is measured off the marker's own box, so a
-   * marker drawn a little taller than the circle it replaces cannot have its name
-   * written through it. */
-  const gap = (n) => Math.round(n * k);
-  const title = captionText(stop.title, {
-    size: Math.round(TYPE.tiny * k),
-    weight: '700',
-    colour: COLOUR.ink,
-    caption,
-  });
-  const stars = puzzles.of ? createStars(node, puzzles) : null;
-  const sub = captionText(line, {
-    size: Math.round(TYPE.tiny * k),
-    weight: '500',
-    colour: here ? COLOUR.ink : COLOUR.inkMute,
-    caption,
-    halo: 2,
-  });
-
-  let top;
-  let bottom;
-  if (side === 'above') {
-    title.anchor.set(0.5, 1);
-    title.position.set(0, marker.box.top - gap(6));
-    let high = title.position.y - title.height;
-    if (stars) {
-      stars.node.position.set(0, high - gap(4) - stars.height);
-      high = stars.node.position.y;
-    }
-    sub.anchor.set(0.5, 1);
-    sub.position.set(0, high - gap(5));
-    top = sub.position.y - sub.height;
-    bottom = marker.box.bottom;
-  } else {
-    title.anchor.set(0.5, 0);
-    title.position.set(0, marker.box.bottom + gap(6));
-    let low = title.position.y + title.height;
-    if (stars) {
-      stars.node.position.set(0, low + gap(4));
-      low += gap(4) + stars.height;
-    }
-    sub.anchor.set(0.5, 0);
-    sub.position.set(0, low + gap(5));
-    top = marker.box.top;
-    bottom = sub.position.y + sub.height;
+  /* The one word: the lesson's number, centred under its tower. `number` is the
+   * caller's — a detour and a boss stop pass none, because neither is a lesson and
+   * numbering them would say they were steps on the course. */
+  let num = null;
+  let bottom = marker.box.bottom;
+  if (number) {
+    num = text(number, { size: Math.round(TYPE.tiny * k), weight: '700', colour: COLOUR.ink, align: 'center' });
+    num.style.stroke = { color: HALO, width: 3 };
+    num.anchor.set(0.5, 0);
+    num.position.set(0, marker.box.bottom + Math.round(6 * k));
+    node.addChild(num);
+    bottom = num.position.y + num.height;
   }
-  node.addChild(title);
-  node.addChild(sub);
 
-  /* The box is the ground the stop really asks for: the marker, the words on their
-   * side of it, and the arrow when there is one. The width is what the words
-   * really drew (`title.width`), not the width they were wrapped to, so a caption
-   * that wrapped early does not claim ground it left empty. */
-  const words = Math.round(Math.max(title.width, sub.width) / 2);
-  const box = {
-    left: Math.min(marker.box.left, -words),
-    right: Math.max(marker.box.right, words),
-    top,
-    bottom,
-  };
+  /* The box is the ground the stop really asks for: the marker and the number
+   * under it. The width is the marker's own, not the number's, because a number
+   * is two digits at the very most and the marker is what a finger and a
+   * neighbouring stop have to stay clear of. */
+  const box = { left: marker.box.left, right: marker.box.right, top: marker.box.top, bottom };
 
   node.eventMode = 'static';
   node.hitArea = marker.hit;
@@ -143,15 +81,15 @@ export function createStop(parent, { stop, state, glyph, line, puzzles, here, ca
     kind: stop.kind,
     state,
     title: stop.title,
-    line,
-    stars: puzzles,
+    number,
     arrow: marker.arrow,
     /* The name the shell's live region is handed when a stop is tapped: the canvas
-     * is one node, so a stop has to say what it is out loud. */
-    spoken: () => `${stop.title}: ${line}`,
+     * is one node, so a stop has to say what it is out loud. The map shows a number
+     * and no words, so the spoken name is where the words still are. */
+    spoken: () => `${stop.title}, ${state}`,
     box,
     /* The hit area is what a finger gets, and it is the marker's own box: the
-     * caption belongs to the stop but is not something a child taps. */
-    measure: () => ({ id: stop.id, kind: stop.kind, state, title: stop.title, line, stars: puzzles, here, x: stop.x, y: stop.y, width: marker.hit.width, height: marker.hit.height, box }),
+     * number belongs to the stop but is not something a child taps. */
+    measure: () => ({ id: stop.id, kind: stop.kind, state, title: stop.title, number, x: stop.x, y: stop.y, width: marker.hit.width, height: marker.hit.height, box }),
   };
 }

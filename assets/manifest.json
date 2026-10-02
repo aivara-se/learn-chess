@@ -153,12 +153,6 @@
       "source": "generated for this project \u2014 the map's marker set \u2014 the boss crest \u2014 a red shield carrying a cracked piece; drawn 76\u00d784, exported at 2\u00d7"
     },
     {
-      "path": "assets/map/marker-star.png",
-      "bytes": 613,
-      "sha256": "640513bb911b069a2792d9a97e10777d40bb92e769f0006e78707775737225f2",
-      "source": "generated for this project \u2014 the map's marker set \u2014 a gold star, for an earned star under a stop; drawn 22\u00d722, exported at 2\u00d7"
-    },
-    {
       "path": "assets/map/marker-arrow.png",
       "bytes": 715,
       "sha256": "326566a6a91e3a986020a1d1ac588c0a087b0450fdbf1758eb03a875b6640ee6",

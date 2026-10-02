@@ -30,7 +30,7 @@ import { LESSONS } from '../src/data/lessons.js';
 import { depth } from '../src/path/layout.js';
 import { coverFit, panRange } from '../src/map/terrain.js';
 import { BEAD, beadRun } from '../src/map/route.js';
-import { MARKER, OVERLAY, STAR } from '../src/map/marker.js';
+import { MARKER, OVERLAY } from '../src/map/marker.js';
 import { FACE, HALF } from '../src/path/layout.js';
 import { TAP_FLOOR } from '../src/ui/theme.js';
 
@@ -196,7 +196,6 @@ describe('a marker', () => {
       expect(shape.width, kind).toBeGreaterThanOrEqual(TAP_FLOOR);
       expect(shape.height, kind).toBeGreaterThanOrEqual(TAP_FLOOR);
     }
-    expect(STAR.size).toBeGreaterThan(0);
     /* The state overlays were drawn over the 64×72 shield the tower replaces: the
        medallion and the crest still scale them from that box, so it stays the one
        the art was drawn against even though no lesson wears it any more. */

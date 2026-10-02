@@ -54,7 +54,6 @@ export const MAP = {
   done: 'assets/map/marker-state-done.png',
   open: 'assets/map/marker-state-open.png',
   locked: 'assets/map/marker-state-locked.png',
-  star: 'assets/map/marker-star.png',
   arrow: 'assets/map/marker-arrow.png',
   banner: 'assets/map/banner-star-counter.png',
 };

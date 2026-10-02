@@ -15,7 +15,7 @@
  *     stop and its caption starts below that.
  *   - **A state overlay is the medallion's box scaled to the marker it sits
  *     on.** The three overlays were drawn over the 64×72 shield the tower
- *     replaces; the medallion is 48×54 and the boss crest 76×84, so the overlay
+ *     replaces; the medallion is 48×54 and the boss crest 64×72, so the overlay
  *     is scaled by the marker's own height and centred on it. That keeps the
  *     ring, the padlock and the tick on the face they were measured on rather
  *     than beside it.
@@ -25,7 +25,7 @@
  *     is named on the pull request with the finding on the art card.
  */
 import { Container, Graphics, Rectangle } from '../../vendor/pixi/pixi.min.mjs';
-import { COLOUR, text } from '../ui/theme.js';
+import { COLOUR } from '../ui/theme.js';
 import { MAP, sprite } from '../ui/assets.js';
 
 /* The art's drawn sizes, read off each entry's `source` line in
@@ -34,21 +34,24 @@ import { MAP, sprite } from '../ui/assets.js';
 export const MARKER = {
   lesson: { asset: null, width: 64, height: 96, pole: false, tower: true },
   pack: { asset: MAP.medallion, width: 48, height: 54, pole: false },
-  boss: { asset: MAP.boss, width: 76, height: 84, pole: false },
+  /* The crest is drawn at the tower's own width where the art shipped it at 76:
+   * the crest is the last stop before the bridge and ten stops have to fit in the
+   * road west of it, so a marker wider than the step would be drawn over its
+   * neighbour. `src/path/layout.js` holds the rule and says why. */
+  boss: { asset: MAP.boss, width: 64, height: 72, pole: false },
 };
 export const TOWER_FOR = { done: MAP.towerDone, open: MAP.towerOpen, locked: MAP.towerLocked };
 export const OVERLAY = { width: 64, height: 72 };
-export const STAR = { size: 16, gap: 2 };
 export const ARROW = { width: 30, height: 36, gap: 4 };
 
 const OVERLAY_FOR = { done: MAP.done, open: MAP.open, locked: MAP.locked };
 
 /* The marker for one stop. Returns the node (its origin is the stop's own point),
- * the face's own box so the caption can hang from it, the arrow when this is the
- * stop the child is on, and the rectangle a finger gets. `glyph` is the app's own
- * text for the stop's face — the art ships no numeral, and the open tower still
- * wears the lesson's number, drawn on the tower's own stone. */
-export function createMarker(parent, { kind = 'lesson', state = 'locked', here = false, glyph = '' }) {
+ * the face's own box, the arrow when this is the stop the child is on, and the
+ * rectangle a finger gets. It draws no text: the lesson's number is the only word
+ * on the map and `src/path/stop.js` writes it under the marker, where every stop's
+ * words used to hang. */
+export function createMarker(parent, { kind = 'lesson', state = 'locked', here = false }) {
   const shape = MARKER[kind] ?? MARKER.lesson;
   const halfW = shape.width / 2;
   const halfH = shape.height / 2;
@@ -83,17 +86,6 @@ export function createMarker(parent, { kind = 'lesson', state = 'locked', here =
     node.addChild(overlay);
   }
 
-  /* The number the open lesson wears is drawn on the tower's own stone, over the
-   * sprite: the art ships no numerals by design — every count on this screen is
-   * the app's text — and it sits on the tower's base, with the parchment behind
-   * it that every word on this map gets. */
-  if (state === 'open' && glyph) {
-    const number = text(glyph, { size: Math.round(shape.height * 0.28), weight: '700', colour: COLOUR.ink });
-    number.anchor.set(0.5);
-    number.position.set(0, -Math.round(shape.height * 0.085));
-    node.addChild(number);
-  }
-
   let arrow = null;
   if (here) {
     arrow = sprite(MAP.arrow, { width: ARROW.width, height: ARROW.height });
@@ -124,28 +116,4 @@ export function createMarker(parent, { kind = 'lesson', state = 'locked', here =
     },
     hit: new Rectangle(-halfW, -halfH, shape.width, shape.height),
   };
-}
-
-/* The row of stars under a stop: one per puzzle the stop has, the ones earned in
- * the art's gold and the ones still to get ghosted, so the row still says *how
- * many of how many* the way the drawn one did. The row's own count in words is the
- * caption's line, which is why a ghosted slot is legible enough — nothing on this
- * map is carried by a shade alone. */
-export function createStars(parent, { of = 0, stars = 0 }) {
-  const node = new Container();
-  if (!of) return { node, width: 0, height: 0 };
-  const width = of * STAR.size + (of - 1) * STAR.gap;
-  let x = -width / 2;
-  for (let i = 0; i < of; i += 1) {
-    const star = sprite(MAP.star, { width: STAR.size, height: STAR.size });
-    if (i >= stars) {
-      star.alpha = 0.32;
-      star.tint = COLOUR.mute;
-    }
-    star.position.set(Math.round(x), 0);
-    node.addChild(star);
-    x += STAR.size + STAR.gap;
-  }
-  parent.addChild(node);
-  return { node, width, height: STAR.size };
 }
