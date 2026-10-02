@@ -8,15 +8,22 @@ and check. Terms, and what was done to each pack, are in
 
 | archive | what it is | used for |
 |---|---|---|
-| `chess-pack.zip` | 2D Chess Pack, Screaming Brain Studios (CC0) | the pieces and the board tiles |
+| `chess-pack.zip` | 2D Chess Pack, Screaming Brain Studios (CC0) | nothing any more: the pieces and the board tiles were its crops until the operator's own generated set replaced them |
 | `kenney_ui-pack.zip` | Kenney UI Pack (CC0) | the buttons, panels and the star |
 | `kenney_interface-sounds.zip` | Kenney Interface Sounds (CC0) | the move, the star and the swoosh |
 | `kenney_ui-audio.zip` | Kenney UI Audio (CC0) | collected as a candidate; nothing from it ships |
 
+## `generated-set.png`
+
+Not a pack and not third-party: it is the operator's own generated sheet, sent by mail to
+`mama@aivara.se`, kept here so that the pieces and the three lesson towers can be traced back
+to the sheet they were cut from — the same reason the packs are here. It is the only file in
+this directory the game's art is drawn from directly.
+
 ## Why these are not in `assets/manifest.json`
 
 `assets/manifest.json` is the offline list: `sw.js` precaches exactly what it names. These
-four archives are 22MB and the game never requests one of them, so listing them would put a
+archives are 22MB and the game never requests one of them, so listing them would put a
 22MB download in front of a child's first screen — the one thing the assets card says must
 not happen. They are shipped as provenance, and the manifest's `note` says so.
 
