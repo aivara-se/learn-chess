@@ -310,10 +310,13 @@ sizes to them. **No marker is wider than the step between two stops**, which is 
 rule the compression forces: the art's own boss crest was 76px and ten stops have to
 fit in the road west of the bridge, where a step is about 68px on the smallest phone,
 so that marker is drawn at the tower's own 64. **The state of a lesson is the tower
-itself** — the open, done and locked towers — and the places and the swords keep the
-overlays the art drew for them; a detour's dotted ring is drawn by the code, since a
-detour is not a step on the course and has to say so now that no word underneath
-does.
+itself** — the open, done and locked towers. Every other marker wears the art's own
+overlay as a **corner badge**: `BADGE` is 30×34 in the marker's bottom-right, the
+padlock for a locked stop and the tick for a finished one. That is a change from
+drawing the overlay across the marker: the plate it was drawn on is shield-shaped, and
+across a mine or a farm it covered exactly the part that says which place the stop is.
+A detour's dotted ring is still drawn by the code, since a detour is not a step on the
+course and has to say so now that no word underneath does.
 
 **The map carries no words at all.** A stop is a marker and nothing else — no name,
 no number, no "locked", no row of stars, no "after lesson 2". Everything a child

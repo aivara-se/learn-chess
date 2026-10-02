@@ -196,9 +196,10 @@ describe('a marker', () => {
       expect(shape.width, kind).toBeGreaterThanOrEqual(TAP_FLOOR);
       expect(shape.height, kind).toBeGreaterThanOrEqual(TAP_FLOOR);
     }
-    /* The state overlays were drawn over the 64×72 shield the tower replaces: the
-       medallion and the crest still scale them from that box, so it stays the one
-       the art was drawn against even though no lesson wears it any more. */
+    /* The state overlays were drawn over the 64×72 shield the tower replaces. Nothing
+       is drawn at that size any more — a non-tower marker wears the overlay as a small
+       corner badge — but the box is still the one the art was measured against, and
+       this is where that stays true. */
     expect(OVERLAY.width).toBe(64);
     expect(OVERLAY.height).toBe(72);
   });
