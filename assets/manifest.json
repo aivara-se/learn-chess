@@ -1,6 +1,6 @@
 {
   "note": "Every shipped asset, path and size, and where it came from. sw.js precaches exactly this list, so a card that adds a sprite adds it here and never to sw.js. assets/source/** is deliberately not listed: those are the unmodified pack archives, kept as provenance, and the start screen must not wait on a 22MB download. Terms live in ATTRIBUTION.md.",
-  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the operator's own generated set with its alpha kept, box-downscaled to the size the game draws and quantised to one 32-colour palette; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge \u2014 the king lands 99 tall against the plastic pack's 102, so the scale the code has always used is unchanged. The two board squares are drawn, not cropped: flat 64x64 tiles in the set's own palette. The map's sprites are the same rule at a bigger size: the beads are 2x exports of an SVG source beside the packs in assets/source/map/, and the three lesson towers are 2x exports of the operator's own generated sheet, kept as assets/source/tower-sheet.png (which is not precached) (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite: assets/map/world.jpg is the operator's own painting, shipped as he sent it \u2014 1584x672, unmodified \u2014 and drawn at a cover fit (src/map/terrain.js), so it is drawn at 0.86x to 1.00x of its own pixels rather than magnified. Its splines and its road are read out of it; the road table is src/map/road.js. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
+  "placement": "A board square is 64 native px. Every piece sprite is a tight crop of the operator's own generated set with its alpha kept, box-downscaled to the size the game draws and quantised to one 32-colour palette; the game draws a piece at k = square/64 and stands it on the square, bottom-centred with its base on the square's bottom edge \u2014 the king lands 99 tall against the plastic pack's 102, so the scale the code has always used is unchanged. The two board squares are drawn, not cropped: flat 64x64 tiles in the set's own palette. The map's sprites are the same rule at a bigger size: the beads are 2x exports of an SVG source beside the packs in assets/source/map/, and the pieces and the three lesson towers are cut from the operator's own generated sheet, kept as assets/source/generated-set.png (which is not precached) (which is not precached), drawn at the size the map draws them \u2014 the drawn size is in each entry below \u2014 so a 64px stop is a 128px file. The world itself is not a sprite: assets/map/world.jpg is the operator's own painting, shipped as he sent it \u2014 1584x672, unmodified \u2014 and drawn at a cover fit (src/map/terrain.js), so it is drawn at 0.86x to 1.00x of its own pixels rather than magnified. Its splines and its road are read out of it; the road table is src/map/road.js. There is no SVG source for it, and no band cut from it: the three terrain bands and the 520px column they were cut for went with the world they composed.",
   "assets": [
     {
       "path": "assets/favicon.svg",
@@ -108,19 +108,19 @@
       "path": "assets/map/marker-tower-open.png",
       "bytes": 10749,
       "sha256": "c1a9b07bc656efa531e93c0df8d4d8ae6625744ef06ad1af4badda789bb99d9d",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, the open tower cut to its own bounds and drawn on a 64x96 canvas, exported at 2\u00d7"
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); the open tower is cut to its own bounds and drawn on a 64x96 canvas standing on its base, exported at 2\u00d7"
     },
     {
       "path": "assets/map/marker-tower-done.png",
       "bytes": 11433,
       "sha256": "521c731b1f59b4edd38167f5f57fb088b9fe79621051bd9c06801915fa52db02",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, the done tower cut to its own bounds and drawn on a 64x96 canvas, exported at 2\u00d7"
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); the done tower is cut to its own bounds and drawn on a 64x96 canvas standing on its base, exported at 2\u00d7"
     },
     {
       "path": "assets/map/marker-tower-locked.png",
       "bytes": 12563,
       "sha256": "7b664f3b4b39686627b48abf050dbd3bdd90a626d7964e164c1a65ffa62875f7",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, the locked tower cut to its own bounds and drawn on a 64x96 canvas, exported at 2\u00d7"
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); the locked tower is cut to its own bounds and drawn on a 64x96 canvas standing on its base, exported at 2\u00d7"
     },
     {
       "path": "assets/map/marker-medallion.png",
@@ -184,75 +184,75 @@
     },
     {
       "path": "assets/pieces/bb.png",
-      "bytes": 3557,
-      "sha256": "6b2f13d2f45cb3ca81bfd336ee6e68ba104d478c9fe5a8e9f9a2e98cfbcb3ed1",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 3463,
+      "sha256": "d377cf4385847bdb7a092b51461c992baa109e37ef0926037762357368205e67",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/bk.png",
-      "bytes": 3914,
-      "sha256": "ffd3b641c28793340e52afddbf1df07558cfd0fa7754795b76016c817c747943",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 4002,
+      "sha256": "e5d7a565155fc95d505193eb4c254b8c80a5706a9c15d36ab25dfa762091bd6e",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/bn.png",
-      "bytes": 4044,
-      "sha256": "9c390de379c4c6fdf5d704480c1164bc8d6164430d69d8db5b20ca59a6f4650e",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 3927,
+      "sha256": "42fad798d9695170dc1de8a1a8abcb69e9b33105f0ebf449cc6e81b0f2afc883",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/bp.png",
-      "bytes": 2346,
-      "sha256": "b9c31e62109b3f663db40e785f6fcd5fa04162c1c995db4f33b8eb582add3d69",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 2277,
+      "sha256": "0f90703453b923692814611cc41f123ec3f25ab09ad0ba929a6afb163da9d68a",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/bq.png",
-      "bytes": 4062,
-      "sha256": "6b435d5d5725838bad5659bb033d04c66a53685c35006b3b1e53f382a98688b9",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 4132,
+      "sha256": "325fa888e364dc41bddbceb66dc6411776338d90e84125fa058668b8af419772",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/br.png",
-      "bytes": 4003,
-      "sha256": "740036d6fc87085f4b0ba1fe1c8298b2c9966a7c27c4ff03afaba17ee73ebecc",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 4091,
+      "sha256": "8a0135425e60471b3c7ec3e975604607015e960502c0b8384da87fa5462a0994",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/wb.png",
-      "bytes": 4133,
-      "sha256": "6d6d94a46228634327aba56b9e5810ca84e130b56770a50e26233616cbf25662",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 4206,
+      "sha256": "3b2f4544bce8b2d5fe7f91a580b2bd767fd01beb790e792191fb6f3a71450b55",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/wk.png",
-      "bytes": 4654,
-      "sha256": "79beb6f553ff6231ec14459ae2ff8d3c0def9ba77908dd597d868c5d636391a1",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 4669,
+      "sha256": "fae85a2e723eb3e40fb7880d338d49a32b15259dfc4d0de7b2f897d41de8ab4a",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/wn.png",
-      "bytes": 4730,
-      "sha256": "07d1682f081185942c889f53c12434686f2ed78cdfd55452cf97f81e841eebd8",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 4792,
+      "sha256": "01885bc14b63c7b3dd3dcce8a4c8de7343b28ca90e7f10db97d4d09961aafac3",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/wp.png",
-      "bytes": 2620,
-      "sha256": "f602981dada0dfb2ac667bb2070270aa1b3ea3016c1748adda2d32883e5f77d9",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 2681,
+      "sha256": "c7dfc66559f89f192cf68b28331dd63846305a28552867370cdc9089f76e243e",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/wq.png",
-      "bytes": 4405,
-      "sha256": "55d081adba1bba925d49972242192b9b3cc3144b1dc10ca6baac76cdbc4eb576",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 4554,
+      "sha256": "76cbcb5a9cc92d5bb049600af63f9d096490a140bafe3e309171409402ae8eae",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/pieces/wr.png",
-      "bytes": 4371,
-      "sha256": "039e41e112f3dcb8bd9cbeb12bf22f5c6f8b26282eed31c3d59a6cdf0b7ac84d",
-      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, its alpha kept, cut to the piece's own bounds, box-downscaled 4x and quantised to one 32-colour palette for the whole set"
+      "bytes": 4705,
+      "sha256": "dbad82f4382934748989d8f8ab568fb5849ba27af9bca39439a2fb73e162f67f",
+      "source": "the operator's own generated set, sent by mail to mama@aivara.se \u2014 the 3168x1344 sheet, shipped here as assets/source/generated-set.png and kept as provenance (not precached); what ships is the alpha it came with, cut to the piece's own bounds, box-downscaled to the size the game draws and quantised to one 32-colour palette for the whole set \u2014 all twelve at one shared scale, so the pieces keep their proportions to each other"
     },
     {
       "path": "assets/ui/arrow-east.png",
