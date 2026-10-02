@@ -26,6 +26,8 @@
  */
 import { describe, expect, test } from 'bun:test';
 import { ROAD, SPAN, WORLD, roadAt } from '../src/map/road.js';
+import { LESSONS } from '../src/data/lessons.js';
+import { depth } from '../src/path/layout.js';
 import { coverFit, panRange } from '../src/map/terrain.js';
 import { BEAD, beadRun } from '../src/map/route.js';
 import { MARKER, OVERLAY, STAR } from '../src/map/marker.js';
@@ -127,11 +129,17 @@ describe('the road', () => {
   test('the stops span a stretch of it that exists', () => {
     expect(SPAN.from).toBeGreaterThan(0);
     expect(SPAN.from).toBeLessThan(SPAN.to);
-    /* The span's far end is the table's last sample: past it the painting's road
-       turns down behind the village's houses, so a stop out there would be a stop
-       standing on a roof. */
-    expect(SPAN.to).toBe(ROAD[ROAD.length - 1][0]);
-    expect(roadAt(SPAN.to)).toBe(ROAD[ROAD.length - 1][1]);
+    /* The span's far end is the stop line, not the road's: the painting's bridge
+       crosses the river at u 0.49–0.54, so the line ends at 0.46 and the last
+       lesson stands before the bridge. The road table itself still runs to the
+       last place the road is really there. */
+    expect(SPAN.to).toBe(0.46);
+    expect(SPAN.to).toBeLessThan(ROAD[ROAD.length - 1][0]);
+    /* The last lesson stands before the bridge's west deck edge (u 0.49): fewer
+       pixels per stop than the old span, but every lesson still stands and the
+       last one is on dry road. */
+    const deepest = LESSONS.reduce((low: number, lesson: any) => Math.max(low, depth(lesson)), 0);
+    expect(SPAN.from + ((SPAN.to - SPAN.from) / deepest) * deepest).toBeLessThan(0.49);
   });
 });
 
@@ -189,10 +197,11 @@ describe('a marker', () => {
       expect(shape.height, kind).toBeGreaterThanOrEqual(TAP_FLOOR);
     }
     expect(STAR.size).toBeGreaterThan(0);
-    /* The state overlays were drawn over the lesson's shield: every marker scales
-       them from that box, so the box is the one the art was drawn against. */
-    expect(OVERLAY.width).toBe(MARKER.lesson.width);
-    expect(OVERLAY.height).toBe(MARKER.lesson.height);
+    /* The state overlays were drawn over the 64×72 shield the tower replaces: the
+       medallion and the crest still scale them from that box, so it stays the one
+       the art was drawn against even though no lesson wears it any more. */
+    expect(OVERLAY.width).toBe(64);
+    expect(OVERLAY.height).toBe(72);
   });
 
   test('is the size the layout reserved for it', () => {

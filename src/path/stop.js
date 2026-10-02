@@ -1,11 +1,11 @@
 /* One stop on the map, drawn — and the tap it answers.
  *
- * The illustration is the art's and lives in `src/map/marker.js`: the shield a
- * lesson wears, the medallion a detour wears, the boss crest, the pole behind the
- * shield, one overlay per state and the golden arrow on the stop the child is on.
- * What is left here is what only this screen knows — the stop's own words, which
- * side of the marker they hang on, the row of stars, Pip standing where the child
- * is, and the two questions a tap asks: was this a pan, and is the stop open.
+ * The illustration is the art's and lives in `src/map/marker.js`: the tower a
+ * lesson wears, the medallion a detour wears, the boss crest, one overlay per
+ * state on the medallion and the crest, and the golden arrow on the stop the
+ * child is on. What is left here is what only this screen knows — the stop's
+ * own words, which side of the marker they hang on, the row of stars, and the
+ * two questions a tap asks: was this a pan, and is the stop open.
  *
  * Three things a reader should know.
  *
@@ -44,11 +44,8 @@
  */
 import { Container } from '../../vendor/pixi/pixi.min.mjs';
 import { COLOUR, TYPE, scale as clamped, text } from '../ui/theme.js';
-import { SPRITE, sprite } from '../ui/assets.js';
 import { createMarker, createStars } from '../map/marker.js';
 
-const PIP = 36;         // Pip, standing where the child is
-const PIP_LIFT = 14;    // how far above the circle he stands
 const HALO = 0xefdfbb;  // the art's parchment, around the words the app writes
 
 /* The app's text on the map, with the parchment behind its outline. `width` is the
@@ -61,24 +58,12 @@ function captionText(string, { size, weight, colour, caption, halo = 3 }) {
   return node;
 }
 
-export function createStop(parent, { stop, state, glyph, line, puzzles, here, caption, side = 'below', room = 0, scale = 1, panned, onTap }) {
+export function createStop(parent, { stop, state, glyph, line, puzzles, here, caption, side = 'below', scale = 1, panned, onTap }) {
   const k = clamped(scale);
   const node = new Container();
   node.position.set(stop.x, stop.y);
 
   const marker = createMarker(node, { kind: stop.kind, state, here, glyph });
-  const halfW = marker.face.width / 2;
-
-  /* Pip stands where the child is, on the side the map has room for: in the last
-   * column his 36px would otherwise hang past the edge of the map and be cut in
-   * half. The arrow above the marker says the same thing in the art's own voice. */
-  const pip = Math.round(PIP * k);
-  const pipRight = room >= halfW + Math.round(2 * k) + pip;
-  if (here) {
-    const mark = sprite(SPRITE.pip, { width: pip, height: pip });
-    mark.position.set(pipRight ? halfW + Math.round(2 * k) : -(halfW + Math.round(2 * k) + pip), -Math.round(PIP_LIFT * k) - pip);
-    node.addChild(mark);
-  }
 
   /* The words, on the side the layout gave them: below the marker for a stop
    * standing on the road, above it for a stop standing off the road — a fork's two
@@ -135,17 +120,14 @@ export function createStop(parent, { stop, state, glyph, line, puzzles, here, ca
   node.addChild(sub);
 
   /* The box is the ground the stop really asks for: the marker, the words on their
-   * side of it, and the arrow when there is one. Pip stands *beside* the marker
-   * rather than under it, so the width his sprite takes is not the width the caption
-   * needs — a stop whose marker had Pip in its box would claim the ground next to the
-   * neighbouring stop's caption and measure a collision in pixels nothing is drawn in.
-   * The width is what the words really drew (`title.width`), not the width they were
-   * wrapped to, so a caption that wrapped early does not claim ground it left empty. */
+   * side of it, and the arrow when there is one. The width is what the words
+   * really drew (`title.width`), not the width they were wrapped to, so a caption
+   * that wrapped early does not claim ground it left empty. */
   const words = Math.round(Math.max(title.width, sub.width) / 2);
   const box = {
     left: Math.min(marker.box.left, -words),
     right: Math.max(marker.box.right, words),
-    top: here ? Math.min(top, -Math.round(PIP_LIFT * k) - pip) : top,
+    top,
     bottom,
   };
 

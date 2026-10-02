@@ -74,14 +74,12 @@ let view = null;
 let wheel = null;
 let bob = null;
 
-/* The line under a stop's name. A locked stop names the lesson that opens it by its
- * number — the same words for a detour as for a lesson, because a number is the
- * stop's place on the path and every other locked stop says it that way; the sheet a
- * tap opens names it in full, and the open stop wears its number on the map so the
- * two agree. */
-function lineFor({ kind, state, puzzles, held, here }) {
+/* The line under a stop's name. A locked stop says only that: the sheet a tap
+ * opens names the lesson that opens it in full, so the map carries no number
+ * the art has to agree with. */
+function lineFor({ kind, state, puzzles, here }) {
   if (here) return 'you are here';
-  if (state === 'locked') return `after lesson ${LESSONS.indexOf(progress.byId.get(held)) + 1}`;
+  if (state === 'locked') return 'locked';
   if (kind === 'boss') return state === 'done' ? 'beaten' : 'beat Pip';
   if (kind === 'pack') {
     if (state === 'done') {
@@ -161,12 +159,11 @@ function build(context) {
         stop: spot,
         state,
         glyph: glyphFor(spot, unit),
-        line: lineFor({ kind: spot.kind, state, puzzles, held: progress.heldBy(record, unit), here: isHere }),
+        line: lineFor({ kind: spot.kind, state, puzzles, here: isHere }),
         puzzles,
         here: isHere,
         caption: spot.caption,
         side: spot.side,
-        room: fit.width - spot.x,
         panned: () => view.dragged,
         onTap: () => tapStop(context, unit, spot.kind),
       }),

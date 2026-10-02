@@ -49,7 +49,11 @@ No third-party terms, because there is no third party. The 1024×1024 originals 
 with an image generator and cut down to the size the game draws; the generator's raws are
 not shipped, since the game never loads them.
 
-- `assets/characters/pip.png` — Pip, the pawn who coaches. The old app's hand-drawn pawn,
+- `assets/characters/pip.png` — Pip, the pawn who coaches.
+- `assets/map/marker-tower-*.png` — the three lesson towers: the operator sent the
+  generator's 3168×1344 sheet (`assets/source/tower-sheet.png`, kept as provenance and
+  not precached); what ships is the alpha it came with, cut to each tower's own bounds,
+  drawn on a 64×96 canvas standing on its base and exported at 2×. The old app's hand-drawn pawn,
   carried into the game as a sprite.
 - `assets/ui/lock.png` — the mark on a lesson a learner has not unlocked yet.
 - `assets/ui/rank-badge.png` — the badge beside a rank on the path.
@@ -65,9 +69,10 @@ not shipped, since the game never loads them.
 ## The lessons map
 
 `assets/map/**` is the world the path is drawn on: **one painting**
-(`assets/map/world.jpg`), the route's bead and its glow, the stop marker set (a shield,
-a detour medallion, a pole and pennant, the done / open / locked overlays, the boss
-crest, a gold star, the golden arrow) and the banner the star count is written on.
+(`assets/map/world.jpg`), the route's bead and its glow, the stop marker set (the
+lesson towers in their open / done / locked states, a detour medallion, the done /
+open / locked overlays the medallion and the boss crest wear, the boss crest, a
+gold star, the golden arrow) and the banner the star count is written on.
 
 **The twenty landmark props are gone.** `assets/map/prop-*.png` — trees, rocks, the
 hedgerow, the village, the bridge, the fence, the temple, the lava fissure, the ash and

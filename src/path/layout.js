@@ -40,21 +40,19 @@ import { LESSONS, PACKS } from '../data/lessons.js';
 import { SPAN, WORLD, roadAt } from '../map/road.js';
 
 /* The marker's own half: what a stop claims above and below its point. The art's
- * drawn sizes are `src/map/marker.js`'s (a lesson's shield 64×72, a detour's
+ * drawn sizes are `src/map/marker.js`'s (a lesson's tower 64×96, a detour's
  * medallion 48×54, a boss's crest 76×84) and `tests/map.test.ts` holds this table to
  * that one, so the two cannot drift. A screen that draws a taller marker than the
  * layout reserved is a marker drawn over the words of the stop above it. */
-export const HALF = { lesson: 36, boss: 42, pack: 27 };
+export const HALF = { lesson: 48, boss: 42, pack: 27 };
 
 /* The marker's width, for the same reason: what a stop claims sideways. */
 export const FACE = { lesson: 64, boss: 76, pack: 48 };
 
-/* How far apart a fork's two branches stand: one above the road and one below, so
- * the distance between them is twice this. It is measured in screen pixels and not
- * in the painting's own, because what has to fit is a 72px marker and a 12px caption
- * at every window — and a caption does not get smaller on a laptop. 48 is the tap
- * floor, so a branch stands a finger's width off the road and the two markers cannot
- * touch: their halves are 42 at the most, and 96 > 42 + 42 + the gutter. */
+/* How far apart a fork's two branches would stand: one above the road and one
+ * below, so the distance between them is twice this. No course uses it any more
+ * — the path is a chain — but the constant stays so the shape cannot come back
+ * without a number to stand on. */
 export const FORK = 48;
 
 /* The room the words under a marker take: the gap, a name of up to three lines, the
@@ -102,6 +100,7 @@ export function layout(scale) {
   /* A lesson's own depth, and the deepest one in the course: the stops span the
    * stretch of the painting the road runs through (`SPAN`), so the deepest lesson
    * stands at its far end and nothing is written down twice. */
+
   const at = new Map(LESSONS.map((lesson) => [lesson.id, depth(lesson)]));
   const deepest = LESSONS.reduce((low, lesson) => Math.max(low, at.get(lesson.id)), 0);
   const step = (SPAN.to - SPAN.from) / deepest;
@@ -153,33 +152,31 @@ export function layout(scale) {
       onRoad: Math.round(roadAt(spot.u) * world.height),
       half,
       face: FACE[shape],
-      /* The ground a stop asks for, before its caption has been measured: the marker
-       * and the room beside it, plus the words above or below. Two stops whose bands
-       * overlap are two stops that have to share the width between them. */
-      band: side === 'above'
-        ? { top: Math.round(spot.on) - half - CAPTION, bottom: Math.round(spot.on) + half }
-        : { top: Math.round(spot.on) - half, bottom: Math.round(spot.on) + half + CAPTION },
+      /* The ground a stop asks for: its own point. Markers may overlap — the road
+       * winds, and neighbours stand closer than their faces are wide — so sharing
+       * ground is not the test. What two stops must not do is stand in the same
+       * place, which the test below holds, and the browser check holds the real
+       * boxes apart at the windows the game is played at. */
+      band: { top: Math.round(spot.on), bottom: Math.round(spot.on) },
     };
   });
 
   /* A caption is as wide as the room its stop has: the world's own margin on one
    * side, the world's far edge on the other, and half the distance to the nearest
-   * stop whose ground it shares — which is what keeps a detour's words off the lesson
-   * beside it. A stop alone in the open writes across the map, up to `CAP_MAX`. The
-   * one pixel of air beside `GUTTER` is for the rounding: a stop's x is a whole
-   * pixel and its caption's half is not, and a rule that holds only for exact numbers
-   * does not hold. `MIN_CAPTION` is the floor: a course that packs stops closer than
-   * this course does would rather wrap a name than write a column of letters, and the
-   * browser check holds the real boxes apart at the windows the game is played at. */
+   * stop at the same height — which is what keeps a detour's words off the lesson
+   * beside it. A stop alone in the open writes across the map, up to `CAP_MAX`.
+   * The words wrap inside the face, so a caption narrower than its own marker is
+   * fine: the floor of the share is a third of the face, enough for one short
+   * word a line, and the browser check holds the real boxes apart. */
   for (const stop of stops) {
     const beside = stops
-      .filter((other) => other.id !== stop.id && other.band.top < stop.band.bottom && stop.band.top < other.band.bottom)
+      .filter((other) => other.id !== stop.id && other.y === stop.y)
       .reduce((near, other) => Math.min(near, Math.abs(other.x - stop.x)), Infinity);
     stop.caption = Math.max(MIN_CAPTION, Math.min(
       CAP_MAX,
       2 * (stop.x - MARGIN),
       2 * (world.width - stop.x - MARGIN),
-      Number.isFinite(beside) ? Math.floor(beside) - GUTTER - 1 : Infinity,
+      Number.isFinite(beside) ? Math.max(Math.floor(stop.face / 3), Math.floor(beside / 2) - GUTTER - 1) : Infinity,
     ));
   }
 

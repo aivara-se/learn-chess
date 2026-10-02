@@ -231,8 +231,8 @@ visitor's browser met *"There is no screen called `path`"* with the network off.
 ## 10. The path — the map a child walks
 
 `#/path` is the screen the game opens on, because it is where a learner starts: one
-open stop, the rest of the course locked behind it, and Pip standing on the one they
-are up to. The stops, the forks and the legs are the course's `requires` graph drawn.
+open stop, the rest of the course locked behind it, and the golden arrow over the one
+they are up to. The stops and the legs are the course's `requires` graph drawn.
 `src/path/layout.js` derives the layout and `src/path/progress.js` says what state each
 stop is in; the screen draws what those two return and decides nothing about the course
 itself.
@@ -297,25 +297,24 @@ that table would be a stop standing on a roof.
 | the world | the painting's own 640×272 grid, drawn at `max(window/640, window/272)` — the cover, which is what makes it edge to edge and what makes the pan real |
 | a stop's x | `SPAN.from + step × depth`, where `step` is the span over the deepest lesson in the course — the course's own shape, never a coordinate |
 | a stop's y | the road's centre at that x, times the scale, plus the stop's own offset — zero for a stop on the road |
-| a fork | two branches, one above the road and one below, `FORK` apart: **48 screen px** each way. It is a screen measurement because what has to fit is a 72px marker and a 12px caption at every window, and a caption does not get smaller on a laptop. **No course uses it any more**: the operator's path is linear, and `scripts/verify-site.ts` fails a course that puts two lessons at one depth |
+| a fork | two branches, one above the road and one below, `FORK` apart: **48 screen px** each way. It is a screen measurement because what has to fit is a 96px marker and a 12px caption at every window, and a caption does not get smaller on a laptop. **No course uses it any more**: the operator's path is linear, and `scripts/verify-site.ts` fails a course that puts two lessons at one depth |
 | a detour | half a step past the lesson that teaches it, on the road: a medallion beside the path, never a third branch of a fork. `scripts/verify-site.ts` fails a course with more than one lesson at one depth |
 | a caption | as wide as its stop's room — the world's margin on one side, its far edge on the other, and half the distance to the nearest stop whose ground it shares; at most **348**, at least **60** |
 | the chrome | the art's star banner in the window's top-right corner, and nothing else: the rank strip and the puzzle chip the port drew are not on this screen |
 
-**A stop's marker is the art's** (`src/map/marker.js`): a lesson's shield 64×72, a
-detour's medallion 48×54, a boss's crest 76×84 — 64 and 48 are the port's own two
-widths and both are at or over the tap floor; the heights are the art's, and
-`tests/map.test.ts` holds the layout's own table of those sizes to them. **The state of
-a stop is a shape and a word**: the white chip and its tick for done, the glow for open,
-the iron band and its padlock for locked, and a locked stop still writes the lesson that
-opens it underneath, so nothing has to be told apart by a shade of grey. The open stop
-still wears its own number, in ink on the glow (**12.12:1**). **The words hang on the
-side the stop stands off the road** — a fork's two branches write outwards, so their
-captions cannot meet in the middle, and a stop on the road writes below its marker —
-and every word wears the art's parchment `#efdfbb` as a halo behind its glyphs
-(**11.95:1**), which is what keeps them legible over a busy painting. The type is the
-kit's tiny tier, 12px, at every width: a finger does not get smaller on a laptop and
-neither does a caption.
+**A stop's marker is the art's** (`src/map/marker.js`): a lesson's tower 64×96, a
+detour's medallion 48×54, a boss's crest 76×84 — all three widths at or over the tap
+floor; the heights are the art's, and `tests/map.test.ts` holds the layout's own
+table of those sizes to them. **The state of a lesson is the tower itself** — the
+open, done and locked towers the operator sent — and the medallion and the crest
+keep the overlays the art drew for them. A locked lesson says only `locked`
+underneath; the sheet a tap opens names the lesson that opens it, so nothing has
+to be told apart by a shade of grey. The open tower still wears its own number,
+in ink on its stone. A stop on the road writes below its marker, and every word
+wears the art's parchment `#efdfbb` as a halo behind its glyphs (**11.95:1**),
+which is what keeps them legible over a busy painting. The type is the kit's tiny
+tier, 12px, at every width: a finger does not get smaller on a laptop and neither
+does a caption.
 
 **The route is a run of the art's beads** (16px, a detour's thread at 10, 22px spacing
 unwalked and 12 walked so a walked leg's beads touch), each bead carrying its own dark
