@@ -34,6 +34,11 @@
  *     over, however far it travelled, so the gesture sets a `moved` flag past a
  *     threshold and a stop panned under a finger never counts as pressed — and a
  *     locked stop still opens the sheet that names its opener and walks there.
+ *   - **The map says a lesson's number and nothing else.** Every other word a stop
+ *     ever wore — its name, how far it is, why its door is shut — is on that sheet,
+ *     which is one tap away and has the room to say it properly. The only reason
+ *     the map ever carried words was that a caption was cheaper than a screen, and
+ *     a caption on a painting is a word written over somebody's drawing.
  *   - **The arrow on the stop the child is on is the only thing that moves**, and it
  *     stops under `prefers-reduced-motion: reduce`.
  *
@@ -74,30 +79,9 @@ let view = null;
 let wheel = null;
 let bob = null;
 
-/* The line under a stop's name. A locked stop says only that: the sheet a tap
- * opens names the lesson that opens it in full, so the map carries no number
- * the art has to agree with. */
-function lineFor({ kind, state, puzzles, here }) {
-  if (here) return 'you are here';
-  if (state === 'locked') return 'locked';
-  if (kind === 'boss') return state === 'done' ? 'beaten' : 'beat Pip';
-  if (kind === 'pack') {
-    if (state === 'done') {
-      return puzzles.stars === puzzles.of ? 'optional \u00b7 all first time' : `optional \u00b7 ${puzzles.stars} of ${puzzles.of} stars`;
-    }
-    return `optional \u00b7 ${puzzles.of} puzzles`;
-  }
-  if (state === 'done') {
-    return puzzles.stars === puzzles.of ? 'all first time' : `${puzzles.stars} of ${puzzles.of} stars`;
-  }
-  /* Both numbers stay apart, and a stop that has been started says how far: a puzzle
-   * solved with a hint is not a star, so "solved" and "stars" are different lines. */
-  return puzzles.solved === 0 ? `${puzzles.of} puzzles` : `${puzzles.solved} of ${puzzles.of} puzzles`;
-}
-
-/* The glyph a stop's face wears: the lesson's number, and nothing for a boss or a
- * detour, whose own art says what they are — the crest and the medallion. */
-const glyphFor = (spot, unit) => (spot.kind === 'lesson' ? String(LESSONS.indexOf(unit) + 1) : '');
+/* The number a lesson wears under its tower. A boss stop and a detour pass none:
+ * neither is a step on the course, and numbering them would say they were. */
+const numberFor = (spot, unit) => (spot.kind === 'lesson' ? String(LESSONS.indexOf(unit) + 1) : '');
 
 /* What a tap on a locked stop answers with: which lesson opens it, and the way there
  * when that lesson is playable. */
@@ -158,12 +142,8 @@ function build(context) {
       stop: createStop(world, {
         stop: spot,
         state,
-        glyph: glyphFor(spot, unit),
-        line: lineFor({ kind: spot.kind, state, puzzles, here: isHere }),
-        puzzles,
+        number: numberFor(spot, unit),
         here: isHere,
-        caption: spot.caption,
-        side: spot.side,
         panned: () => view.dragged,
         onTap: () => tapStop(context, unit, spot.kind),
       }),
@@ -244,9 +224,7 @@ function handle(context) {
       depth: spot.depth,
       state: stop.state,
       title: stop.title,
-      line: stop.line,
-      stars: stop.stars,
-      side: spot.side,
+      number: stop.number,
       off: spot.off,
       here: spot.id === view.here,
       floor: TAP_FLOOR,
@@ -303,7 +281,7 @@ function handle(context) {
       beads: view.route.beads.length,
       beadsWalked: view.route.beads.filter((bead) => bead.walked).length,
       drawnBeads: view.route.beads.map((bead) => ({ from: bead.from, to: bead.to, walked: bead.walked, x: bead.x, y: bead.y })),
-      markers: view.stops.map(({ spot, stop }) => ({ id: spot.id, kind: stop.kind, state: stop.state, glyph: glyphFor(spot, progress.byId.get(spot.id)) })),
+      markers: view.stops.map(({ spot, stop }) => ({ id: spot.id, kind: stop.kind, state: stop.state, number: stop.number })),
       banner: { read: view.banner.read(), x: view.banner.node.x, y: view.banner.node.y, width: view.banner.width, height: view.banner.height, stars: view.banner.stars, of: view.banner.of },
       edges: { depth: view.edges.depth, peak: view.edges.peak },
       arrow: view.arrow ? {
@@ -429,9 +407,8 @@ export default {
     start(context);
   },
 
-  /* A new size is a new cover: the world is drawn at a different scale, every stop
-   * moves, and the captions are measured against a different painting, so the screen
-   * is rebuilt — and the child's place in the world is kept where it can be rather
+  /* A new size is a new cover: the world is drawn at a different scale and every stop
+   * moves, so the screen is rebuilt — and the child's place in the world is kept where it can be rather
    * than reset under them, by keeping the stop they were looking at in the middle of
    * the window. */
   resize(context) {
