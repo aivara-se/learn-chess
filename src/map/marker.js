@@ -48,8 +48,13 @@ export const OVERLAY = { width: 64, height: 72 };
  * it belongs to. It is deliberately not drawn over the marker's middle any more —
  * a place is a picture of a place, and the plate the overlay was drawn on covered
  * exactly the part that says which place it is. The badge keeps the padlock and the
- * tick legible as marks while the icon underneath stays readable. */
-export const BADGE = { width: 30, height: 34 };
+ * tick legible as marks while the icon underneath stays readable.
+ *
+ * Its size is a share of the marker's own width rather than a fixed number: a fixed
+ * 30px badge on a 48px place is nearly two-thirds of it and reads as the plate it
+ * used to be, where the same badge on the 64px swords reads as a corner mark. The
+ * share is what the overlay's own aspect (128×144) is carried at. */
+export const BADGE = { of: 0.5, aspect: 144 / 128 };
 export const ARROW = { width: 30, height: 36, gap: 4 };
 
 const OVERLAY_FOR = { done: MAP.done, open: MAP.open, locked: MAP.locked };
@@ -91,8 +96,9 @@ export function createMarker(parent, { id = '', kind = 'lesson', state = 'locked
    * this is — so it is a badge now, and the state is still a shape rather than a
    * shade of grey. */
   if (!shape.tower) {
-    const badge = sprite(OVERLAY_FOR[state] ?? OVERLAY_FOR.locked, { width: BADGE.width, height: BADGE.height });
-    badge.position.set(halfW - BADGE.width, halfH - BADGE.height);
+    const badgeW = Math.round(shape.width * BADGE.of);
+    const badge = sprite(OVERLAY_FOR[state] ?? OVERLAY_FOR.locked, { width: badgeW, height: Math.round(badgeW * BADGE.aspect) });
+    badge.position.set(halfW - badgeW, halfH - badge.height);
     node.addChild(badge);
   }
 
