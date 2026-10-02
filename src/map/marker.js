@@ -13,12 +13,11 @@
  *   - **The marker is drawn about the stop's own point.** A lesson's tower is
  *     64×96, so it stands 48px above and below the point the layout gives the
  *     stop.
- *   - **A state overlay is the box it was drawn against scaled to the marker it
- *     sits on.** The three overlays were drawn over the 64×72 shield the tower
- *     replaces; a detour's place is 48×54 and the swords 64×72, so the overlay is
- *     scaled by the marker's own height and centred on it. That keeps the ring,
- *     the padlock and the tick on the face they were measured on rather than
- *     beside it.
+ *   - **A non-tower marker wears its state as a corner badge**, the art's own
+ *     overlay drawn small rather than across the middle: the plate the overlay was
+ *     drawn on is shield-shaped and covered the part of a mine or a farm that says
+ *     which place it is. `OVERLAY` is still the box the overlays were measured
+ *     against; it is no longer the size they are drawn at.
  *   - **A detour's place is picked per stop**, not per kind: `PACK_FOR` maps the
  *     pack's own id to the sprite the sheet drew for it, because three detours that
  *     all wore one icon said nothing about where they were. `tests/path.test.ts`
@@ -45,6 +44,12 @@ export const TOWER_FOR = { done: MAP.towerDone, open: MAP.towerOpen, locked: MAP
  * fails a pack the sheet has no place for. */
 export const PACK_FOR = { fork: MAP.mine, pin: MAP.farm, 'back-rank': MAP.cave };
 export const OVERLAY = { width: 64, height: 72 };
+/* The state badge: the art's own overlay drawn small, in the corner of the marker
+ * it belongs to. It is deliberately not drawn over the marker's middle any more —
+ * a place is a picture of a place, and the plate the overlay was drawn on covered
+ * exactly the part that says which place it is. The badge keeps the padlock and the
+ * tick legible as marks while the icon underneath stays readable. */
+export const BADGE = { width: 30, height: 34 };
 export const ARROW = { width: 30, height: 36, gap: 4 };
 
 const OVERLAY_FOR = { done: MAP.done, open: MAP.open, locked: MAP.locked };
@@ -79,16 +84,16 @@ export function createMarker(parent, { id = '', kind = 'lesson', state = 'locked
     node.addChild(ring);
   }
 
-  /* A lesson's state is the tower itself, so it wears no overlay. The places and
-   * the swords keep the one the art drew for them, scaled from the 64×72 box they
-   * were measured on. */
+  /* A lesson's state is the tower itself, so it wears no badge. Every other marker
+   * wears the art's own overlay drawn small, in its bottom-right corner: the padlock
+   * for a locked stop, the tick for a finished one. Drawn at full size the overlay's
+   * plate covered the middle of the icon — which is the part that says *which place*
+   * this is — so it is a badge now, and the state is still a shape rather than a
+   * shade of grey. */
   if (!shape.tower) {
-    const overlay = sprite(OVERLAY_FOR[state] ?? OVERLAY_FOR.locked, {
-      width: Math.round((shape.height / OVERLAY.height) * OVERLAY.width),
-      height: shape.height,
-    });
-    overlay.position.set(-overlay.width / 2, -halfH);
-    node.addChild(overlay);
+    const badge = sprite(OVERLAY_FOR[state] ?? OVERLAY_FOR.locked, { width: BADGE.width, height: BADGE.height });
+    badge.position.set(halfW - BADGE.width, halfH - BADGE.height);
+    node.addChild(badge);
   }
 
   let arrow = null;

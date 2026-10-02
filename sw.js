@@ -24,7 +24,7 @@
    gesture back to front. `scripts/verify-shell.ts` fails a
    name at or below `v14` for the same reason: reusing a name a device already
    holds leaves the old app in its browser. */
-const CACHE = 'learn-chess-v26';
+const CACHE = 'learn-chess-v27';
 
 /* The shell: the files the app needs to boot and to draw its first frame. Two
  * rules, and scripts/verify-shell.ts now holds the list to both of them, because
