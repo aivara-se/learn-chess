@@ -40,9 +40,9 @@ export const totalDrills = stops.reduce((n, stop) => n + (stop.drills ?? []).len
 
 /* Stars become a rank, and the rank is a piece whose reach they have earned: a
  * child who has won five stars is a knight, not "level 2". The rungs are v1's,
- * verbatim — set against the course's own puzzle pool, a rung every six or seven
- * stars with King still short of the last one, and `docs/PORT.md` is where the
- * reasoning is written down. */
+ * verbatim — set against the course's own puzzle pool, a rung every five to seven
+ * stars with King still short of the last one. `docs/PRODUCT.md` § Behaviour is the
+ * rule a change has to keep. */
 export const ranks = [['Pawn', 0], ['Knight', 6], ['Bishop', 13], ['Rook', 18], ['Queen', 23], ['King', 29]];
 
 export const drillKey = (id, index) => `drill:${id}:${index}`;

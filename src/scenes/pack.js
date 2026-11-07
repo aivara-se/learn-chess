@@ -5,8 +5,8 @@
  * plays a stop's puzzles is `src/scenes/lesson.js`; this file is the address and
  * nothing else — it hands that screen a pack instead of a lesson
  * (`src/lesson/address.js`), and the steps, the board, the coach, the star rule
- * and the record it writes are the same ones, because a second loop is what
- * `docs/PORT.md` says a port must never become.
+ * and the record it writes are the same ones, because a second loop would be a
+ * second set of rules to keep in step.
  *
  * The screen module is imported on demand, like every other route: this file is
  * not in `sw.js`'s `SHELL` — the shell is the first frame's closure and the game

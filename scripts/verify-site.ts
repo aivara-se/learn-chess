@@ -206,11 +206,11 @@ checks.push(`copy within a nine-year-old's budgets (longest prompt ${longest.pro
 /* 3. no course total is written into a file: they are counted from the course.
  * The numbers are read off the course data rather than named here, so the guard
  * moves with the course: add a puzzle and a screen that still writes the old total
- * down fails the same run. (`24` used to be in v1's line, which is how it went
- * blind — the total is 44 now, and the guard never noticed.) The files are the ones
+ * down fails the same run. (`24` used to be in v1's line, which is how that guard went
+ * blind: the total moved and the written number did not.) The files are the ones
  * a course total could be printed in — the data itself and the screens; the rules
- * engine is arithmetic and is not scanned. docs/PORT.md states these numbers on
- * purpose: it is the contract, and every figure in it can be re-derived. */
+ * engine is arithmetic and is not scanned. Every figure this file prints is counted here, so a
+ * comment or a document that quotes one is quoting what the run derives. */
 {
   const course = [...LESSONS, ...PACKS] as any[];
   const puzzles = course.reduce((n, s) => n + ((s.drills ?? []) as unknown[]).length, 0);

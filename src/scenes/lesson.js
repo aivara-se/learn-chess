@@ -7,20 +7,20 @@
  * screen draws it. **A pack is this screen under a second address**: the route
  * resolves differently (`src/lesson/address.js`) and the words around the board
  * say what a detour needs to say, and the drill loop, the coach, the star rule
- * and the record are the ones below — once, because a second copy of them is
- * what `docs/PORT.md` says a port must never become.
+ * and the record are the ones below — once, because a second copy of them is a
+ * second drill loop, and the two would drift.
  *
  * **The drill loop is `v1`'s, whole.** The prompt, the hint, tapping a piece and
  * then a square it can reach, the wrong answer in the app's own words, the star
  * for a solve on the first try, and the reveal that plays the accepted move on
- * the board and says what it was. `docs/PORT.md` is the contract and every one of
- * those was measured in the old app; nothing here is simplified away.
+ * the board and says what it was. Every one of those was measured in the old app;
+ * nothing here is simplified away.
  *
  * **The coach has two voices and they are two elements.** The bubble is Pip
  * judging the move just played and it keeps what it said until the child moves
  * again; the line under the divider is what happened, and the reveal is written
  * there. His reply used to be written into the bubble 332ms after a tap, which
- * is why `docs/PORT.md` carries the bug: a verdict a child cannot read is a
+ * is the failure `docs/PRODUCT.md` refuses: a verdict a child cannot read is a
  * verdict that does not exist.
  *
  * Three things a reader should know before changing it:
@@ -29,7 +29,7 @@
  *     In `v1` the search ran before the repaint and a tap at level 3 froze the
  *     board for a fifth of a second with nothing on screen to say it had landed.
  *   - **The board takes what its screen has left, down to its 240px floor, and
- *     everything else gives way before it does** (`docs/PORT.md`). Its room is
+ *     everything else gives way before it does** (`docs/DESIGN.md`). Its room is
  *     measured from the blocks above and below it, so a longer verdict is a
  *     taller page and never a smaller board.
  *   - **The strip at the bottom of the window is the shell's.** `#status` is a
@@ -74,7 +74,7 @@ const COLUMN = 520;
 const TOP = 8;        // the header's own margin from the top of the window
 const ROW = 10;       // between the blocks of a step
 const DRAG = 6;       // how far a finger travels before it is a drag, not a tap
-const FLOOR = 240;    // the board's own floor, `docs/PORT.md`
+const FLOOR = 240;    // the board's own floor, `docs/DESIGN.md` §3
 const STAR = 22;      // the star a solved puzzle wears on the completion card
 /* What the shell's own bar takes at the bottom of the window while it carries a
  * sentence. `#status` is fixed over the canvas and grows with the words in it —
@@ -880,7 +880,7 @@ function refuse(context, title, body) {
  * between the two routes that reach it: it takes the route's params and answers
  * the stop they name, or a refusal in words (`src/lesson/address.js`). Everything
  * below is the same for a lesson and a detour, and that is the point — a second
- * drill loop is what `docs/PORT.md` says a port must never become.
+ * drill loop would be a second set of rules to keep in step.
  */
 export function scene(address) {
   return {

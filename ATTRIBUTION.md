@@ -119,5 +119,4 @@ palette is the one in `docs/DESIGN.md` plus the painting's own greens and browns
 `assets/favicon.svg`, `assets/icon-180.png`, `assets/icon-192.png`, `assets/icon-512.png`,
 `assets/icon-maskable-512.png` and `assets/share-card.png` are the files this site itself
 published before the rebuild — taken unchanged from the `v1` tag, because the page still
-names the addresses they live at. Their art is CC0 like the rest of the old course's
-([`docs/PORT.md`](docs/PORT.md)).
+names the addresses they live at. Their art is CC0 like the rest of the old course's.

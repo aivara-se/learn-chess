@@ -13,7 +13,7 @@
  *
  * What it cannot see: whether a frame is drawn, whether the canvas is crisp,
  * whether the app opens with the network off, and whether it looks like a game.
- * Those are the browser check in docs/SYSTEM.md and a pair of eyes, and no
+ * Those are the browser check in docs/SYSTEMS.md and a pair of eyes, and no
  * script here replaces either.
  *
  * #38 owns the *project's* site verifier (`scripts/verify-site.ts`: the course's
