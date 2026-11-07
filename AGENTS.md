@@ -1,88 +1,76 @@
 # Agent Instructions
 
-A beginner's chess course and coach, published as a static site at <https://aivara-se.github.io/learn-chess/>.
+A beginner's chess course for children, walked as a path of stops on a painted map: eight lessons, two
+boss games and three optional detour packs, played on a real board with Pip the pawn judging the move
+just played. A static site with no build step — the committed files are the published files.
 
-Static HTML, CSS and ES modules — no build step, no dependencies, no third-party request, no server. The interface is `index.html` plus `js/app.js`; the rules engine and the opponent are `js/engine.js`; the course content is `js/lessons.js`. Design rules are in [`docs/DESIGN.md`](docs/DESIGN.md), purpose and scope in [`docs/PRODUCT.md`](docs/PRODUCT.md), deployment in [`docs/SYSTEM.md`](docs/SYSTEM.md).
+This file is the `aivara-se` agent convention: the rules that hold in every repository. Adopt it, do not fork it. It never describes the state of the work — that lives in the documents below.
 
-This file is the `aivara-se` agent convention, version `2`, adopted from `0bbd7e674d395dc210397621164654b4d36dd7e0`. Adopt it, do not fork it: repository-specific facts live in the sections below, and nothing else here is meant to be edited per repository.
+## Where a fact lives
 
-## Current Project Focus
+- `docs/PRODUCT.md` — what the game is, who it serves, what it must not do, and what would make it done.
+- `docs/SYSTEMS.md` — how it is served and checked, and what fails.
+- `docs/DESIGN.md` — every colour, size and shape the game draws with, and its measurements.
+- `docs/adrs/` — a decision per file, written before the code it decides.
+- `README.md` — how to run it locally.
+- `docs/DRILLS.md` — measured, not written: `verify-drills.ts --write` regenerates it.
 
-The app is published and verified locally. It teaches check, the ways out of it, and checkmate; keeps its
-own files so a reload with no network still opens it; installs to a home screen; behaves the way a child
-taps it; and the eight lessons are now a **path that opens as you walk it** — two forks, two merges, a stop
-that says which lesson unlocks it, and stars that make a rank from Pawn to King.
-
-Next work, in the order it is worth doing: (1) the coach's verdict on a move is written into the bubble and
-overwritten 332ms later by Pip's own move, so a child never reads it — see the measurements in
-`docs/DESIGN.md`; (2) make Pip's move name what it attacks ("my knight is attacking your queen"), because
-"Pip played Nd4" is not a sentence an eight-year-old can read; (3) more course, in the same shape: a
-mate-in-one ladder and a lesson on finishing a won game — the course is 26 puzzles, and a child who likes
-chess finishes it in half an hour; (4) a tablet and laptop layout, where the board is still capped at 430px
-inside a 520px column. Then hand it to a child, watch where they stop, and fix that — the copy and the first
-lesson are the parts a script cannot judge. `docs/DRILLS.md` is where the puzzles' answers were last
-measured; regenerate it in the same pull request that changes a position.
-
-This section is steering, not policy. It is the one place where what matters right now outranks the standing rules below, it changes often, and it is replaced rather than appended to. Keep it short enough to read in full, and current enough to be worth reading.
+One fact, one home: link to a document, never restate it. A sentence here that starts describing the work instead of how work is done belongs in `PRODUCT.md`.
 
 ## House rules
 
-- **The course content is data, not code.** Lesson text and puzzles live in `js/lessons.js`. Every puzzle's answer must be a move a beginner can find, and every `accepted` list must hold moves verified against Stockfish at depth 18 — a puzzle that rejects a good move teaches the wrong thing. `scripts/verify-site.ts` checks that each position is playable, every answer legal and every `best` accepted; `scripts/verify-drills.ts` runs Stockfish itself and fails a drill whose answer is more than 30 centipawns behind the engine's best. A drill whose list is deliberately narrower than the engine's — because the position is level and the lesson asks for one idea — carries a `note` saying so, and that note is what keeps the exception readable.
-- **Copy is written for a nine-year-old**, and the length budgets are enforced by `scripts/verify-site.ts`: a lesson goal under 55 characters, a title under 40, a body paragraph under 170, a caption under 110, a puzzle prompt under 65, a hint under 55, an explanation under 150. Short sentences, active voice, no jargon.
-- **A star means first try.** Never award one for a puzzle solved after a hint or a wrong answer. The list shows both numbers — puzzles solved and stars earned — and they must stay separate.
-- **The board is drawn from White's side and the engine is not.** The engine numbers squares `0 = a1 … 63 = h8`, so drawing that index in DOM order puts White at the top — which shipped once, because the file and rank labels followed the same convention and nothing looked wrong. Map the cell in row `row` and column `col` to `(7 - row) * 8 + col`, and to `row * 8 + (7 - col)` when flipped. Square colour comes from the square, not the cell (a1 and h8 stay dark). The browser check asserts orientation, the corner labels, a1/h8 colouring and every piece's colour against the position; keep those assertions when you touch the renderer.
-- **Every colour is measured, on the surface it is used on.** `docs/DESIGN.md` carries the table; a new pair without a measurement does not ship. Nothing may be signalled by colour alone: a verdict, a turn or a check is always also a word. Every square names itself for a screen reader — coordinate, what stands on it, and whether it is yours, selected, a target or in check.
-- **Nothing is hidden with the `hidden` attribute alone.** An author `display` beats the browser's own `[hidden]` rule, and the lesson list and the lesson view are both `.stack`, which is `display: grid` — so the stylesheet carries `[hidden] { display: none !important }`, and it is the reason a lesson used to open *underneath* the list that was supposed to have gone (the tap changed nothing you could see, the two screenshots were byte-identical, and the list's cards stayed in the tab order). Anything that opens something else is looked at, not asserted.
-- **Every animation is off under `prefers-reduced-motion: reduce`**, checked with the preference switched on. Only the piece that just moved slides: a redraw cannot show which piece went where, and that is the one movement here that earns its keep.
-- **A control a child needs stays on screen at 360×640, and the board is what gives way.** Before the board did, Hint, Undo and Flip sat below the fold on a 640px phone (166px of scroll) and a puzzle's board was cut in half. The board takes `--board-room` — what its screen has left after its own chrome — down to a 240px floor; the constants are measured in a browser, the table is in `docs/DESIGN.md`, and a new element in a screen's chrome is a smaller board on the smallest phones. Nothing else gives way, and a line of copy is long enough to cost 18px of board when it wraps.
-- **The path is a graph in `js/lessons.js`, and the map is drawn from it.** A lesson's `requires` names the lessons that must be finished before it can be opened; the lessons tab is a route built from that, and nothing about the order is written anywhere else. Do not hand-place a stop or hand-write the order in `js/app.js` — the layout is derived so it cannot disagree with the course. `scripts/verify-site.ts` fails a `requires` that names no lesson, a circle, or a stop no route can reach, because a learner stranded behind a graph bug has no way round it. A fork is a choice for the learner; a merge is where the teaching order is enforced, so a merge must require **every** branch.
-- **Nothing counts the course but the app.** The number of lessons and puzzles is derived from `js/lessons.js`; a total written into a file is a lie waiting to happen, and `scripts/verify-site.ts` fails one.
-- **The app must keep working offline and from `file://`-style hosting**: no fetch, no CDN, no external font, no account, no backend. Any feature that needs a server does not belong here. `sw.js` holds the offline copy, so a file the page serves goes into its list in the same commit — and a change to a file already in the list bumps the cache name with it.
-- **Say what the engine can do, and no more.** The opponent is a small alpha-beta search over material and piece-square tables with quiescence, three settings, labelled honestly in the interface. Do not describe it as strong, and do not call its evaluation an engine-grade verdict.
-- **Progress is the visitor's, and stays on their machine.** `localStorage` only; never add analytics, tracking, or anything that sends their moves anywhere.
-- **Copy is for someone who has never played.** Short sentences, no jargon ("tempo", "initiative", "prophylaxis"), no abbreviations left unexplained.
+- **The course is data, not code.** Lessons and puzzles live in `src/data/lessons.js`, and the map is derived from their `requires`. Do not hand-place a stop or write the order anywhere else. A `requires` that names no lesson, a circle or an unreachable stop fails the site check.
+- **A puzzle's answer is a move a beginner can find, verified against Stockfish at depth 18.** A drill whose accepted list is deliberately narrower carries a `note` saying why; the drill check fails an answer more than 30 centipawns behind the engine's top move.
+- **A star means a first try.** Never after a hint or a wrong answer. Puzzles solved and stars won are two numbers and stay separate.
+- **Nothing counts the course but the app.** Every total is derived; a total written into a file fails the site check.
+- **Copy is for a nine-year-old**, inside the budgets `scripts/verify-site.ts` enforces: title 40, goal 55, caption 110, body 170, prompt 65, hint 55, why 150 characters. Short sentences, active voice, no jargon.
+- **The board is drawn from White's side and the engine is not.** The engine numbers squares `0 = a1 … 63 = h8`, so map row `row` and column `col` to `(7 - row) * 8 + col`, and to `row * 8 + (7 - col)` when flipped. Square colour comes from the square, not the cell: a1 and h8 stay dark.
+- **Every colour is measured, on the surface it is used on.** A new pair without a measurement does not ship, and nothing is signalled by colour alone — a verdict, a turn or a check is always also a word.
+- **Every square names itself for a screen reader** — coordinate, what stands on it, and whether it is yours, selected, a target or in check — through a polite live region.
+- **Nothing is hidden with the `hidden` attribute alone.** An author `display` beats `[hidden]`, so the stylesheet carries `[hidden] { display: none !important }`. Anything that opens something else is looked at, not asserted.
+- **Every animation is off under `prefers-reduced-motion: reduce`.** Only the piece that just moved slides; that one movement earns its keep.
+- **The board is what gives way, and never past 240px.** 48px is the floor for anything a child taps, and a new line of chrome is a smaller board on the smallest phones.
+- **Never** add a build step, a `package.json`, a dependency or a request off this origin. The one third-party file is `vendor/pixi/pixi.min.mjs`, pinned and hashed with its licence beside it. Any feature that needs a server does not belong here.
+- **Offline is a rule.** A file the page serves goes into `sw.js`'s `SHELL` in the same commit, and a change to a file already there bumps `CACHE` in that commit — to a name no branch holds and above the `v14` floor. A stale list is what broke the offline game once.
+- **`.nojekyll` stays.** Without it Pages does not publish `vendor/`, and the live game 404s its own library.
+- **Say what the engine can do, and no more.** The opponent is a small alpha-beta search with quiescence, three settings, labelled honestly. Never call it strong.
+- **Progress is the visitor's.** `localStorage` only; never add analytics or anything that sends their moves anywhere.
 
 ## Tooling
 
-- **Bun is the runtime for scripts.** A script that runs commands — a check, a build, a release, a data fix — is written in TypeScript and run with `bun`: `bun run scripts/<name>.ts`. **Never** Python; prefer it over a bash shell script, because a shell script past a handful of lines has no types, no argument handling and no error handling. A one-line command typed at the prompt is not a script.
-- **Never** add a second package manager, a second lockfile, a second formatter or a second test runner. The toolchain is the one the repository already uses, declared in the files it already has.
+- **Bun runs the scripts.** A script that runs commands is TypeScript, run with `bun run scripts/<name>.ts` — never Python, and a shell script only when it stays a few lines. A command typed at the prompt is not a script.
+- **Never** add a second package manager, lockfile, formatter or test runner. The toolchain is the one the repository already declares.
 - **Never** report "tests pass", "it builds" or "verified" without the command and the tree it ran against.
+
+## Skills
+
+The organisation's skills live in `aivara-se/.agents/skills` and every agent reads them from there; a repository carries no copy. Each declares a `when-to-use`: open the one that covers the work before starting it.
 
 ## Verify before pushing
 
 ```bash
-bun test                              # the rules engine: perft and legality
-bun run scripts/verify-site.ts        # the site-level rules that can be checked mechanically
-bun run scripts/verify-drills.ts      # every puzzle's answer, against Stockfish
+bun test                            # the engine, the board's geometry, the drill loop, the graph
+bun run scripts/verify-shell.ts     # the tree as served, and the offline list
+bun run scripts/verify-site.ts      # the course: positions, graph, copy budgets, art record
+bun run scripts/verify-drills.ts    # every answer against Stockfish ($STOCKFISH or /usr/games/stockfish)
 ```
 
-Run the whole sequence, not just its fast part, and read every result — the exit code of the last command says nothing about the first.
+Run the whole sequence and read every result — the last exit code says nothing about the first.
 
-Then the two things a script cannot see: the app must work on a phone — no horizontal scroll at 360px, and every control a screen needs on it without scrolling at 360×640, where the board is the only thing that may give way — and the _rendered_ page must be looked at: board legible, pieces distinguishable, buttons reachable, no console error. Automated browser checks do not prove the pixels are right; look at a screenshot.
+What no script can see — a frame at 360×640, whether a board is legible, a lesson walked end to end,
+a reload with the network off — is the browser pass in `README.md` § Checks, and the screenshots
+belong in the pull request beside the numbers.
+
+The same commands run in `.github/workflows/validate.yml`, whose job is named `validate` — the name
+the organisation's baseline requires a check under before a merge.
 
 ## Version Control
 
-- **Branches**: lowercase, hyphens only, one per task, named for the change — `fix-log-timezone`, `chore/adopt-agents-config`. No uppercase, no underscores, no personal prefixes.
+- **Branches**: lowercase, hyphens, one per task: `docs/`, `feat/`, `fix/` or `chore/` and a short name — `docs/adopt-agents-config`, `fix-log-timezone`. No uppercase, no underscores, no personal prefixes.
 - **Commits**: Conventional Commits, lowercase, single line, no scopes — `type: short description`.
-- **Never** commit to `main` directly. **Never** force-push a branch another agent or person has seen.
-- Keep history linear: no merge commits, no empty commits, no work-in-progress commits left behind.
-- Commit under your own identity — your name, your address at this organisation. Never a generic bot, never another agent's identity.
-- Remote work is always a branch plus a pull request. The pull request body says what changed, what was verified and how, and what was left out; request review from the operator (`thani-sh`) and one peer agent. Leave the working tree clean: no scratch files, no editor backups, no `.env` you created.
-
-## Repository Structure
-
-- `index.html`: the app shell — markup and the stylesheet
-- `sw.js`: the offline cache list and the fetch handler
-- `manifest.webmanifest`: what a home screen installs
-- `js/engine.js`: rules, legal move generation, search, evaluation
-- `js/lessons.js`: the course — lesson text, diagrams, verified drills, and `requires`, the graph the path is drawn from
-- `js/app.js`: the interface — board, coach, progress
-- `tests/`: `bun test` suites
-- `scripts/`: `verify-site.ts` and `verify-drills.ts`, the mechanically checkable rules
-- `assets/fonts/`: self-hosted latin-subset fonts and their licences
-- `assets/`: the mark (`favicon.svg`), the rendered icons and the share card
-- `docs/`: the authoritative documents — `DESIGN.md`, `PRODUCT.md`, `SYSTEM.md`, `DRILLS.md`
-- `README.md`: what the app is, how to run and check it, where things are documented
-
-New markdown goes in the directory that already owns its subject, and a fact has exactly one home. Never add a second copy of something a document already says; link to it. If a path in the map above stops being true, fix the map in the same pull request. A map that lies is worse than no map.
+- **Never** commit to `main` directly, and **never** force-push a branch someone else has seen.
+- Keep history linear: no merge commits, no empty commits, no work-in-progress commits.
+- Commit under your own identity, never another agent's.
+- Remote work is a branch plus a pull request: the body says what changed, what was verified and how, and what was left out. Leave the tree clean.
+- Request review from the operator (`thani-sh`) alone for a documents-only change, and from the operator and one peer agent for an implementation one.
 

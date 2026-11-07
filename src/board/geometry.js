@@ -16,7 +16,7 @@ import { squareName } from '../engine/engine.js';
 
 /* The board is square, and it is what gives way: a screen's chrome takes room
  * from the board, never the other way round. 240px across (`SQUARE_MIN` × 8) is
- * the floor PORT.md measures — eight 48px squares do not fit on a phone — and
+ * the floor `docs/DESIGN.md` fixes — eight 48px squares do not fit on a phone — and
  * 560px (`SQUARE_MAX` × 8) is the widest the old app ever drew one. */
 export const SQUARE_MIN = 30;
 export const SQUARE_MAX = 70;

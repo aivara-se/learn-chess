@@ -13,9 +13,9 @@
  *
  * One thing moves: the piece that just arrived slides in from the square it
  * left, in 160ms — the old app's `.pc.walk { animation: walk 0.16s ease-out }`,
- * and the one animation `docs/PORT.md` keeps, because a redraw cannot show which
- * piece went where. Under `prefers-reduced-motion: reduce` the piece is simply
- * there, and nothing else in here moves at all.
+ * and the one animation on the board, because a redraw cannot show which
+ * piece went where (`docs/DESIGN.md` § Motion). Under
+ * `prefers-reduced-motion: reduce` the piece is simply there, and nothing in here moves at all.
  */
 import { Assets, Container, Sprite } from '../../vendor/pixi/pixi.min.mjs';
 import { parseFen, pieceAt } from '../engine/engine.js';

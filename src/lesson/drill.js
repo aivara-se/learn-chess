@@ -6,7 +6,7 @@
  * screen plays real engine moves, so one of these two spellings has to be turned
  * into the other on every answer, and the comparison has to be exact: a drill
  * whose accepted list is missed by a promotion letter is a drill that rejects a
- * good move, which is the one failure `docs/PORT.md` names.
+ * good move, which is the one finding `scripts/verify-drills.ts` fails a run for.
  *
  * All of it is pure — the engine's own `legalMoves` is the only thing it asks —
  * so `tests/lesson.test.ts` plays every drill in the course without a browser.

@@ -1,6 +1,6 @@
 /* The coach's words — what Pip says about a move, in a child's own language.
  *
- * `docs/PORT.md` is where the rules come from and they are rules, not taste: a
+ * `docs/PRODUCT.md` § Behaviour is where the rules come from, and they are rules, not taste: a
  * verdict for **every** move, the stronger move **named** when the move was not
  * the engine's own, and a move that *is* the engine's choice never criticised
  * for the score it leaves — that drop is the opponent's reply rather than the
@@ -81,7 +81,7 @@ const stop = (word) => (/[!?.]$/.test(word) ? word : `${word}.`);
 
 /**
  * How a played move rates, in a child's words, from the centipawns it gave away
- * — `v1`'s six bands, kept as written because `docs/PORT.md` carries them.
+ * — `v1`'s six bands, kept as written because `docs/adrs/001-the-course-replaces-v1.md` carries them.
  */
 export function verdict(loss) {
   if (loss <= 10) return { word: 'Perfect!', tone: 'good' };

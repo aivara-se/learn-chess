@@ -34,7 +34,7 @@ const CACHE = 'learn-chess-v29';
  * A screen the router imports on demand, and that the game does not open on, is
  * not one of these: `src/scenes/lesson.js`, `src/scenes/kit.js` and
  * `src/scenes/board-fixture.js` are fetched when they are opened and kept from
- * then on, so a start with no network does not need them. docs/SYSTEM.md §4 says
+ * then on, so a start with no network does not need them. docs/adrs/002-the-offline-copy-has-two-lists.md says
  * what that costs and where it is written down. */
 const SHELL = [
   './',

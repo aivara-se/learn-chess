@@ -4,7 +4,7 @@
  * course does: `#/lesson/<n>` uses a lesson's number on the path — the number
  * the map prints on the stop — and `#/pack/<id>` uses a pack's id, because a
  * pack has no place in that order. It is offered *beside* the lesson that
- * teaches its idea rather than on the path itself (`docs/PORT.md`), which is
+ * teaches its idea rather than on the path itself (`docs/adrs/001-the-course-replaces-v1.md`), which is
  * also why it is required by nothing.
  *
  * This module is the whole of that translation, and it is pure — no PixiJS, no

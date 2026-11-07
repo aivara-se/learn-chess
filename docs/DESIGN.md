@@ -6,8 +6,8 @@ against it, and a new value that is not in these tables does not ship.
 
 The old `DESIGN.md` described a phone web app: a DOM, a tab bar, CSS. This one describes a 2D game drawn
 on a canvas, and the parts it shares with the old document are the ones that were *measured* there and
-still hold — the tap floor, the board's room, the motion rule. `docs/PORT.md` is the port contract and
-`docs/SYSTEM.md` is how the tree is served.
+still hold — the tap floor, the board's room, the motion rule. `docs/adrs/001-the-course-replaces-v1.md` is the record of the port and
+`docs/SYSTEMS.md` is how the tree is served.
 
 ## 1. What is here
 
@@ -28,7 +28,7 @@ still hold — the tap floor, the board's room, the motion rule. `docs/PORT.md` 
 | `src/path/stop.js` | one stop drawn: its marker, and the lesson's number under it |
 | `src/path/sheet.js` | what a tap on a door answers with |
 
-A screen is still a file and a route (`docs/SYSTEM.md` §1). The kit is imported, not registered: there is
+A screen is still a file and a route (`docs/SYSTEMS.md` § Architecture). The kit is imported, not registered: there is
 no index, so a new component is a new file and nothing else.
 
 ## 2. Colour — every pair measured, on the surface it is used on
@@ -99,7 +99,7 @@ with a dark outline* was settled — the pixels said ink on parchment, twice ove
   proportions hold at both.
 - **The board is the one documented exception** and it is documented because it was measured: eight
   squares cannot be 48px each inside a 360px screen. The board takes what its screen has left
-  (`--board-room`, in `docs/PORT.md`) down to a **240px floor** on a phone and 320px on a wide screen, and
+  (`--board-room`) down to a **240px floor** on a phone and 320px on a wide screen, and
   everything else gives way before it does.
 
 ### What the kit measures at scale 1, at 360 wide
@@ -184,7 +184,7 @@ of `button.png` are `#146587`). The fill bar's pill is 16px tall with a 4px radi
 640 is the whole screen, and a screen's chrome is not free: every pixel a screen adds above the board is a
 smaller board, and the board is the only thing that gives way. The kit's own parts, measured above, are
 what a screen's chrome is built from — a header line, a coach panel (101 tall), a row of controls (48), a
-chip (30) — and the browser list in `docs/SYSTEM.md` §3 is still the check: at 360×640 nothing a child
+chip (30) — and the browser pass in `README.md` is still the check: at 360×640 nothing a child
 needs may be below the fold, and the only thing that may be cut is the board, down to its 240px floor. A
 screen that cannot fit says so by scrolling the one long thing on it — the course's own move record — and
 never by hiding a control.
@@ -196,9 +196,11 @@ and a human looks at it. Automated checks do not prove a button is legible.
 ## 7. Motion
 
 One movement in the kit — a pressed button dips to 0.97 for as long as the press lasts — and **off under
-`prefers-reduced-motion: reduce`**, where the face swap alone carries the press. The board's own slide
-(only the piece that just moved, 0.16s) is `docs/PORT.md`'s rule and the board card's to draw. Nothing in
-the kit loops, and nothing moves while a child is thinking about their own move.
+`prefers-reduced-motion: reduce`**, where the face swap alone carries the press. The board has one of its
+own: the piece that just moved slides in over 0.16s, because a redraw cannot show which piece went
+where. Under `prefers-reduced-motion: reduce` it does not slide — the piece is simply there, and nothing
+on the board moves at all. Nothing in the kit loops, and nothing moves while a child is thinking about
+their own move.
 
 ## 8. Accessibility
 
@@ -223,7 +225,7 @@ the kit loops, and nothing moves while a child is thinking about their own move.
 on, and `scripts/verify-shell.ts` fails the tree when the list does not name that screen or is not closed
 under its own imports. A screen the router imports on demand — `#/kit`, `#/lesson/1`, `#/board-fixture/*`
 — is fetched when it is first opened and cached from then on. What that costs, and why the list is not
-simply "every screen", is [`docs/SYSTEM.md`](SYSTEM.md) §4. Until #43 this section was a deviation note,
+simply "every screen", is [`docs/adrs/002-the-offline-copy-has-two-lists.md`](adrs/002-the-offline-copy-has-two-lists.md). Until #43 this section was a deviation note,
 written because this card's `Do not touch` list named `sw.js`: the list still held the shell's deleted
 `placeholder.js` and named none of the files the game actually opens on, which is how a returning
 visitor's browser met *"There is no screen called `path`"* with the network off.
@@ -382,7 +384,7 @@ from a paragraph
 (`for br in $(git branch -r); do git show $br:sw.js | grep -m1 '^const CACHE'; done`),
 stood at `v19` on `main` when this branch was cut — `#63` took it — and no branch held
 `v20` or anything above it. A change to a file in `SHELL`, or to the list, takes the next
-name in the same commit; [`docs/SYSTEM.md`](SYSTEM.md) §4 is the rule and what the
+name in the same commit; [`docs/adrs/002-the-offline-copy-has-two-lists.md`](adrs/002-the-offline-copy-has-two-lists.md) is the rule and what the
 on-demand class costs.
 
 **The map's own files, and who draws what.** `src/map/road.js` is the painting's size
@@ -392,4 +394,4 @@ the trail, the markers, the counter and the vignette; `src/path/layout.js` is wh
 every stop stands and `src/scenes/path.js` composes them. `src/scenes/kit.js` remains
 this kit's own route — and it is still not in `sw.js`'s `SHELL` list, which is a rule
 rather than a deviation: an on-demand screen is fetched when it is first opened and
-cached from then on, and [`docs/SYSTEM.md`](SYSTEM.md) §4 says what that costs.
+cached from then on, and [`docs/adrs/002-the-offline-copy-has-two-lists.md`](adrs/002-the-offline-copy-has-two-lists.md) says what that costs.
