@@ -1,19 +1,24 @@
-name: Checks
+name: validate
 
 on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
+
+permissions:
+  contents: read
 
 jobs:
-  checks:
+  validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.4
 
       - name: Rules engine
         run: bun test
@@ -29,3 +34,10 @@ jobs:
 
       - name: Puzzle answers
         run: bun run scripts/verify-drills.ts
+
+  # The document standard, from the one checker in aivara-se/.github. This
+  # repository carries no copy of it.
+  docs:
+    permissions:
+      contents: read
+    uses: aivara-se/.github/.github/workflows/validate-docs.yml@main
