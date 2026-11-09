@@ -17,7 +17,7 @@
  * below it; and a change to a file in the list, or to the list itself, bumps it in
  * the same commit. The name has to be its own because the shell is served
  * cache-first: a device that has played before keeps the files it holds until a
- * new worker arrives. `docs/SYSTEM.md` §4 holds the rule. */
+ * new worker arrives. `docs/adrs/002-the-offline-copy-has-two-lists.md` holds the rule. */
 const CACHE = 'learn-chess-v29';
 
 /* The shell: the files the app needs to boot and to draw its first frame. Two
