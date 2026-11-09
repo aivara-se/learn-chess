@@ -10,15 +10,15 @@
  * list holds goes into the list in the same commit that adds it, and a change
  * to a file in it bumps CACHE in the same commit.
  */
-/* The cache name. Three rules: it is one no branch holds — two branches that take
- * the same number merge with no conflict marker, so the value is compared across
- * branches rather than read; it stays above `v14`, the last name the deleted app
- * served, and `scripts/verify-shell.ts` fails a name at or below it; and a change
- * to a shell file bumps it in the same commit. The name has to be its own because
- * the shell is served cache-first: a device that has played before keeps the files
- * it holds until a new worker arrives.
- * `docs/adrs/002-the-offline-copy-has-two-lists.md` holds the record. */
-const CACHE = 'learn-chess-v28';
+/* The cache name. Three rules: it is one no branch claims when it is taken — two
+ * branches that take the same number merge with no conflict marker, so the value
+ * is compared across branches rather than read; it stays above `v14`, the last
+ * name the deleted app served, and `scripts/verify-shell.ts` fails a name at or
+ * below it; and a change to a file in the list, or to the list itself, bumps it in
+ * the same commit. The name has to be its own because the shell is served
+ * cache-first: a device that has played before keeps the files it holds until a
+ * new worker arrives. `docs/SYSTEM.md` §4 holds the rule. */
+const CACHE = 'learn-chess-v29';
 
 /* The shell: the files the app needs to boot and to draw its first frame. Two
  * rules, and scripts/verify-shell.ts now holds the list to both of them, because
