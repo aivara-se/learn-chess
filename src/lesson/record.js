@@ -5,8 +5,8 @@
  * of its own so that no screen handler writes a key by hand. Both files name the
  * key shape from the same place (`KEY` and `drillKey` are imported, not spelled
  * again), which is what keeps `#11`'s map and a lesson's stars from drifting
- * apart — the failure `docs/PRODUCT.md` fixes, where two numbers that should agree are maintained in
- * two places.
+ * apart — the rule `docs/PRODUCT.md` states, that every total is derived and
+ * never written down.
  *
  * **A star is a first-try solve** — never for a puzzle solved after a wrong
  * answer or after a hint, and the caller is where that is decided, because only
