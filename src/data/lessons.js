@@ -476,7 +476,7 @@ export const LESSONS = [
   },
 ];
 
-/* The detour stops. The path has twelve stops and no way to practise one idea a
+/* The detour stops. The path has ten stops and no way to practise one idea a
  * learner is shaky on, so a **pack** hangs off the lesson that teaches the idea:
  * three more puzzles on it, and *optional* — nothing requires a pack, a pack
  * requires nothing, and finishing one, or never opening it, changes nothing about

@@ -10,20 +10,14 @@
  * list holds goes into the list in the same commit that adds it, and a change
  * to a file in it bumps CACHE in the same commit.
  */
-/* The cache-name ladder. Read off the branches rather than guessed — measured
-   with `git show origin/<branch>:sw.js | grep '^const CACHE'` on the rebase this
-   name was kept through: the frozen `v1` tag, and so the name the deleted app
-   served, is `learn-chess-v14`, and `main` stands at `learn-chess-v22`. This
-   branch keeps `v23`: nobody holds it — read off every branch, local and remote —
-   and nothing on any branch is above it.
-   The name has to be its own because the shell is served cache-first: the fetch
-   handler answers every same-origin GET from the cache and keeps what it
-   fetches, so a device that has played before holds the course and the screen this
-   branch rewrites — `src/data/lessons.js` and `src/scenes/path.js` — and re-fetches
-   neither without a new worker, so it keeps walking the forking path with the wheel
-   gesture back to front. `scripts/verify-shell.ts` fails a
-   name at or below `v14` for the same reason: reusing a name a device already
-   holds leaves the old app in its browser. */
+/* The cache name. Three rules: it is one no branch holds — two branches that take
+ * the same number merge with no conflict marker, so the value is compared across
+ * branches rather than read; it stays above `v14`, the last name the deleted app
+ * served, and `scripts/verify-shell.ts` fails a name at or below it; and a change
+ * to a shell file bumps it in the same commit. The name has to be its own because
+ * the shell is served cache-first: a device that has played before keeps the files
+ * it holds until a new worker arrives.
+ * `docs/adrs/002-the-offline-copy-has-two-lists.md` holds the record. */
 const CACHE = 'learn-chess-v28';
 
 /* The shell: the files the app needs to boot and to draw its first frame. Two
