@@ -1,6 +1,6 @@
 # learn-chess
 
-A beginner's chess course for children, as a small game: twelve stops that open as a child walks the
+A beginner's chess course for children, as a small game: ten stops that open as a child walks the
 path — eight lessons and two boss games, with three optional detour packs beside them — where the puzzles
 are played on a board rather than answered on paper, and Pip the pawn says what he thinks of the move
 just played. It is a static site with no build step and no dependency: the committed files are the
