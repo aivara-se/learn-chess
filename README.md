@@ -53,7 +53,8 @@ bun run scripts/verify-drills.ts   # every puzzle's answer, measured against Sto
 The first three need nothing but Bun. The fourth needs Stockfish — `$STOCKFISH`, or
 `/usr/games/stockfish` — and it is the only one that asks a question a legal-move check cannot: whether
 an answer is *good*. All four run in `.github/workflows/validate.yml` on every pull request, in the job
-named `validate`, beside a `docs` job that checks the documents against the organisation's standard.
+named `validate`, beside an `agents` job and a `docs` job that check the entry file and the documents
+against the organisation's standard.
 
 What they cannot see — what a frame looks like, whether a board is legible, whether the game opens with
 the network off — is a browser pass against a served copy of the branch, never `file://`, at 360×640
