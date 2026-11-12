@@ -1,10 +1,10 @@
 /* Which square a tap landed on.
  *
  * The board is drawn and the pieces are placed from `src/board/geometry.js`, and
- * this is the inverse of that one mapping — the operation `AGENTS.md` writes out
- * in full because this app has already shipped a board upside down: the cell in
- * row `row` and column `col` is square `(7 - row) * 8 + col`, and
- * `row * 8 + (7 - col)` when the board is flipped.
+ * this is the inverse of that one mapping — the operation `squareOf` writes out
+ * in full, and `tests/board.test.ts` pins, because this app has already shipped
+ * a board upside down: the cell in row `row` and column `col` is square
+ * `(7 - row) * 8 + col`, and `row * 8 + (7 - col)` when the board is flipped.
  *
  * It is a module of its own, with no PixiJS in it, for the same reason the
  * geometry is: a renderer that maps a tap two pixels off is a renderer that
