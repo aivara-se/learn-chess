@@ -214,6 +214,9 @@ their own move.
 - The canvas is one node to a screen reader, so a control hands its name up: `spoken()` returns
   "Show me, waiting for Pip", and a screen passes it to the shell's live region (`#status` in
   `index.html`). A per-square name for the board is the board card's business and is not solved here.
+- Nothing is hidden with the `hidden` attribute alone: an author `display` beats the browser's own,
+  so `index.html`'s style block carries `[hidden] { display: none !important }`. `#status` is set that
+  way, and a screen that opens over another is looked at with the attribute set, not assumed.
 
 ## 9. What this card does not own
 
