@@ -5,9 +5,10 @@
  * wrong are facts `bun test` can hold still without a browser — the engine
  * numbers squares from a1 (0 = a1 … 63 = h8) while a screen numbers rows from
  * the top, and the whole board mirrors when it is drawn from Black's side — and
- * this app has already shipped that board upside down once. `AGENTS.md` writes
- * the rule out: the cell in row `row` and column `col` is square
- * `(7 - row) * 8 + col`, and `row * 8 + (7 - col)` when the board is flipped.
+ * this app has already shipped that board upside down once. `squareOf` below
+ * writes the rule out, and `tests/board.test.ts` pins it: the cell in row `row`
+ * and column `col` is square `(7 - row) * 8 + col`, and `row * 8 + (7 - col)`
+ * when the board is flipped.
  *
  * `board.js` and `pieces.js` both read their geometry from here, so the squares
  * and the pieces cannot disagree about where e4 is.
@@ -62,8 +63,8 @@ export function cellOf(sq, flipped = false) {
   return flipped ? { row: rank, col: 7 - file } : { row: 7 - rank, col: file };
 }
 
-/** The square drawn in a cell — the direction `AGENTS.md` states, and the
- *  inverse of `cellOf`. */
+/** The square drawn in a cell — the direction `tests/board.test.ts` pins, and
+ *  the inverse of `cellOf`. */
 export function squareOf(row, col, flipped = false) {
   return flipped ? row * 8 + (7 - col) : (7 - row) * 8 + col;
 }
