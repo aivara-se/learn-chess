@@ -42,6 +42,7 @@ position to play in it. A verdict a child cannot read.
 - Under `prefers-reduced-motion: reduce` nothing moves, the piece that just arrived included.
 - Progress is kept on the device, and a reload returns the child to it.
 - A visited stop opens with the network off.
+- The opponent is described honestly, and never called strong.
 
 ## Autonomy
 
