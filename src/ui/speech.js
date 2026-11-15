@@ -26,7 +26,7 @@ const TONE = {
   bad: { fill: COLOUR.badSoft, line: COLOUR.bad },
 };
 
-export function createSpeech(parent, { units = 300, scale = 1, avatar = true } = {}) {
+export function createSpeech(parent, { units = 300, scale = 1, avatar = true, surface = false } = {}) {
   const k = clamped(scale);
   const width = Math.round(units * k);
   const gap = Math.round(LIFT * k);
@@ -41,9 +41,16 @@ export function createSpeech(parent, { units = 300, scale = 1, avatar = true } =
   const bubble = text('Tap a piece, then tap where it should go.', { size: Math.round(TYPE.body * k), colour: COLOUR.ink, wrap: bubbleW - pad });
   const divider = sprite(SPRITE.divider, { width, height: Math.max(2, Math.round(4 * k)) });
   const reply = text('', { size: Math.round(TYPE.small * k), colour: COLOUR.inkSoft, wrap: width });
+  /* The reply is a voice of its own, and on a screen with a picture behind it a
+   * voice with no surface under it is unreadable. `surface` draws the card's own
+   * rim under the reply and nothing else changes: the two voices stay two
+   * elements, which is the rule this component exists to keep. */
+  const replyPad = surface ? Math.round(6 * k) : 0;
+  const replyShape = surface ? new Graphics() : null;
 
   node.addChild(shape);
   if (avatarNode) node.addChild(avatarNode);
+  if (replyShape) node.addChild(replyShape);
   node.addChild(bubble, divider, reply);
 
   let tone = 'plain';
@@ -62,8 +69,17 @@ export function createSpeech(parent, { units = 300, scale = 1, avatar = true } =
     if (avatarNode) avatarNode.position.set(0, 0);
     bubble.position.set(bubbleX + Math.round(pad / 2), Math.round((box - bubble.height) / 2));
     divider.position.set(0, box + gap);
-    reply.position.set(0, box + gap + divider.height + gap);
-    height = box + gap + divider.height + gap + reply.height;
+    const replyY = box + gap + divider.height + gap;
+    if (replyShape) {
+      replyShape.clear();
+      if (reply.text) {
+        replyShape.roundRect(0, replyY - replyPad, width, reply.height + 2 * replyPad, Math.round(10 * k))
+          .fill(COLOUR.cardSoft)
+          .stroke({ width: Math.max(1, Math.round(k)), color: COLOUR.line, alignment: 0.5 });
+      }
+    }
+    reply.position.set(replyPad, replyY);
+    height = replyY + reply.height + replyPad;
   };
 
   const handle = {

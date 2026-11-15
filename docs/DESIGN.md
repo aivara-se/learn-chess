@@ -398,3 +398,62 @@ every stop stands and `src/scenes/path.js` composes them. `src/scenes/kit.js` re
 this kit's own route — and it is still not in `sw.js`'s `SHELL` list, which is a rule
 rather than a deviation: an on-demand screen is fetched when it is first opened and
 cached from then on, and [`docs/adrs/002-the-offline-copy-has-two-lists.md`](adrs/002-the-offline-copy-has-two-lists.md) says what that costs.
+
+## 11. The lesson — the stop you opened
+
+`#/lesson/<n>` and `#/pack/<id>` are the same screen (`src/scenes/lesson.js`), and it
+is now drawn on the world the map is drawn on. A stop is a place; the lesson is the
+inside of the door the child tapped.
+
+**The ground is the map's own painting, held on the stop.** `assets/map/world.jpg`
+at the map's cover fit (`src/map/terrain.js`), panned so the stop the child opened is
+in the middle of the window — its x comes from `src/path/layout.js`, so the frame is
+this stop's own place and not a general decorative plate. Over it: the sheet's own
+scrim, ink at **0.45** — the number `src/path/sheet.js` already uses on this painting
+— and the map's vignette (`src/map/edges.js`) at the window's edges. It does not pan:
+the map is the screen the child travels on, and this is where they got off. The one
+exception is a screen that cannot draw the stop at all (`refuse`), which stays on the
+flat ground: a refusal is not a place.
+
+**The header is a band, and its opacity is a rule.** 56px across the whole window, in
+the card colour, ending on a 1px line of the art's outline ink `#1d222b` at 0.16. On
+it: the stop's own mark at 22 wide — a lesson wears the tower in the state the record
+says it is in, a detour the place the map draws for it (`TOWER_FOR` and `PACK_FOR` in
+`src/map/marker.js`) — then `Lesson N of 10` (or the detour's title) at body 17 bold
+ink, then the step dots under the words, starting at 58 from the window's edge. It
+must be opaque edge to edge because the page scrolls *under* it; a card on the column
+would let a paragraph slide through the 16px margin beside it. There is no mask: the
+band is the clip.
+
+56 is the band's own arithmetic: 6 + 22 of words + 2 + 20 of dots + 6. It replaces a
+38px header of 12px `inkMute` text, which a child could not read and which said
+`Lesson 1 of 10 · Puzzle 2 of 3` in one grey line. **The puzzle count is gone with
+it**: the dots are the count (a star is a puzzle, a dot is a page, the ring is where
+the child is), and the live region still announces `Puzzle 2. …` to whoever cannot
+see them. The extra 18px is the whole price of the band, and the drill still fits at
+360×640 — `bun run scripts/verify-site.ts` holds the board at its 240px floor and the
+browser pass measures `maxScroll` at 1.
+
+**The turn is the prompt's second line, not a line of its own.** A drill's card says
+the puzzle and, under it in small `inkSoft`, `White to move — your turn`. It was bare
+text between the board and the coach; over a painting, bare text is a sentence the
+fields eat, and a pill of its own fixed that but cost a block the drill could not
+spare at 360. The card is measured with both lines in it, so the words cannot outgrow
+their surface.
+
+**The coach's reply gets a surface too.** `createSpeech(..., { surface: true })` draws
+the reply's own rounded face in `cardSoft` on the card's rim, 6px of padding, and
+nothing else moves: the bubble is still the verdict, the reply is still the thing that
+happened, and `handle.voices()` still returns two nodes (`tests/lesson.test.ts` holds
+them apart). Bare text under the divider was readable on the flat ground and is not
+readable over ploughed fields.
+
+**No colour was added and no pair was re-measured.** The band is `card`, the pill is
+`cardSoft`, the reply face is `cardSoft`, and every word on them is the ink that was
+measured on that surface in §2 (`ink` 15.74:1 on the card, `inkSoft` 8.03:1). The
+scrim and the vignette are the map's own values, unchanged.
+
+**`sw.js`'s cache name does not move.** `src/scenes/lesson.js` and
+`src/ui/speech.js` are on-demand screens, not in `SHELL`, so this change is fetched
+the next time a lesson is opened and no shell file changed with it (§10's rule, and
+[`docs/adrs/002-the-offline-copy-has-two-lists.md`](adrs/002-the-offline-copy-has-two-lists.md)).
