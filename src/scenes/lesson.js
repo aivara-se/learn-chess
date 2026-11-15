@@ -45,11 +45,15 @@
  */
 import { Container, Graphics, Rectangle } from '../../vendor/pixi/pixi.min.mjs';
 import { COLOUR, GAP, LIFT, PAD, TAP_FLOOR, TYPE, card, text } from '../ui/theme.js';
-import { SPRITE, loadChrome, sprite } from '../ui/assets.js';
+import { SPRITE, loadChrome, loadMap, sprite } from '../ui/assets.js';
 import { createButton } from '../ui/button.js';
 import { createSpeech } from '../ui/speech.js';
 import { LESSONS } from '../data/lessons.js';
 import * as progress from '../path/progress.js';
+import { layout } from '../path/layout.js';
+import { PACK_FOR, TOWER_FOR } from '../map/marker.js';
+import { coverFit, createTerrain, panRange } from '../map/terrain.js';
+import { createEdges } from '../map/edges.js';
 import { createBoard } from '../board/board.js';
 import { createPieces } from '../board/pieces.js';
 import { cornerOf, squareSize } from '../board/geometry.js';
@@ -65,6 +69,11 @@ import { solve } from '../lesson/record.js';
  * its own try/catch, so a sprite that is not there is a screen the shell knows
  * how to report rather than a promise nobody is holding. */
 const SPRITES = await loadChrome();
+/* The world, and the tower the child tapped. The map draws these on the path
+ * screen, which is where the game opens, so a lesson opened from it reads them
+ * out of the same cache — and a lesson opened cold pays for the painting it now
+ * stands in, which is the point of it. */
+const MAP_SPRITES = await loadMap();
 
 /* The column the lesson lives in — 520 is the width the old document capped the
  * board's column at, and the path's own choice, so a wider window gets margins
@@ -455,47 +464,67 @@ function hint() {
 
 /* ---- the header ---- */
 
-/* The header is where the child is and how far in: the stop and the puzzle in
- * words, and the dots below them as a shape. The lesson's name is not here — the
- * pages that are read carry it, as the old app's own bar carried the stop's
- * number rather than its title, and a header tall enough for a two-line title is
- * a header that costs the board room on the smallest phone. */
+/* The header is where the child is: the stop's own tower, its number on the
+ * path, and the dots below them. The tower is the marker the map draws, in the
+ * state the child left it — so the tower they tapped is the tower over the
+ * lesson, and the screen reads as the inside of the door they opened.
+ *
+ * It is a band across the top of the window rather than a card on the column,
+ * and that is a rule rather than a look: the page scrolls *under* it, so the
+ * band has to be opaque edge to edge or a paragraph would slide through the
+ * margin beside a card. 56 is what the band's own parts need — 6 above the
+ * words, 22 of words, 2, 20 of dots, 6 below. */
+const HEAD = 56;
+const HEAD_RIM = 0x1d222b;   // the art's outline ink, the line the band ends on
+const TOWER = { width: 22, height: 33 };
+const WORD_X = PAD + 10 + TOWER.width + 10;   // the margin, the tower, a gap
+
+function headerWords(unit) {
+  return progress.isPack(unit) ? unit.title : `Lesson ${numberOf(unit)} of ${LESSONS.length}`;
+}
+
+/* The mark the header wears: a lesson is its tower in the state it is in, and a
+ * detour is the place the map draws for it — the same sprite the child tapped,
+ * because a header that named the stop with a different picture would be a
+ * second vocabulary for the same course. */
+function headerMark(unit, record) {
+  if (progress.isPack(unit)) {
+    return { path: PACK_FOR[unit.id], width: TOWER.width, height: Math.round(TOWER.width * 54 / 48) };
+  }
+  return { path: TOWER_FOR[progress.state(record, unit)], ...TOWER };
+}
+
 function buildHeader(context) {
-  const column = view.column;
   const group = new Container();
-  const line = text('', { size: TYPE.tiny, weight: '700', colour: COLOUR.inkMute, align: 'center', wrap: column - 2 * PAD });
-  line.anchor.set(0.5, 0);
-  line.position.set(Math.round(column / 2), TOP);
-  const dotsY = TOP + line.height + 4;
+
+  const band = new Graphics()
+    .rect(0, 0, context.width, HEAD)
+    .fill(COLOUR.card)
+    .rect(0, HEAD - 1, context.width, 1)
+    .fill({ color: HEAD_RIM, alpha: 0.16 });
+
+  const mark = headerMark(view.unit, progress.read());
+  const tower = sprite(mark.path, { width: mark.width, height: mark.height });
+  tower.position.set(view.left + PAD + 10, Math.round((HEAD - mark.height) / 2));
+
+  const line = text(headerWords(view.unit), { size: TYPE.body, weight: '700', colour: COLOUR.ink, wrap: view.column - WORD_X - PAD });
+  line.position.set(view.left + WORD_X, 6);
+  const dotsY = 6 + Math.round(line.height) + 2;
   const dots = new Container();
-  group.addChild(line, dots);
-  /* 20 is the dots' own height (`stepDots`), reserved whether or not a step has
-   * drawn them yet: a header that grew when the first step landed would move the
-   * whole page under the child. */
-  const height = dotsY + 20 + 6;
+  group.addChild(band, tower, line, dots);
 
-  /* The header is a curtain over the page: opaque, and interactive so a control
-   * scrolling underneath it cannot be tapped through. */
-  const curtain = new Graphics().rect(0, 0, context.width, height).fill(COLOUR.ground);
-  curtain.eventMode = 'static';
-  curtain.hitArea = new Rectangle(0, 0, context.width, height);
-  group.addChild(curtain);
-
-  view.header = { group, line, dots, dotsY, height };
+  view.header = { group, line, dots, dotsY, height: HEAD, tower };
   return view.header;
 }
 
 function drawHeader() {
   const header = view.header;
-  const step = view.steps[view.step];
   const puzzles = puzzlesIn(view.steps);
-  const at = puzzles.indexOf(step);
-  /* Where the child is and how far in: a lesson is its number on the path, and a
-   * detour is its own name, because it has no number to count to. */
-  const where = progress.isPack(view.unit)
-    ? view.unit.title
-    : `Lesson ${numberOf(view.unit)} of ${LESSONS.length}`;
-  header.line.text = at >= 0 ? `${where} · Puzzle ${at + 1} of ${puzzles.length}` : where;
+  /* The line is the stop and never the puzzle: a lesson is its number on the path
+   * and a detour is its own name, and which puzzle this is, is the dots — the one
+   * they are on wears the ring. The header was three words of grey at 12px, and a
+   * child cannot see where they are in three words of grey at 12px. */
+  header.line.text = headerWords(view.unit);
 
   const record = progress.read();
   const won = new Set(puzzles
@@ -503,7 +532,14 @@ function drawHeader() {
     .map((entry) => entry.i));
   header.dots.removeChildren().forEach((node) => node.destroy({ children: true }));
   const dots = stepDots(header.dots, view.steps, view.step, won);
-  dots.node.position.set(Math.round((view.column - dots.width) / 2), header.dotsY);
+  dots.node.position.set(view.left + WORD_X, header.dotsY);
+  /* The tower is the state the stop is in, and the state changes when the last
+   * puzzle lands — so the header is re-read every step rather than drawn once
+   * with the state it had when the screen opened. */
+  const mark = headerMark(view.unit, record);
+  header.tower.texture = sprite(mark.path).texture;
+  header.tower.width = mark.width;
+  header.tower.height = mark.height;
 }
 
 /* ---- the step, drawn ---- */
@@ -588,7 +624,7 @@ function controlsFor(step) {
  * controls, the header, and the place of every block. */
 function drawStep() {
   const step = view.steps[view.step];
-  if (step?.kind === 'drill' && view.drill?.at === view.step) view.turnCap.text = turnName(view.drill);
+  if (step?.kind === 'drill' && view.drill?.at === view.step) view.turnCap.set(turnName(view.drill));
   /* The coach is re-measured rather than remembered: he opens with one sentence
    * and answers with three, and a block that keeps the height it was built at is
    * a reply the page never grows to hold — the room below the fold stays exactly
@@ -714,17 +750,29 @@ function buildStep() {
 
   if (step.kind === 'drill') {
     const drill = step.drill;
-    const prompt = cardBox(view.page, { width, lines: [{ string: drill.prompt, size: TYPE.body, weight: '700' }] });
-    view.blocks.push({ node: prompt.node, height: prompt.height });
-
-    const coach = createSpeech(view.page, { units: width });
-    const turnCap = text('', { size: TYPE.small, weight: '500', colour: COLOUR.inkSoft, align: 'center', wrap: width });
-    turnCap.anchor.set(0.5, 0);
-    turnCap.position.set(Math.round(column / 2), 0);
-    view.page.addChild(turnCap);
-
     const pos = parseFen(drill.fen);
     const flipped = pos.turn === 'b';
+    /* The turn is the prompt's own second line, on the prompt's card. It used to
+     * be a line of bare text under the board, and on a painting a line of bare
+     * text is a line the fields eat — a pill of its own fixed that and cost a
+     * block of its own too, and at 360×640 the drill has no block to spare. */
+    const prompt = cardBox(view.page, {
+      width,
+      lines: [
+        { string: drill.prompt, size: TYPE.body, weight: '700' },
+        { string: flipped ? 'Black to move — your turn' : 'White to move — your turn', size: TYPE.small, weight: '500', colour: COLOUR.inkSoft },
+      ],
+    });
+    const turnNode = prompt.entries[1].node;
+    const turnCap = {
+      set(line) { turnNode.text = line; },
+      get text() { return turnNode.text; },
+      height: 0,
+    };
+    view.blocks.push({ node: prompt.node, height: prompt.height });
+
+    const coach = createSpeech(view.page, { units: width, surface: true });
+
     view.drill = {
       at: view.step,
       index: step.i,
@@ -742,7 +790,7 @@ function buildStep() {
       locked: false,
       last: null,
     };
-    turnCap.text = turnName(view.drill);
+    turnCap.set(turnName(view.drill));
 
     view.controlsBlock = { node: null, height: 0, gap: ROW };
     const controls = controlsFor(step);
@@ -753,7 +801,7 @@ function buildStep() {
      * measured. The coach is reserved at the height of the sentence it opens
      * with, so a longer verdict grows the page rather than shrinking the board
      * under a child's finger. */
-    const reserved = prompt.height + turnCap.height + coach.measure().height + controls.height + 4 * ROW;
+    const reserved = prompt.height + coach.measure().height + controls.height + 3 * ROW;
     const side = placeBoard(view.band, {
       width: column,
       room: Math.max(FLOOR, view.viewport - reserved),
@@ -768,7 +816,6 @@ function buildStep() {
     coach.reply('Tap a piece, then tap where it should go.');
 
     view.blocks.push({ node: view.band.node, height: side, gap: ROW, x: 0 });
-    view.blocks.push({ node: turnCap, height: turnCap.height, gap: ROW, x: Math.round(column / 2) });
     /* The coach's block is kept, not just pushed: `drawStep()` re-measures it
      * every time his reply is rewritten, and `place()` reads this height. */
     view.coachBlock = { node: coach.node, height: coach.measure().height, gap: ROW };
@@ -873,6 +920,37 @@ function refuse(context, title, body) {
   return root;
 }
 
+/* ---- the world the lesson stands in ---- */
+
+/*
+ * The lesson is a stop, and a stop is a place: so the screen is drawn on the same
+ * painting the map is, at the same cover fit, held on the tower the child tapped
+ * rather than reset to the middle of the world. The scrim is the sheet's own —
+ * ink at 0.45, the number the map's sheet already uses over this painting — so
+ * the cards in front of it read exactly as they do on the map, and the vignette
+ * is the map's edges, drawn the same way at the window's own sides.
+ *
+ * It does not pan: the map is the screen you travel on, and this one is where you
+ * got off. A 2.35:1 painting in a 9:16 window is a window into the world, and the
+ * window is this stop's.
+ */
+function drawGround(context, unit) {
+  const fit = coverFit({ width: context.width, height: context.height });
+  const range = panRange({ width: context.width, height: context.height }, fit);
+  const spot = layout(fit.scale).stops.find((entry) => entry.id === unit.id);
+  const world = new Container();
+  const terrain = createTerrain(world, { fit });
+  const pan = {
+    x: Math.max(0, Math.min(range.x, Math.round((spot ? spot.x : fit.width / 2) - context.width / 2))),
+    y: Math.max(0, Math.min(range.y, Math.round((spot ? spot.y : fit.height / 2) - context.height / 2))),
+  };
+  world.position.set(-pan.x, -pan.y);
+  view.root.addChild(world);
+  view.root.addChild(new Graphics().rect(0, 0, context.width, context.height).fill({ color: COLOUR.ink, alpha: 0.45 }));
+  const edges = createEdges(view.root, { left: 0, width: context.width, height: context.height });
+  return { world, terrain, edges, fit, range, pan, stop: spot ? spot.id : null };
+}
+
 /* ---- the screen ---- */
 
 /**
@@ -937,6 +1015,7 @@ function start(context, address, { step = 0 } = {}) {
     unit,
     steps: stepsFor(unit),
     header: null,
+    ground: null,
     page: null,
     pinned: null,
     band: null,
@@ -954,11 +1033,14 @@ function start(context, address, { step = 0 } = {}) {
   context.layer.eventMode = 'static';
   context.layer.hitArea = new Rectangle(0, 0, context.width, context.height);
   context.layer.addChild(view.root);
-  view.root.addChild(new Graphics().rect(0, 0, context.width, context.height).fill(COLOUR.ground));
+  /* The world first, then the sheet the stop is played on: the painting is the
+   * place, and everything the child touches is the kit. */
+  view.ground = drawGround(context, unit);
 
   view.band = makeBoard(context);
+  buildHeader(context);
   view.page = new Container();
-  view.page.position.set(view.left, TOP);
+  view.page.position.set(view.left, view.header.height);
   view.root.addChild(view.page);
   /* The layer the controls are drawn in: outside `view.page`, so scrolling the
    * reading never moves the row — the reply and the way on cannot be in the same
@@ -967,7 +1049,6 @@ function start(context, address, { step = 0 } = {}) {
   view.pinned.position.set(view.left, 0);
   view.root.addChild(view.pinned);
 
-  buildHeader(context);
   view.viewport = Math.max(1, context.height - view.header.height - STATUS - CLEAR);
   buildStep();
   view.root.addChild(view.header.group);
@@ -1121,6 +1202,16 @@ function handle() {
     contentHeight: () => view.contentHeight,
     viewport: () => view.viewport,
     maxScroll: () => view.maxScroll,
+    /* The place the lesson is played in: the stop the painting is held on, and the
+     * crop of it the window shows — so a check can hold the world to the map's own
+     * fit instead of trusting that a picture is behind the cards. */
+    ground: () => ({
+      stop: view.ground.stop,
+      pan: view.ground.pan,
+      scale: view.ground.fit.scale,
+      drawn: { width: view.ground.fit.width, height: view.ground.fit.height },
+      range: view.ground.range,
+    }),
     scroll: () => view.scroll,
     scrollTo: (y) => applyScroll(y),
     sprites: () => SPRITES.length,
